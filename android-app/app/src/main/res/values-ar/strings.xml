@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Information -->
+    <string name="app_name">نافيجي</string>
+    <string name="app_tagline">شاهد الإعلانات، اكسب نقاط سبارو</string>
+    
+    <!-- Authentication -->
+    <string name="login">تسجيل الدخول</string>
+    <string name="register">إنشاء حساب</string>
+    <string name="email">البريد الإلكتروني</string>
+    <string name="phone_number">رقم الهاتف</string>
+    <string name="password">كلمة المرور</string>
+    <string name="confirm_password">تأكيد كلمة المرور</string>
+    <string name="forgot_password">نسيت كلمة المرور؟</string>
+    <string name="login_with_google">تسجيل الدخول بجوجل</string>
+    <string name="referral_code">رمز الإحالة (اختياري)</string>
+    <string name="enter_referral_code">أدخل رمز الإحالة</string>
+    <string name="create_account">إنشاء حساب</string>
+    <string name="already_have_account">لديك حساب بالفعل؟ سجل الدخول</string>
+    <string name="dont_have_account">ليس لديك حساب؟ أنشئ حساباً</string>
+    
+    <!-- Navigation -->
+    <string name="home">الرئيسية</string>
+    <string name="earn">ربح</string>
+    <string name="contests">المسابقات</string>
+    <string name="withdraw">السحب</string>
+    <string name="profile">الملف الشخصي</string>
+    <string name="referrals">الإحالات</string>
+    
+    <!-- Home Screen -->
+    <string name="welcome_back">مرحباً بعودتك!</string>
+    <string name="your_balance">رصيدك</string>
+    <string name="sbaro_points">نقاط سبارو</string>
+    <string name="watch_ads">مشاهدة الإعلانات</string>
+    <string name="earn_points">اكسب النقاط</string>
+    <string name="daily_progress">التقدم اليومي</string>
+    <string name="weekly_progress">التقدم الأسبوعي</string>
+    <string name="monthly_progress">التقدم الشهري</string>
+    
+    <!-- Earning Methods -->
+    <string name="watch_rewarded_ad">مشاهدة إعلان مكافأة</string>
+    <string name="play_games">لعب الألعاب</string>
+    <string name="complete_surveys">إكمال الاستطلاعات</string>
+    <string name="like_videos">إعجاب بالفيديوهات</string>
+    <string name="points_earned">نقاط مكتسبة!</string>
+    <string name="ad_loading">جاري تحميل الإعلان...</string>
+    <string name="ad_failed">فشل في تحميل الإعلان. حاول مرة أخرى.</string>
+    <string name="congratulations">تهانينا!</string>
+    <string name="you_earned">لقد كسبت</string>
+    <string name="points">نقاط</string>
+    
+    <!-- Contests -->
+    <string name="daily_contest">المسابقة اليومية</string>
+    <string name="weekly_contest">المسابقة الأسبوعية</string>
+    <string name="monthly_contest">المسابقة الشهرية</string>
+    <string name="contest_requirement">المطلوب</string>
+    <string name="contest_prize">الجائزة</string>
+    <string name="contest_participants">المشاركون</string>
+    <string name="contest_time_left">الوقت المتبقي</string>
+    <string name="contest_join">انضم للمسابقة</string>
+    <string name="contest_joined">انضممت للمسابقة!</string>
+    <string name="watch_10_ads_daily">شاهد 10 إعلانات في اليوم</string>
+    <string name="watch_30_ads_weekly">شاهد 30 إعلان في الأسبوع</string>
+    <string name="watch_100_ads_monthly">شاهد 100 إعلان في الشهر</string>
+    <string name="contest_winner">فائز المسابقة!</string>
+    <string name="contest_results">نتائج المسابقة</string>
+    
+    <!-- Withdrawal -->
+    <string name="withdrawal_methods">طرق السحب</string>
+    <string name="binance_pay">بايننس باي</string>
+    <string name="baridimob">باريدي موب</string>
+    <string name="google_play_cards">بطاقات هدايا جوجل بلاي</string>
+    <string name="flexy">فليكسي</string>
+    <string name="minimum_withdrawal">الحد الأدنى</string>
+    <string name="withdraw_now">اسحب الآن</string>
+    <string name="withdrawal_request">طلب سحب</string>
+    <string name="withdrawal_pending">السحب قيد المعالجة</string>
+    <string name="withdrawal_approved">تم الموافقة على السحب</string>
+    <string name="withdrawal_rejected">تم رفض السحب</string>
+    <string name="enter_binance_email">أدخل بريد بايننس باي</string>
+    <string name="enter_baridimob_number">أدخل رقم باريدي موب</string>
+    <string name="enter_phone_number">أدخل رقم الهاتف</string>
+    <string name="select_card_value">اختر قيمة البطاقة</string>
+    <string name="insufficient_balance">الرصيد غير كافي</string>
+    <string name="processing_time">المعالجة خلال 8 ساعات</string>
+    
+    <!-- Referrals -->
+    <string name="your_referral_code">رمز الإحالة الخاص بك</string>
+    <string name="share_referral_code">شارك رمز الإحالة</string>
+    <string name="referral_earnings">أرباح الإحالة</string>
+    <string name="direct_referrals">الإحالات المباشرة</string>
+    <string name="indirect_referrals">الإحالات غير المباشرة</string>
+    <string name="total_referrals">إجمالي الإحالات</string>
+    <string name="invite_friends">ادع الأصدقاء</string>
+    <string name="referral_link">رابط الإحالة</string>
+    <string name="copy_code">نسخ الرمز</string>
+    <string name="copy_link">نسخ الرابط</string>
+    <string name="share">مشاركة</string>
+    <string name="level_1_commission">المستوى 1: عمولة 5%</string>
+    <string name="level_2_commission">المستوى 2: عمولة 3%</string>
+    
+    <!-- Profile -->
+    <string name="account_settings">إعدادات الحساب</string>
+    <string name="language">اللغة</string>
+    <string name="notifications">الإشعارات</string>
+    <string name="privacy_policy">سياسة الخصوصية</string>
+    <string name="terms_of_service">شروط الخدمة</string>
+    <string name="contact_support">اتصل بالدعم</string>
+    <string name="logout">تسجيل الخروج</string>
+    <string name="delete_account">حذف الحساب</string>
+    <string name="account_info">معلومات الحساب</string>
+    <string name="joined_date">تاريخ الانضمام</string>
+    <string name="total_earned">إجمالي الأرباح</string>
+    <string name="ads_watched">الإعلانات المشاهدة</string>
+    
+    <!-- Languages -->
+    <string name="english">English</string>
+    <string name="arabic">العربية</string>
+    
+    <!-- Messages -->
+    <string name="loading">جاري التحميل...</string>
+    <string name="error">خطأ</string>
+    <string name="success">نجح</string>
+    <string name="network_error">خطأ في الشبكة. تحقق من اتصالك.</string>
+    <string name="try_again">حاول مرة أخرى</string>
+    <string name="ok">موافق</string>
+    <string name="cancel">إلغاء</string>
+    <string name="confirm">تأكيد</string>
+    <string name="yes">نعم</string>
+    <string name="no">لا</string>
+    <string name="copied_to_clipboard">تم النسخ إلى الحافظة</string>
+    
+    <!-- Validation Messages -->
+    <string name="field_required">هذا الحقل مطلوب</string>
+    <string name="invalid_email">عنوان بريد إلكتروني غير صحيح</string>
+    <string name="invalid_phone">رقم هاتف غير صحيح</string>
+    <string name="password_too_short">كلمة المرور يجب أن تكون 6 أحرف على الأقل</string>
+    <string name="passwords_dont_match">كلمات المرور غير متطابقة</string>
+    <string name="invalid_referral_code">رمز إحالة غير صحيح</string>
+    
+    <!-- Ad Loading Messages -->
+    <string name="preparing_ad">جاري تحضير الإعلان...</string>
+    <string name="ad_ready">الإعلان جاهز!</string>
+    <string name="watch_full_ad">يرجى مشاهدة الإعلان كاملاً لكسب النقاط</string>
+    <string name="ad_skipped">تم تخطي الإعلان. لم تكسب نقاط.</string>
+    
+    <!-- Security -->
+    <string name="biometric_prompt_title">المصادقة البيومترية</string>
+    <string name="biometric_prompt_subtitle">استخدم بصمة الإصبع أو الوجه للمصادقة</string>
+    <string name="biometric_prompt_description">ضع إصبعك على المستشعر أو انظر إلى الكاميرا</string>
+    <string name="biometric_error">فشلت المصادقة البيومترية</string>
+    
+    <!-- Notifications -->
+    <string name="notification_title_contest_winner">فائز المسابقة!</string>
+    <string name="notification_title_withdrawal_approved">تم الموافقة على السحب</string>
+    <string name="notification_title_withdrawal_rejected">تم رفض السحب</string>
+    <string name="notification_title_gift_card">بطاقة الهدية جاهزة</string>
+    
+</resources>
