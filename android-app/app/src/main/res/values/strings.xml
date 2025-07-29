@@ -4,10 +4,10 @@
     <string name="app_name">NAVIGI</string>
     <string name="app_tagline">Watch Ads, Earn SBARO Points</string>
     
-    <!-- AdMob Configuration -->
-    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
-    <string name="admob_rewarded_ad_id">ca-app-pub-3940256099942544/5224354917</string>
-    <string name="admob_interstitial_ad_id">ca-app-pub-3940256099942544/1033173712</string>
+    <!-- AdMob Configuration (Your Real IDs) -->
+    <string name="admob_app_id">ca-app-pub-3874809248437139~9575307303</string>
+    <string name="admob_rewarded_ad_id">ca-app-pub-3874809248437139/9163910620</string>
+    <string name="admob_interstitial_ad_id">ca-app-pub-3874809248437139/9020440399</string>
     
     <!-- Firebase Configuration -->
     <string name="default_notification_channel_id">sbaro_notifications</string>
