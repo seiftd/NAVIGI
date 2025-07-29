@@ -11,7 +11,7 @@ require('dotenv').config();
 // Import configurations and utilities
 const { initializeFirebase } = require('./config/firebase');
 const logger = require('./utils/logger');
-const { errorHandler, notFound } = require('./middleware/errorHandler');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const authMiddleware = require('./middleware/auth');
 
 // Import routes
@@ -20,13 +20,14 @@ const userRoutes = require('./routes/users');
 const adRoutes = require('./routes/ads');
 const contestRoutes = require('./routes/contests');
 const withdrawalRoutes = require('./routes/withdrawals');
+const surveyRoutes = require('./routes/surveys');
 const referralRoutes = require('./routes/referrals');
 const adminRoutes = require('./routes/admin');
 const notificationRoutes = require('./routes/notifications');
 
 // Import services
 const { initializeCronJobs } = require('./services/cronService');
-const { initializeSocketIO } = require('./services/socketService');
+const { initializeSocketService } = require('./services/socketService');
 
 // Initialize Express app
 const app = express();
@@ -42,7 +43,7 @@ const io = new Server(server, {
 
 // Initialize services
 initializeFirebase();
-initializeSocketIO(io);
+initializeSocketService(io);
 
 // Security middleware
 app.use(helmet({
@@ -120,6 +121,7 @@ app.use('/api/users', authMiddleware, userRoutes);
 app.use('/api/ads', authMiddleware, adRoutes);
 app.use('/api/contests', authMiddleware, contestRoutes);
 app.use('/api/withdrawals', authMiddleware, withdrawalRoutes);
+app.use('/api/surveys', authMiddleware, surveyRoutes);
 app.use('/api/referrals', authMiddleware, referralRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', authMiddleware, notificationRoutes);
@@ -148,7 +150,7 @@ app.get('/api', (req, res) => {
 });
 
 // 404 handler for unknown routes
-app.use(notFound);
+app.use(notFoundHandler);
 
 // Global error handler
 app.use(errorHandler);
