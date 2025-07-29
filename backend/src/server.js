@@ -12,7 +12,7 @@ require('dotenv').config();
 const { initializeFirebase } = require('./config/firebase');
 const logger = require('./utils/logger');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
-const authMiddleware = require('./middleware/auth');
+const { authMiddleware } = require('./middleware/auth');
 
 // Import routes
 const authRoutes = require('./routes/auth');
