@@ -1,0 +1,19 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow admin areas
+Disallow: /admin/
+Disallow: /admin/*
+
+# Allow important pages
+Allow: /
+Allow: /about
+Allow: /features
+Allow: /how-it-works
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+
+# Sitemap
+Sitemap: https://navigi.com/sitemap.xml
