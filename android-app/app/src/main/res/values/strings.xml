@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Information -->
+    <string name="app_name">NAVIGI</string>
+    <string name="app_tagline">Watch Ads, Earn SBARO Points</string>
+    
+    <!-- AdMob Configuration -->
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="admob_rewarded_ad_id">ca-app-pub-3940256099942544/5224354917</string>
+    <string name="admob_interstitial_ad_id">ca-app-pub-3940256099942544/1033173712</string>
+    
+    <!-- Firebase Configuration -->
+    <string name="default_notification_channel_id">sbaro_notifications</string>
+    
+    <!-- Authentication -->
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="email">Email</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="login_with_google">Login with Google</string>
+    <string name="referral_code">Referral Code (Optional)</string>
+    <string name="enter_referral_code">Enter referral code</string>
+    <string name="create_account">Create Account</string>
+    <string name="already_have_account">Already have an account? Login</string>
+    <string name="dont_have_account">Don\'t have an account? Register</string>
+    
+    <!-- Navigation -->
+    <string name="home">Home</string>
+    <string name="earn">Earn</string>
+    <string name="contests">Contests</string>
+    <string name="withdraw">Withdraw</string>
+    <string name="profile">Profile</string>
+    <string name="referrals">Referrals</string>
+    
+    <!-- Home Screen -->
+    <string name="welcome_back">Welcome back!</string>
+    <string name="your_balance">Your Balance</string>
+    <string name="sbaro_points">SBARO Points</string>
+    <string name="watch_ads">Watch Ads</string>
+    <string name="earn_points">Earn Points</string>
+    <string name="daily_progress">Daily Progress</string>
+    <string name="weekly_progress">Weekly Progress</string>
+    <string name="monthly_progress">Monthly Progress</string>
+    
+    <!-- Earning Methods -->
+    <string name="watch_rewarded_ad">Watch Rewarded Ad</string>
+    <string name="play_games">Play Games</string>
+    <string name="complete_surveys">Complete Surveys</string>
+    <string name="like_videos">Like Videos</string>
+    <string name="points_earned">Points Earned!</string>
+    <string name="ad_loading">Loading Ad...</string>
+    <string name="ad_failed">Ad failed to load. Please try again.</string>
+    <string name="congratulations">Congratulations!</string>
+    <string name="you_earned">You earned</string>
+    <string name="points">points</string>
+    
+    <!-- Contests -->
+    <string name="daily_contest">Daily Contest</string>
+    <string name="weekly_contest">Weekly Contest</string>
+    <string name="monthly_contest">Monthly Contest</string>
+    <string name="contest_requirement">Requirement</string>
+    <string name="contest_prize">Prize</string>
+    <string name="contest_participants">Participants</string>
+    <string name="contest_time_left">Time Left</string>
+    <string name="contest_join">Join Contest</string>
+    <string name="contest_joined">Contest Joined!</string>
+    <string name="watch_10_ads_daily">Watch 10 ads in a day</string>
+    <string name="watch_30_ads_weekly">Watch 30 ads in a week</string>
+    <string name="watch_100_ads_monthly">Watch 100 ads in a month</string>
+    <string name="contest_winner">Contest Winner!</string>
+    <string name="contest_results">Contest Results</string>
+    
+    <!-- Withdrawal -->
+    <string name="withdrawal_methods">Withdrawal Methods</string>
+    <string name="binance_pay">Binance Pay</string>
+    <string name="baridimob">BaridiMob</string>
+    <string name="google_play_cards">Google Play Gift Cards</string>
+    <string name="flexy">Flexy</string>
+    <string name="minimum_withdrawal">Minimum</string>
+    <string name="withdraw_now">Withdraw Now</string>
+    <string name="withdrawal_request">Withdrawal Request</string>
+    <string name="withdrawal_pending">Withdrawal Pending</string>
+    <string name="withdrawal_approved">Withdrawal Approved</string>
+    <string name="withdrawal_rejected">Withdrawal Rejected</string>
+    <string name="enter_binance_email">Enter Binance Pay Email</string>
+    <string name="enter_baridimob_number">Enter BaridiMob Number</string>
+    <string name="enter_phone_number">Enter Phone Number</string>
+    <string name="select_card_value">Select Card Value</string>
+    <string name="insufficient_balance">Insufficient Balance</string>
+    <string name="processing_time">Processing within 8 hours</string>
+    
+    <!-- Referrals -->
+    <string name="your_referral_code">Your Referral Code</string>
+    <string name="share_referral_code">Share Referral Code</string>
+    <string name="referral_earnings">Referral Earnings</string>
+    <string name="direct_referrals">Direct Referrals</string>
+    <string name="indirect_referrals">Indirect Referrals</string>
+    <string name="total_referrals">Total Referrals</string>
+    <string name="invite_friends">Invite Friends</string>
+    <string name="referral_link">Referral Link</string>
+    <string name="copy_code">Copy Code</string>
+    <string name="copy_link">Copy Link</string>
+    <string name="share">Share</string>
+    <string name="level_1_commission">Level 1: 5% Commission</string>
+    <string name="level_2_commission">Level 2: 3% Commission</string>
+    
+    <!-- Profile -->
+    <string name="account_settings">Account Settings</string>
+    <string name="language">Language</string>
+    <string name="notifications">Notifications</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="contact_support">Contact Support</string>
+    <string name="logout">Logout</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="account_info">Account Information</string>
+    <string name="joined_date">Joined Date</string>
+    <string name="total_earned">Total Earned</string>
+    <string name="ads_watched">Ads Watched</string>
+    
+    <!-- Languages -->
+    <string name="english">English</string>
+    <string name="arabic">العربية</string>
+    
+    <!-- Messages -->
+    <string name="loading">Loading...</string>
+    <string name="error">Error</string>
+    <string name="success">Success</string>
+    <string name="network_error">Network error. Please check your connection.</string>
+    <string name="try_again">Try Again</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
+    
+    <!-- Validation Messages -->
+    <string name="field_required">This field is required</string>
+    <string name="invalid_email">Invalid email address</string>
+    <string name="invalid_phone">Invalid phone number</string>
+    <string name="password_too_short">Password must be at least 6 characters</string>
+    <string name="passwords_dont_match">Passwords don\'t match</string>
+    <string name="invalid_referral_code">Invalid referral code</string>
+    
+    <!-- Ad Loading Messages -->
+    <string name="preparing_ad">Preparing your ad...</string>
+    <string name="ad_ready">Ad is ready!</string>
+    <string name="watch_full_ad">Please watch the full ad to earn points</string>
+    <string name="ad_skipped">Ad was skipped. No points earned.</string>
+    
+    <!-- Points Display -->
+    <string name="points_format">%1$d points</string>
+    <string name="dollars_format">$%1$.2f</string>
+    <string name="da_format">%1$d DA</string>
+    
+    <!-- Time Formats -->
+    <string name="hours_format">%1$d hours</string>
+    <string name="minutes_format">%1$d minutes</string>
+    <string name="seconds_format">%1$d seconds</string>
+    <string name="days_format">%1$d days</string>
+    
+    <!-- Security -->
+    <string name="biometric_prompt_title">Biometric Authentication</string>
+    <string name="biometric_prompt_subtitle">Use your fingerprint or face to authenticate</string>
+    <string name="biometric_prompt_description">Place your finger on the sensor or look at the camera</string>
+    <string name="biometric_error">Biometric authentication failed</string>
+    
+    <!-- Notifications -->
+    <string name="notification_title_contest_winner">Contest Winner!</string>
+    <string name="notification_title_withdrawal_approved">Withdrawal Approved</string>
+    <string name="notification_title_withdrawal_rejected">Withdrawal Rejected</string>
+    <string name="notification_title_gift_card">Gift Card Ready</string>
+    
+</resources>
