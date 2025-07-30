@@ -12,8 +12,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.navigi.sbaro.data.ads.AdMobManager
 import com.navigi.sbaro.data.repository.UserRepository
+import com.navigi.sbaro.presentation.navigation.SbaroNavHost
 import com.navigi.sbaro.presentation.theme.NAVIGITheme
-import com.navigi.sbaro.presentation.ui.screens.main.EnhancedMainScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -56,14 +56,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    EnhancedMainScreen(
-                        onNavigateToAuth = {
-                            // Handle navigation to auth
-                            // For now, just restart the activity or implement proper auth flow
-                            finish()
-                        },
-                        userRepository = userRepository,
-                        adMobManager = adMobManager
+                    SbaroNavHost(
+                        adMobManager = adMobManager,
+                        userRepository = userRepository
                     )
                 }
             }

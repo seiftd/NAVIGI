@@ -1,19 +1,25 @@
 package com.navigi.sbaro.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.navigi.sbaro.data.ads.AdMobManager
+import com.navigi.sbaro.data.repository.UserRepository
 import com.navigi.sbaro.presentation.ui.screens.auth.LoginScreen
 import com.navigi.sbaro.presentation.ui.screens.auth.RegisterScreen
-import com.navigi.sbaro.presentation.ui.screens.main.MainScreen
+import com.navigi.sbaro.presentation.ui.screens.main.EnhancedMainScreen
 import com.navigi.sbaro.presentation.ui.screens.splash.SplashScreen
+import javax.inject.Inject
 
 @Composable
 fun SbaroNavHost(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = SbaroDestinations.SPLASH
+    startDestination: String = SbaroDestinations.SPLASH,
+    adMobManager: AdMobManager,
+    userRepository: UserRepository
 ) {
     NavHost(
         navController = navController,
@@ -64,12 +70,14 @@ fun SbaroNavHost(
 
         // Main App Screen (contains bottom navigation)
         composable(SbaroDestinations.MAIN) {
-            MainScreen(
+            EnhancedMainScreen(
                 onNavigateToAuth = {
                     navController.navigate(SbaroDestinations.LOGIN) {
                         popUpTo(SbaroDestinations.MAIN) { inclusive = true }
                     }
-                }
+                },
+                userRepository = userRepository,
+                adMobManager = adMobManager
             )
         }
     }
