@@ -184,10 +184,31 @@ private fun EnhancedHomeScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "${userStats.totalPoints} SBARO",
+                        text = "${userStats.totalPoints} SBARO ${if (userStats.isVip) "👑" else ""}",
                         style = MaterialTheme.typography.headlineLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
+                    )
+                    
+                    // VIP Status
+                    if (userStats.isVip) {
+                        Text(
+                            text = "VIP • ${userRepository.getRemainingVipDays()} ${if (isArabic) "أيام متبقية" else "days left"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    
+                    // Daily Ads Info
+                    Text(
+                        text = "${if (isArabic) "إعلانات اليوم" else "Today's Ads"}: ${userStats.dailyEarnAds}/${userStats.dailyAdLimit}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (userStats.dailyEarnAds < userStats.dailyAdLimit) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        }
                     )
                     
                     Spacer(modifier = Modifier.height(16.dp))
@@ -441,22 +462,83 @@ private fun EnhancedEarnScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
+                    // Daily limit progress
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isArabic) "إعلانات اليوم:" else "Today's Ads:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "${userStats.dailyEarnAds}/${userStats.dailyAdLimit}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (userStats.dailyEarnAds < userStats.dailyAdLimit) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            }
+                        )
+                    }
+                    
+                    // VIP status if applicable
+                    if (userStats.isVip) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (isArabic) "VIP:" else "VIP:",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "${userRepository.getRemainingVipDays()} ${if (isArabic) "أيام متبقية" else "days left"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Button(
                         onClick = {
-                            if (adMobManager.isRewardedAdReady()) {
+                            if (userStats.dailyEarnAds >= userStats.dailyAdLimit) {
+                                errorMessage = if (isArabic) {
+                                    "وصلت للحد الأقصى اليومي (${userStats.dailyAdLimit} إعلان)"
+                                } else {
+                                    "Daily limit reached (${userStats.dailyAdLimit} ads)"
+                                }
+                            } else if (adMobManager.isRewardedAdReady()) {
                                 adMobManager.showRewardedAd(
                                     activity = context as Activity,
                                     onRewarded = { adRevenue ->
-                                        // Use real AdMob profit calculation
-                                        userRepository.addPointsFromAd(adRevenue)
-                                        // Calculate user's actual points and USD value (70% of revenue)
-                                        val userShareUSD = adRevenue * 0.70
-                                        val userPoints = (userShareUSD * 100).toInt()
-                                        rewardAmount = userPoints
-                                        rewardUSD = userShareUSD
-                                        showRewardDialog = true
+                                        // Use real AdMob profit calculation with limit check
+                                        val success = userRepository.addPointsFromAd(adRevenue)
+                                        if (success) {
+                                            // Calculate user's actual points and USD value (70% of revenue)
+                                            val userShareUSD = adRevenue * 0.70
+                                            val userPoints = (userShareUSD * 100).toInt()
+                                            rewardAmount = userPoints
+                                            rewardUSD = userShareUSD
+                                            showRewardDialog = true
+                                        } else {
+                                            errorMessage = if (isArabic) {
+                                                "وصلت للحد الأقصى اليومي"
+                                            } else {
+                                                "Daily limit reached"
+                                            }
+                                        }
                                     },
                                     onAdFailed = { error ->
                                         errorMessage = error
@@ -471,9 +553,16 @@ private fun EnhancedEarnScreen(
                                 adMobManager.loadRewardedAd(context)
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = userStats.dailyEarnAds < userStats.dailyAdLimit && adMobManager.isRewardedAdReady()
                     ) {
-                        Text(if (isArabic) "شاهد الإعلان" else "Watch Ad")
+                        Text(
+                            when {
+                                userStats.dailyEarnAds >= userStats.dailyAdLimit -> if (isArabic) "الحد اليومي مكتمل" else "Daily Limit Reached"
+                                adMobManager.isRewardedAdReady() -> if (isArabic) "شاهد الإعلان" else "Watch Ad"
+                                else -> if (isArabic) "جاري التحميل..." else "Loading..."
+                            }
+                        )
                     }
                     
                     Text(

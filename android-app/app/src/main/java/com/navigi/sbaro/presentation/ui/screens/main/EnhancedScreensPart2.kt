@@ -77,7 +77,7 @@ fun EnhancedContestsScreen(
                     showJoinDialog = true
                 },
                 onWatchAd = {
-                    userRepository.addContestAd()
+                    userRepository.addContestAd("daily")
                 }
             )
         }
@@ -98,7 +98,7 @@ fun EnhancedContestsScreen(
                     showJoinDialog = true
                 },
                 onWatchAd = {
-                    userRepository.addContestAd()
+                    userRepository.addContestAd("weekly")
                 }
             )
         }
@@ -119,9 +119,32 @@ fun EnhancedContestsScreen(
                     showJoinDialog = true
                 },
                 onWatchAd = {
-                    userRepository.addContestAd()
+                    userRepository.addContestAd("monthly")
                 }
             )
+        }
+        
+        // VIP Contest (only for VIP users)
+        if (userStats.isVip) {
+            item {
+                ContestCard(
+                    title = if (isArabic) "مسابقة VIP" else "VIP Contest",
+                    description = if (isArabic) "شاهد 30 إعلان كل 3 أيام للمشاركة" else "Watch 30 ads every 3 days to participate",
+                    prize = "10% " + if (isArabic) "من نقاط المسابقة" else "of contest points",
+                    requirement = "30 ${if (isArabic) "إعلان" else "ads"}",
+                    userAds = userStats.vipContestAds,
+                    isEligible = userStats.isEligibleForVip,
+                    deadline = userStats.vipContestDeadline,
+                    isArabic = isArabic,
+                    onJoin = {
+                        selectedContest = "vip"
+                        showJoinDialog = true
+                    },
+                    onWatchAd = {
+                        userRepository.addContestAd("vip")
+                    }
+                )
+            }
         }
     }
     
@@ -419,6 +442,14 @@ fun EnhancedWithdrawScreen(
                     )
                 }
             }
+        }
+        
+        // VIP Upgrade Card
+        item {
+            VipUpgradeCard(
+                userRepository = userRepository,
+                isArabic = isArabic
+            )
         }
         
         // Test notification button (for demonstration)
@@ -880,5 +911,154 @@ private fun StatCard(
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Composable
+fun VipUpgradeCard(
+    userRepository: UserRepository,
+    isArabic: Boolean,
+    onVipActivated: () -> Unit = {}
+) {
+    val userStats by userRepository.userStats.collectAsState()
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (userStats.isVip) Color(0xFF4CAF50) else Color(0xFFFFD700)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // VIP Crown Icon
+            Text(
+                text = "👑",
+                style = MaterialTheme.typography.headlineLarge
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = if (userStats.isVip) {
+                    if (isArabic) "أنت عضو VIP!" else "You are VIP!"
+                } else {
+                    if (isArabic) "ترقى إلى VIP" else "Upgrade to VIP"
+                },
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = if (userStats.isVip) Color.White else Color.Black
+            )
+            
+            if (userStats.isVip) {
+                Text(
+                    text = "${userRepository.getRemainingVipDays()} ${if (isArabic) "أيام متبقية" else "days remaining"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White
+                )
+            } else {
+                Text(
+                    text = if (isArabic) "20 USDT شهريًا" else "20 USDT monthly",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // VIP Benefits
+            if (!userStats.isVip) {
+                Column(
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = if (isArabic) "مزايا VIP:" else "VIP Benefits:",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    BenefitRow("✅", if (isArabic) "25 إعلان يوميًا (بدلًا من 12)" else "25 daily ads (instead of 12)", isArabic)
+                    BenefitRow("🎯", if (isArabic) "مسابقة VIP كل 3 أيام" else "VIP contest every 3 days", isArabic)
+                    BenefitRow("👥", if (isArabic) "5 فائزين × 10% لكل واحد" else "5 winners × 10% each", isArabic)
+                    BenefitRow("💰", if (isArabic) "أولوية في السحب" else "Priority withdrawals", isArabic)
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Payment Instructions
+                Text(
+                    text = if (isArabic) "ادفع إلى:" else "Pay to:",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                
+                Text(
+                    text = "TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    color = Color.Black
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // QR Code placeholder (you'd implement actual QR generation)
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .background(Color.White, RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "QR CODE\n📱",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Test VIP button (for demonstration)
+                Button(
+                    onClick = {
+                        userRepository.activateVip()
+                        onVipActivated()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4CAF50)
+                    )
+                ) {
+                    Text(
+                        text = if (isArabic) "🧪 تفعيل VIP (للاختبار)" else "🧪 Activate VIP (Test)",
+                        color = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BenefitRow(icon: String, text: String, isArabic: Boolean) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 2.dp)
+    ) {
+        Text(
+            text = icon,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Black
+        )
     }
 }

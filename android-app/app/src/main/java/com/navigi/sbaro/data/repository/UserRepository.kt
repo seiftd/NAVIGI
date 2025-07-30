@@ -19,9 +19,11 @@ data class UserStats(
     val todayPoints: Int = 0,
     val referralPoints: Int = 0,
     val adsWatched: Int = 0,
+    val dailyEarnAds: Int = 0,
     val contestAdsToday: Int = 0,
     val contestAdsWeek: Int = 0,
     val contestAdsMonth: Int = 0,
+    val vipContestAds: Int = 0,
     val referralCode: String = "",
     val referredUsers: List<String> = emptyList(),
     val level1Earnings: Int = 0,
@@ -30,9 +32,14 @@ data class UserStats(
     val isEligibleForDaily: Boolean = true,
     val isEligibleForWeekly: Boolean = true,
     val isEligibleForMonthly: Boolean = true,
+    val isEligibleForVip: Boolean = true,
     val dailyContestDeadline: Long = 0,
     val weeklyContestDeadline: Long = 0,
-    val monthlyContestDeadline: Long = 0
+    val monthlyContestDeadline: Long = 0,
+    val vipContestDeadline: Long = 0,
+    val isVip: Boolean = false,
+    val vipExpiryDate: Long = 0,
+    val dailyAdLimit: Int = 12
 )
 
 data class ContestInfo(
@@ -62,9 +69,11 @@ class UserRepository @Inject constructor(
         private const val PREF_TODAY_POINTS = "today_points"
         private const val PREF_REFERRAL_POINTS = "referral_points"
         private const val PREF_ADS_WATCHED = "ads_watched"
+        private const val PREF_DAILY_EARN_ADS = "daily_earn_ads"
         private const val PREF_CONTEST_ADS_TODAY = "contest_ads_today"
         private const val PREF_CONTEST_ADS_WEEK = "contest_ads_week"
         private const val PREF_CONTEST_ADS_MONTH = "contest_ads_month"
+        private const val PREF_VIP_CONTEST_ADS = "vip_contest_ads"
         private const val PREF_REFERRAL_CODE = "referral_code"
         private const val PREF_LEVEL1_EARNINGS = "level1_earnings"
         private const val PREF_LEVEL2_EARNINGS = "level2_earnings"
@@ -72,9 +81,14 @@ class UserRepository @Inject constructor(
         private const val PREF_LAST_DAILY_DATE = "last_daily_date"
         private const val PREF_LAST_WEEKLY_DATE = "last_weekly_date"
         private const val PREF_LAST_MONTHLY_DATE = "last_monthly_date"
+        private const val PREF_LAST_VIP_DATE = "last_vip_date"
         private const val PREF_DAILY_CONTEST_DEADLINE = "daily_contest_deadline"
         private const val PREF_WEEKLY_CONTEST_DEADLINE = "weekly_contest_deadline"
         private const val PREF_MONTHLY_CONTEST_DEADLINE = "monthly_contest_deadline"
+        private const val PREF_VIP_CONTEST_DEADLINE = "vip_contest_deadline"
+        private const val PREF_IS_VIP = "is_vip"
+        private const val PREF_VIP_EXPIRY_DATE = "vip_expiry_date"
+        private const val PREF_LAST_AD_RESET_DATE = "last_ad_reset_date"
     }
     
     init {
@@ -86,41 +100,62 @@ class UserRepository @Inject constructor(
         val currentUser = auth.currentUser
         val userId = currentUser?.uid ?: "guest"
         
+        // Check if we need to reset daily counters
+        checkAndResetDailyCounters()
+        
         val totalPoints = prefs.getInt(PREF_TOTAL_POINTS, 0)
         val todayPoints = prefs.getInt(PREF_TODAY_POINTS, 0)
         val referralPoints = prefs.getInt(PREF_REFERRAL_POINTS, 0)
         val adsWatched = prefs.getInt(PREF_ADS_WATCHED, 0)
+        val dailyEarnAds = prefs.getInt(PREF_DAILY_EARN_ADS, 0)
         val contestAdsToday = prefs.getInt(PREF_CONTEST_ADS_TODAY, 0)
         val contestAdsWeek = prefs.getInt(PREF_CONTEST_ADS_WEEK, 0)
         val contestAdsMonth = prefs.getInt(PREF_CONTEST_ADS_MONTH, 0)
+        val vipContestAds = prefs.getInt(PREF_VIP_CONTEST_ADS, 0)
         val referralCode = prefs.getString(PREF_REFERRAL_CODE, null) ?: generateReferralCode(userId)
         val level1Earnings = prefs.getInt(PREF_LEVEL1_EARNINGS, 0)
         val level2Earnings = prefs.getInt(PREF_LEVEL2_EARNINGS, 0)
         val contestsWon = prefs.getInt(PREF_CONTESTS_WON, 0)
+        
+        // VIP status
+        val isVip = prefs.getBoolean(PREF_IS_VIP, false)
+        val vipExpiryDate = prefs.getLong(PREF_VIP_EXPIRY_DATE, 0)
+        val currentVipStatus = isVip && vipExpiryDate > System.currentTimeMillis()
+        val dailyAdLimit = if (currentVipStatus) 25 else 12
+        
+        // Update VIP status if expired
+        if (isVip && vipExpiryDate <= System.currentTimeMillis()) {
+            prefs.edit().putBoolean(PREF_IS_VIP, false).apply()
+        }
         
         // Check contest eligibility and deadlines
         val today = System.currentTimeMillis()
         val lastDaily = prefs.getLong(PREF_LAST_DAILY_DATE, 0)
         val lastWeekly = prefs.getLong(PREF_LAST_WEEKLY_DATE, 0)
         val lastMonthly = prefs.getLong(PREF_LAST_MONTHLY_DATE, 0)
+        val lastVip = prefs.getLong(PREF_LAST_VIP_DATE, 0)
         
         val isEligibleForDaily = (today - lastDaily) > 24 * 60 * 60 * 1000 // 24 hours
         val isEligibleForWeekly = (today - lastWeekly) > 7 * 24 * 60 * 60 * 1000 // 7 days
         val isEligibleForMonthly = (today - lastMonthly) > 30 * 24 * 60 * 60 * 1000 // 30 days
+        val isEligibleForVip = currentVipStatus && (today - lastVip) > 3 * 24 * 60 * 60 * 1000 // 3 days
         
         // Calculate contest deadlines (next draw times)
         val dailyDeadline = prefs.getLong(PREF_DAILY_CONTEST_DEADLINE, 0)
         val weeklyDeadline = prefs.getLong(PREF_WEEKLY_CONTEST_DEADLINE, 0)
         val monthlyDeadline = prefs.getLong(PREF_MONTHLY_CONTEST_DEADLINE, 0)
+        val vipDeadline = prefs.getLong(PREF_VIP_CONTEST_DEADLINE, 0)
         
         _userStats.value = UserStats(
             totalPoints = totalPoints,
             todayPoints = todayPoints,
             referralPoints = referralPoints,
             adsWatched = adsWatched,
+            dailyEarnAds = dailyEarnAds,
             contestAdsToday = contestAdsToday,
             contestAdsWeek = contestAdsWeek,
             contestAdsMonth = contestAdsMonth,
+            vipContestAds = vipContestAds,
             referralCode = referralCode,
             level1Earnings = level1Earnings,
             level2Earnings = level2Earnings,
@@ -128,9 +163,14 @@ class UserRepository @Inject constructor(
             isEligibleForDaily = isEligibleForDaily,
             isEligibleForWeekly = isEligibleForWeekly,
             isEligibleForMonthly = isEligibleForMonthly,
+            isEligibleForVip = isEligibleForVip,
             dailyContestDeadline = dailyDeadline,
             weeklyContestDeadline = weeklyDeadline,
-            monthlyContestDeadline = monthlyDeadline
+            monthlyContestDeadline = monthlyDeadline,
+            vipContestDeadline = vipDeadline,
+            isVip = currentVipStatus,
+            vipExpiryDate = vipExpiryDate,
+            dailyAdLimit = dailyAdLimit
         )
         
         // Save referral code if it was generated
@@ -139,14 +179,34 @@ class UserRepository @Inject constructor(
         }
     }
     
+    private fun checkAndResetDailyCounters() {
+        val today = System.currentTimeMillis()
+        val lastResetDate = prefs.getLong(PREF_LAST_AD_RESET_DATE, 0)
+        val daysDiff = (today - lastResetDate) / (24 * 60 * 60 * 1000)
+        
+        if (daysDiff >= 1) {
+            // Reset daily counters
+            prefs.edit()
+                .putInt(PREF_DAILY_EARN_ADS, 0)
+                .putInt(PREF_TODAY_POINTS, 0)
+                .putLong(PREF_LAST_AD_RESET_DATE, today)
+                .apply()
+        }
+    }
+    
     private fun generateReferralCode(userId: String): String {
         val randomSuffix = Random.nextInt(1000, 9999)
         return "SBARO-${userId.take(4).uppercase()}$randomSuffix"
     }
     
-    // Real AdMob profit calculation (70% to user)
-    fun addPointsFromAd(adRevenue: Double = 0.02) { // Default $0.02 per ad (typical AdMob rate)
+    // Real AdMob profit calculation (70% to user) with daily limits
+    fun addPointsFromAd(adRevenue: Double = 0.02): Boolean { // Returns true if ad was counted, false if limit reached
         val currentStats = _userStats.value
+        
+        // Check daily limit
+        if (currentStats.dailyEarnAds >= currentStats.dailyAdLimit) {
+            return false // Daily limit reached
+        }
         
         // Calculate real profit: User gets 70%, Admin gets 30%
         val userShareUSD = adRevenue * 0.70
@@ -155,11 +215,13 @@ class UserRepository @Inject constructor(
         val newTotalPoints = currentStats.totalPoints + points
         val newTodayPoints = currentStats.todayPoints + points
         val newAdsWatched = currentStats.adsWatched + 1
+        val newDailyEarnAds = currentStats.dailyEarnAds + 1
         
         _userStats.value = currentStats.copy(
             totalPoints = newTotalPoints,
             todayPoints = newTodayPoints,
-            adsWatched = newAdsWatched
+            adsWatched = newAdsWatched,
+            dailyEarnAds = newDailyEarnAds
         )
         
         // Save to preferences
@@ -167,37 +229,77 @@ class UserRepository @Inject constructor(
             .putInt(PREF_TOTAL_POINTS, newTotalPoints)
             .putInt(PREF_TODAY_POINTS, newTodayPoints)
             .putInt(PREF_ADS_WATCHED, newAdsWatched)
+            .putInt(PREF_DAILY_EARN_ADS, newDailyEarnAds)
             .apply()
         
         // Sync to Firebase
         syncToFirebase()
         
         // Log for admin tracking
-        android.util.Log.d("AdRevenue", "Ad Revenue: $${String.format("%.4f", adRevenue)}, User Points: $points, Admin Share: $${String.format("%.4f", adRevenue * 0.30)}")
+        android.util.Log.d("AdRevenue", "Ad Revenue: $${String.format("%.4f", adRevenue)}, User Points: $points, Admin Share: $${String.format("%.4f", adRevenue * 0.30)}, Daily Ads: $newDailyEarnAds/${currentStats.dailyAdLimit}")
+        
+        return true
     }
     
     // Separate contest ad tracking (for contests only)
-    fun addContestAd() {
+    fun addContestAd(contestType: String) {
         val currentStats = _userStats.value
-        val newContestAdsToday = currentStats.contestAdsToday + 1
-        val newContestAdsWeek = currentStats.contestAdsWeek + 1
-        val newContestAdsMonth = currentStats.contestAdsMonth + 1
         
-        _userStats.value = currentStats.copy(
-            contestAdsToday = newContestAdsToday,
-            contestAdsWeek = newContestAdsWeek,
-            contestAdsMonth = newContestAdsMonth
-        )
-        
-        // Save to preferences
-        prefs.edit()
-            .putInt(PREF_CONTEST_ADS_TODAY, newContestAdsToday)
-            .putInt(PREF_CONTEST_ADS_WEEK, newContestAdsWeek)
-            .putInt(PREF_CONTEST_ADS_MONTH, newContestAdsMonth)
-            .apply()
+        when (contestType) {
+            "daily" -> {
+                val newContestAdsToday = currentStats.contestAdsToday + 1
+                _userStats.value = currentStats.copy(contestAdsToday = newContestAdsToday)
+                prefs.edit().putInt(PREF_CONTEST_ADS_TODAY, newContestAdsToday).apply()
+            }
+            "weekly" -> {
+                val newContestAdsWeek = currentStats.contestAdsWeek + 1
+                _userStats.value = currentStats.copy(contestAdsWeek = newContestAdsWeek)
+                prefs.edit().putInt(PREF_CONTEST_ADS_WEEK, newContestAdsWeek).apply()
+            }
+            "monthly" -> {
+                val newContestAdsMonth = currentStats.contestAdsMonth + 1
+                _userStats.value = currentStats.copy(contestAdsMonth = newContestAdsMonth)
+                prefs.edit().putInt(PREF_CONTEST_ADS_MONTH, newContestAdsMonth).apply()
+            }
+            "vip" -> {
+                val newVipContestAds = currentStats.vipContestAds + 1
+                _userStats.value = currentStats.copy(vipContestAds = newVipContestAds)
+                prefs.edit().putInt(PREF_VIP_CONTEST_ADS, newVipContestAds).apply()
+            }
+        }
         
         // Sync to Firebase
         syncToFirebase()
+    }
+    
+    // VIP subscription management
+    fun activateVip() {
+        val currentTime = System.currentTimeMillis()
+        val expiryTime = currentTime + (30 * 24 * 60 * 60 * 1000L) // 30 days
+        
+        prefs.edit()
+            .putBoolean(PREF_IS_VIP, true)
+            .putLong(PREF_VIP_EXPIRY_DATE, expiryTime)
+            .apply()
+            
+        loadUserStats() // Refresh to update daily limit to 25
+        syncToFirebase()
+    }
+    
+    fun checkVipStatus(): Pair<Boolean, Long> {
+        val isVip = prefs.getBoolean(PREF_IS_VIP, false)
+        val expiryDate = prefs.getLong(PREF_VIP_EXPIRY_DATE, 0)
+        val isActive = isVip && expiryDate > System.currentTimeMillis()
+        return Pair(isActive, expiryDate)
+    }
+    
+    fun getRemainingVipDays(): Int {
+        val (isActive, expiryDate) = checkVipStatus()
+        if (!isActive) return 0
+        
+        val currentTime = System.currentTimeMillis()
+        val remainingTime = expiryDate - currentTime
+        return (remainingTime / (24 * 60 * 60 * 1000)).toInt()
     }
     
     // Legacy method for other point sources
@@ -278,6 +380,16 @@ class UserRepository @Inject constructor(
                     // Set deadline for next draw (30 days from now)
                     val deadline = today + (30 * 24 * 60 * 60 * 1000)
                     prefs.edit().putLong(PREF_MONTHLY_CONTEST_DEADLINE, deadline).apply()
+                    loadUserStats() // Refresh eligibility
+                    return true
+                }
+            }
+            "vip" -> {
+                if (currentStats.isEligibleForVip && currentStats.vipContestAds >= 30) {
+                    prefs.edit().putLong(PREF_LAST_VIP_DATE, today).apply()
+                    // Set deadline for next draw (3 days from now)
+                    val deadline = today + (3 * 24 * 60 * 60 * 1000)
+                    prefs.edit().putLong(PREF_VIP_CONTEST_DEADLINE, deadline).apply()
                     loadUserStats() // Refresh eligibility
                     return true
                 }
