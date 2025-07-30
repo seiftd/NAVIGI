@@ -8,11 +8,11 @@ import android.os.Build
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+// import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.messaging.FirebaseMessaging
-import com.pollfish.Pollfish
-import com.pollfish.builder.Position
-import com.tapjoy.Tapjoy
+// import com.pollfish.Pollfish
+// import com.pollfish.builder.Position
+// import com.tapjoy.Tapjoy
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,11 +46,11 @@ class SbaroApplication : Application() {
     private fun initializeFirebase() {
         FirebaseApp.initializeApp(this)
         
-        // Initialize Firebase App Check for security
-        val firebaseAppCheck = FirebaseAppCheck.getInstance()
-        firebaseAppCheck.installAppCheckProviderFactory(
-            PlayIntegrityAppCheckProviderFactory.getInstance()
-        )
+        // Initialize Firebase App Check for security (temporarily disabled)
+        // val firebaseAppCheck = FirebaseAppCheck.getInstance()
+        // firebaseAppCheck.installAppCheckProviderFactory(
+        //     PlayIntegrityAppCheckProviderFactory.getInstance()
+        // )
     }
 
     private fun initializeAdMob() {
@@ -74,6 +74,8 @@ class SbaroApplication : Application() {
     }
 
     private fun initializeThirdPartySDKs() {
+        // Third-party SDKs temporarily disabled until dependencies are added
+        /*
         try {
             // Initialize Tapjoy
             val tapjoyConfig = Hashtable<String, Any>()
@@ -97,6 +99,7 @@ class SbaroApplication : Application() {
         } catch (e: Exception) {
             android.util.Log.e("ThirdParty", "Failed to initialize third-party SDKs", e)
         }
+        */
     }
 
     private fun createNotificationChannels() {
