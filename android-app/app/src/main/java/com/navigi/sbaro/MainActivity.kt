@@ -10,17 +10,30 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.navigi.sbaro.presentation.navigation.SbaroNavHost
+import com.navigi.sbaro.data.ads.AdMobManager
+import com.navigi.sbaro.data.repository.UserRepository
 import com.navigi.sbaro.presentation.theme.NAVIGITheme
+import com.navigi.sbaro.presentation.ui.screens.main.EnhancedMainScreen
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    
+    @Inject
+    lateinit var adMobManager: AdMobManager
+    
+    @Inject
+    lateinit var userRepository: UserRepository
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Initialize AdMob
+        adMobManager.initialize(this)
         
         // Keep the splash screen on-screen while loading
         splashScreen.setKeepOnScreenCondition {
@@ -43,7 +56,15 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    SbaroNavHost()
+                    EnhancedMainScreen(
+                        onNavigateToAuth = {
+                            // Handle navigation to auth
+                            // For now, just restart the activity or implement proper auth flow
+                            finish()
+                        },
+                        userRepository = userRepository,
+                        adMobManager = adMobManager
+                    )
                 }
             }
         }
