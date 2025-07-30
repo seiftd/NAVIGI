@@ -1,0 +1,56 @@
+# Android SDK Location Configuration
+# Copy this file to 'local.properties' and update the sdk.dir path
+
+# =============================================================================
+# WINDOWS USERS - Choose one of these common Android SDK locations:
+# =============================================================================
+
+# Option 1: Android Studio default location (most common)
+# sdk.dir=C\:\\Users\\YourUsername\\AppData\\Local\\Android\\Sdk
+
+# Option 2: If you installed Android Studio in custom location
+# sdk.dir=C\:\\Android\\Sdk
+
+# Option 3: If you're using Android SDK command line tools
+# sdk.dir=C\:\\android-sdk
+
+# =============================================================================
+# LINUX/MAC USERS - Choose one of these common locations:
+# =============================================================================
+
+# Linux default
+# sdk.dir=/home/yourusername/Android/Sdk
+
+# Mac default  
+# sdk.dir=/Users/yourusername/Library/Android/sdk
+
+# =============================================================================
+# HOW TO FIND YOUR ANDROID SDK PATH:
+# =============================================================================
+
+# Method 1: Android Studio
+# 1. Open Android Studio
+# 2. Go to File > Settings (Windows) or Android Studio > Preferences (Mac)
+# 3. Go to Appearance & Behavior > System Settings > Android SDK
+# 4. Copy the "Android SDK Location" path
+
+# Method 2: Command Line
+# Windows: echo %ANDROID_HOME%
+# Linux/Mac: echo $ANDROID_HOME
+
+# Method 3: Check common locations manually:
+# Windows: C:\Users\%USERNAME%\AppData\Local\Android\Sdk
+# Linux: ~/Android/Sdk
+# Mac: ~/Library/Android/sdk
+
+# =============================================================================
+# INSTRUCTIONS:
+# =============================================================================
+# 1. Copy this file to 'local.properties' (remove .example)
+# 2. Uncomment and update ONE of the sdk.dir lines above
+# 3. Replace 'YourUsername' with your actual Windows username
+# 4. Use double backslashes (\\) for Windows paths
+# 5. Save the file
+
+# Example for user "Seif" on Windows:
+# sdk.dir=C\:\\Users\\Seif\\AppData\\Local\\Android\\Sdk
