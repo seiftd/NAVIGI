@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include app data for backup -->
+    <include domain="shared_pref" path="."/>
+    <include domain="database" path="."/>
+    <include domain="file" path="user_data/"/>
+    
+    <!-- Exclude sensitive and temporary data -->
+    <exclude domain="shared_pref" path="firebase_auth_session"/>
+    <exclude domain="shared_pref" path="user_credentials"/>
+    <exclude domain="database" path="temp_session.db"/>
+    <exclude domain="file" path="cache/"/>
+    <exclude domain="file" path="temp/"/>
+    
+    <!-- Exclude large files that shouldn't be backed up -->
+    <exclude domain="file" path="downloads/"/>
+    <exclude domain="file" path="logs/"/>
+</full-backup-content>

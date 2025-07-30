@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Include user preferences and app data -->
+        <include domain="shared_pref" path="."/>
+        <include domain="database" path="."/>
+        
+        <!-- Exclude sensitive data -->
+        <exclude domain="shared_pref" path="firebase_auth_session"/>
+        <exclude domain="shared_pref" path="user_credentials"/>
+        <exclude domain="database" path="temp_session.db"/>
+    </cloud-backup>
+    
+    <device-transfer>
+        <!-- Include user data for device transfer -->
+        <include domain="shared_pref" path="."/>
+        <include domain="database" path="."/>
+        <include domain="file" path="user_data/"/>
+        
+        <!-- Exclude sensitive auth data -->
+        <exclude domain="shared_pref" path="firebase_auth_session"/>
+        <exclude domain="file" path="cache/"/>
+    </device-transfer>
+</data-extraction-rules>

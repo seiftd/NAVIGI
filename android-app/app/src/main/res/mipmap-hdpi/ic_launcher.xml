@@ -1,0 +1,29 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="72dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+    
+    <!-- Background -->
+    <path
+        android:fillColor="@color/primary"
+        android:pathData="M0,0h72v72h-72z"/>
+    
+    <!-- Letter N -->
+    <path
+        android:fillColor="@color/white"
+        android:pathData="M20,20h8v32h-8V20z"/>
+    <path
+        android:fillColor="@color/white"
+        android:pathData="M44,20h8v32h-8V20z"/>
+    <path
+        android:fillColor="@color/white"
+        android:pathData="M24,32h24v8H24V32z"/>
+    
+    <!-- Accent dot -->
+    <circle
+        android:fillColor="@color/secondary"
+        android:cx="36"
+        android:cy="16"
+        android:radius="3"/>
+</vector>
