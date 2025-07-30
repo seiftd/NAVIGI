@@ -14,33 +14,6 @@ buildscript {
     }
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-        
-        // Tapjoy SDK Repository
-        maven {
-            url = uri("https://tapjoy.bintray.com/maven")
-            isAllowInsecureProtocol = false
-        }
-        
-        // Pollfish SDK Repository  
-        maven {
-            url = uri("https://pollfish.jfrog.io/artifactory/pollfish-android")
-            isAllowInsecureProtocol = false
-        }
-        
-        // JitPack for additional libraries
-        maven { url = uri("https://jitpack.io") }
-        
-        // JCenter (for legacy dependencies)
-        @Suppress("DEPRECATION")
-        jcenter()
-    }
-}
-
 task("clean", Delete::class) {
     delete(rootProject.buildDir)
 }
