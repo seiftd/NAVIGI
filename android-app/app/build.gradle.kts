@@ -41,7 +41,8 @@ android {
         }
         debug {
             isDebuggable = true
-            applicationIdSuffix = ".debug"
+            // Remove .debug suffix to match existing google-services.json
+            // applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
     }
