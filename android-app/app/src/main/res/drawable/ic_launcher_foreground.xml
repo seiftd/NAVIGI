@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- NAVIGI Logo - Simple N Letter -->
+    <group android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:pivotX="54"
+        android:pivotY="54">
+        
+        <!-- Background Circle -->
+        <path
+            android:fillColor="@color/primary"
+            android:pathData="M54,54m-25,0a25,25 0,1 1,50 0a25,25 0,1 1,-50 0"/>
+        
+        <!-- Letter N -->
+        <path
+            android:fillColor="@color/white"
+            android:pathData="M44,44h4v20h-4V44z"/>
+        <path
+            android:fillColor="@color/white"
+            android:pathData="M60,44h4v20h-4V44z"/>
+        <path
+            android:fillColor="@color/white"
+            android:pathData="M46,50h16v4H46V50z"/>
+        
+        <!-- Small accent dot -->
+        <circle
+            android:fillColor="@color/secondary"
+            android:cx="54"
+            android:cy="40"
+            android:radius="2"/>
+    </group>
+</vector>
