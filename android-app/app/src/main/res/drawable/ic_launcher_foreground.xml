@@ -26,11 +26,9 @@
             android:fillColor="@color/white"
             android:pathData="M46,50h16v4H46V50z"/>
         
-        <!-- Small accent dot -->
-        <circle
-            android:fillColor="@color/secondary"
-            android:cx="54"
-            android:cy="40"
-            android:radius="2"/>
+                        <!-- Small accent dot -->
+                <path
+                    android:fillColor="@color/secondary"
+                    android:pathData="M54,40m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"/>
     </group>
 </vector>
