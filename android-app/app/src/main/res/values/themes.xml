@@ -38,19 +38,6 @@
         
         <!-- Ripple Effect -->
         <item name="colorControlHighlight">@color/ripple_light</item>
-        
-        <!-- Typography -->
-        <item name="textAppearanceHeadline1">@style/TextAppearance.NAVIGI.Headline1</item>
-        <item name="textAppearanceHeadline2">@style/TextAppearance.NAVIGI.Headline2</item>
-        <item name="textAppearanceHeadline3">@style/TextAppearance.NAVIGI.Headline3</item>
-        <item name="textAppearanceBody1">@style/TextAppearance.NAVIGI.Body1</item>
-        <item name="textAppearanceBody2">@style/TextAppearance.NAVIGI.Body2</item>
-        <item name="textAppearanceCaption">@style/TextAppearance.NAVIGI.Caption</item>
-        
-        <!-- Corner Radius -->
-        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.NAVIGI.SmallComponent</item>
-        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.NAVIGI.MediumComponent</item>
-        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.NAVIGI.LargeComponent</item>
     </style>
 
     <style name="Theme.NAVIGI" parent="Base.Theme.NAVIGI" />
@@ -123,10 +110,6 @@
         <item name="shapeAppearance">@style/ShapeAppearance.NAVIGI.MediumComponent</item>
         <item name="android:textSize">16sp</item>
         <item name="android:fontFamily">sans-serif-medium</item>
-        <item name="android:paddingTop">16dp</item>
-        <item name="android:paddingBottom">16dp</item>
-        <item name="android:paddingStart">24dp</item>
-        <item name="android:paddingEnd">24dp</item>
     </style>
 
     <style name="Widget.NAVIGI.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
@@ -141,16 +124,6 @@
         <item name="cardBackgroundColor">@color/card_background</item>
         <item name="cardElevation">4dp</item>
         <item name="shapeAppearance">@style/ShapeAppearance.NAVIGI.MediumComponent</item>
-        <item name="strokeColor">@color/card_stroke</item>
-        <item name="strokeWidth">1dp</item>
-    </style>
-
-    <!-- TextField Styles -->
-    <style name="Widget.NAVIGI.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/primary</item>
-        <item name="hintTextColor">@color/on_surface_variant</item>
-        <item name="android:textColorHint">@color/on_surface_variant</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.NAVIGI.SmallComponent</item>
     </style>
 
     <!-- Bottom Navigation Style -->
@@ -159,35 +132,6 @@
         <item name="itemTextColor">@color/bottom_nav_state_list</item>
         <item name="android:background">@color/surface</item>
         <item name="elevation">8dp</item>
-    </style>
-
-    <!-- Chip Styles -->
-    <style name="Widget.NAVIGI.Chip" parent="Widget.Material3.Chip.Filter">
-        <item name="chipBackgroundColor">@color/surface_variant</item>
-        <item name="android:textColor">@color/on_surface</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.NAVIGI.SmallComponent</item>
-    </style>
-
-    <!-- Progress Bar Style -->
-    <style name="Widget.NAVIGI.ProgressBar" parent="Widget.Material3.LinearProgressIndicator">
-        <item name="indicatorColor">@color/primary</item>
-        <item name="trackColor">@color/surface_variant</item>
-        <item name="trackCornerRadius">4dp</item>
-        <item name="indicatorCornerRadius">4dp</item>
-    </style>
-
-    <!-- Dialog Style -->
-    <style name="Widget.NAVIGI.Dialog" parent="ThemeOverlay.Material3.Dialog">
-        <item name="colorSurface">@color/surface</item>
-        <item name="colorOnSurface">@color/on_surface</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.NAVIGI.LargeComponent</item>
-    </style>
-
-    <!-- Floating Action Button Style -->
-    <style name="Widget.NAVIGI.FloatingActionButton" parent="Widget.Material3.FloatingActionButton.Primary">
-        <item name="backgroundTint">@color/secondary</item>
-        <item name="tint">@color/on_secondary</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.NAVIGI.LargeComponent</item>
     </style>
 
 </resources>
