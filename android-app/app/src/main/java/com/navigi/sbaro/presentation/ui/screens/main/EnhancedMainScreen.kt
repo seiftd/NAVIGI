@@ -36,6 +36,7 @@ import com.navigi.sbaro.data.repository.ContestInfo
 import com.navigi.sbaro.data.repository.UserRepository
 import com.navigi.sbaro.data.repository.UserStats
 import com.navigi.sbaro.presentation.navigation.SbaroDestinations
+import com.navigi.sbaro.presentation.navigation.bottomNavItems
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -634,18 +635,4 @@ private fun EarningMethodCard(
     }
 }
 
-// Bottom Navigation Items
-private data class BottomNavItem(
-    val route: String,
-    val icon: ImageVector,
-    val label: String,
-    val arabicLabel: String
-)
-
-private val bottomNavItems = listOf(
-    BottomNavItem(SbaroDestinations.HOME, Icons.Default.Home, "Home", "الرئيسية"),
-    BottomNavItem(SbaroDestinations.EARN, Icons.Default.PlayArrow, "Earn", "اربح"),
-    BottomNavItem(SbaroDestinations.CONTESTS, Icons.Default.EmojiEvents, "Contests", "مسابقات"),
-    BottomNavItem(SbaroDestinations.WITHDRAW, Icons.Default.AccountBalanceWallet, "Withdraw", "سحب"),
-    BottomNavItem(SbaroDestinations.PROFILE, Icons.Default.Person, "Profile", "الملف الشخصي")
-)
+// Bottom Navigation Items are now imported from the navigation package

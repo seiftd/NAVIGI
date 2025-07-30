@@ -244,7 +244,7 @@ private fun ContestCard(
             
             // Progress bar
             LinearProgressIndicator(
-                progress = { (userAds.toFloat() / requiredAds).coerceAtMost(1f) },
+                progress = (userAds.toFloat() / requiredAds).coerceAtMost(1f),
                 modifier = Modifier.fillMaxWidth(),
             )
             
