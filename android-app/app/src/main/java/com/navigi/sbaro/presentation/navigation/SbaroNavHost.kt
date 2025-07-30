@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.navigi.sbaro.data.ads.AdMobManager
+import com.navigi.sbaro.data.notification.NotificationManager
 import com.navigi.sbaro.data.repository.UserRepository
 import com.navigi.sbaro.presentation.ui.screens.auth.LoginScreen
 import com.navigi.sbaro.presentation.ui.screens.auth.RegisterScreen
@@ -19,7 +20,8 @@ fun SbaroNavHost(
     navController: NavHostController = rememberNavController(),
     startDestination: String = SbaroDestinations.SPLASH,
     adMobManager: AdMobManager,
-    userRepository: UserRepository
+    userRepository: UserRepository,
+    notificationManager: NotificationManager
 ) {
     NavHost(
         navController = navController,
@@ -77,7 +79,8 @@ fun SbaroNavHost(
                     }
                 },
                 userRepository = userRepository,
-                adMobManager = adMobManager
+                adMobManager = adMobManager,
+                notificationManager = notificationManager
             )
         }
     }

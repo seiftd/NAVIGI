@@ -19,6 +19,9 @@ data class UserStats(
     val todayPoints: Int = 0,
     val referralPoints: Int = 0,
     val adsWatched: Int = 0,
+    val contestAdsToday: Int = 0,
+    val contestAdsWeek: Int = 0,
+    val contestAdsMonth: Int = 0,
     val referralCode: String = "",
     val referredUsers: List<String> = emptyList(),
     val level1Earnings: Int = 0,
@@ -26,7 +29,10 @@ data class UserStats(
     val contestsWon: Int = 0,
     val isEligibleForDaily: Boolean = true,
     val isEligibleForWeekly: Boolean = true,
-    val isEligibleForMonthly: Boolean = true
+    val isEligibleForMonthly: Boolean = true,
+    val dailyContestDeadline: Long = 0,
+    val weeklyContestDeadline: Long = 0,
+    val monthlyContestDeadline: Long = 0
 )
 
 data class ContestInfo(
@@ -56,6 +62,9 @@ class UserRepository @Inject constructor(
         private const val PREF_TODAY_POINTS = "today_points"
         private const val PREF_REFERRAL_POINTS = "referral_points"
         private const val PREF_ADS_WATCHED = "ads_watched"
+        private const val PREF_CONTEST_ADS_TODAY = "contest_ads_today"
+        private const val PREF_CONTEST_ADS_WEEK = "contest_ads_week"
+        private const val PREF_CONTEST_ADS_MONTH = "contest_ads_month"
         private const val PREF_REFERRAL_CODE = "referral_code"
         private const val PREF_LEVEL1_EARNINGS = "level1_earnings"
         private const val PREF_LEVEL2_EARNINGS = "level2_earnings"
@@ -63,6 +72,9 @@ class UserRepository @Inject constructor(
         private const val PREF_LAST_DAILY_DATE = "last_daily_date"
         private const val PREF_LAST_WEEKLY_DATE = "last_weekly_date"
         private const val PREF_LAST_MONTHLY_DATE = "last_monthly_date"
+        private const val PREF_DAILY_CONTEST_DEADLINE = "daily_contest_deadline"
+        private const val PREF_WEEKLY_CONTEST_DEADLINE = "weekly_contest_deadline"
+        private const val PREF_MONTHLY_CONTEST_DEADLINE = "monthly_contest_deadline"
     }
     
     init {
@@ -78,12 +90,15 @@ class UserRepository @Inject constructor(
         val todayPoints = prefs.getInt(PREF_TODAY_POINTS, 0)
         val referralPoints = prefs.getInt(PREF_REFERRAL_POINTS, 0)
         val adsWatched = prefs.getInt(PREF_ADS_WATCHED, 0)
+        val contestAdsToday = prefs.getInt(PREF_CONTEST_ADS_TODAY, 0)
+        val contestAdsWeek = prefs.getInt(PREF_CONTEST_ADS_WEEK, 0)
+        val contestAdsMonth = prefs.getInt(PREF_CONTEST_ADS_MONTH, 0)
         val referralCode = prefs.getString(PREF_REFERRAL_CODE, null) ?: generateReferralCode(userId)
         val level1Earnings = prefs.getInt(PREF_LEVEL1_EARNINGS, 0)
         val level2Earnings = prefs.getInt(PREF_LEVEL2_EARNINGS, 0)
         val contestsWon = prefs.getInt(PREF_CONTESTS_WON, 0)
         
-        // Check contest eligibility
+        // Check contest eligibility and deadlines
         val today = System.currentTimeMillis()
         val lastDaily = prefs.getLong(PREF_LAST_DAILY_DATE, 0)
         val lastWeekly = prefs.getLong(PREF_LAST_WEEKLY_DATE, 0)
@@ -93,18 +108,29 @@ class UserRepository @Inject constructor(
         val isEligibleForWeekly = (today - lastWeekly) > 7 * 24 * 60 * 60 * 1000 // 7 days
         val isEligibleForMonthly = (today - lastMonthly) > 30 * 24 * 60 * 60 * 1000 // 30 days
         
+        // Calculate contest deadlines (next draw times)
+        val dailyDeadline = prefs.getLong(PREF_DAILY_CONTEST_DEADLINE, 0)
+        val weeklyDeadline = prefs.getLong(PREF_WEEKLY_CONTEST_DEADLINE, 0)
+        val monthlyDeadline = prefs.getLong(PREF_MONTHLY_CONTEST_DEADLINE, 0)
+        
         _userStats.value = UserStats(
             totalPoints = totalPoints,
             todayPoints = todayPoints,
             referralPoints = referralPoints,
             adsWatched = adsWatched,
+            contestAdsToday = contestAdsToday,
+            contestAdsWeek = contestAdsWeek,
+            contestAdsMonth = contestAdsMonth,
             referralCode = referralCode,
             level1Earnings = level1Earnings,
             level2Earnings = level2Earnings,
             contestsWon = contestsWon,
             isEligibleForDaily = isEligibleForDaily,
             isEligibleForWeekly = isEligibleForWeekly,
-            isEligibleForMonthly = isEligibleForMonthly
+            isEligibleForMonthly = isEligibleForMonthly,
+            dailyContestDeadline = dailyDeadline,
+            weeklyContestDeadline = weeklyDeadline,
+            monthlyContestDeadline = monthlyDeadline
         )
         
         // Save referral code if it was generated
@@ -118,11 +144,17 @@ class UserRepository @Inject constructor(
         return "SBARO-${userId.take(4).uppercase()}$randomSuffix"
     }
     
-    fun addPoints(points: Int, source: String = "ad") {
+    // Real AdMob profit calculation (70% to user)
+    fun addPointsFromAd(adRevenue: Double = 0.02) { // Default $0.02 per ad (typical AdMob rate)
         val currentStats = _userStats.value
+        
+        // Calculate real profit: User gets 70%, Admin gets 30%
+        val userShareUSD = adRevenue * 0.70
+        val points = (userShareUSD * 100).toInt() // Convert to points (1 point = $0.01)
+        
         val newTotalPoints = currentStats.totalPoints + points
         val newTodayPoints = currentStats.todayPoints + points
-        val newAdsWatched = if (source == "ad") currentStats.adsWatched + 1 else currentStats.adsWatched
+        val newAdsWatched = currentStats.adsWatched + 1
         
         _userStats.value = currentStats.copy(
             totalPoints = newTotalPoints,
@@ -135,6 +167,54 @@ class UserRepository @Inject constructor(
             .putInt(PREF_TOTAL_POINTS, newTotalPoints)
             .putInt(PREF_TODAY_POINTS, newTodayPoints)
             .putInt(PREF_ADS_WATCHED, newAdsWatched)
+            .apply()
+        
+        // Sync to Firebase
+        syncToFirebase()
+        
+        // Log for admin tracking
+        android.util.Log.d("AdRevenue", "Ad Revenue: $${String.format("%.4f", adRevenue)}, User Points: $points, Admin Share: $${String.format("%.4f", adRevenue * 0.30)}")
+    }
+    
+    // Separate contest ad tracking (for contests only)
+    fun addContestAd() {
+        val currentStats = _userStats.value
+        val newContestAdsToday = currentStats.contestAdsToday + 1
+        val newContestAdsWeek = currentStats.contestAdsWeek + 1
+        val newContestAdsMonth = currentStats.contestAdsMonth + 1
+        
+        _userStats.value = currentStats.copy(
+            contestAdsToday = newContestAdsToday,
+            contestAdsWeek = newContestAdsWeek,
+            contestAdsMonth = newContestAdsMonth
+        )
+        
+        // Save to preferences
+        prefs.edit()
+            .putInt(PREF_CONTEST_ADS_TODAY, newContestAdsToday)
+            .putInt(PREF_CONTEST_ADS_WEEK, newContestAdsWeek)
+            .putInt(PREF_CONTEST_ADS_MONTH, newContestAdsMonth)
+            .apply()
+        
+        // Sync to Firebase
+        syncToFirebase()
+    }
+    
+    // Legacy method for other point sources
+    fun addPoints(points: Int, source: String = "other") {
+        val currentStats = _userStats.value
+        val newTotalPoints = currentStats.totalPoints + points
+        val newTodayPoints = currentStats.todayPoints + points
+        
+        _userStats.value = currentStats.copy(
+            totalPoints = newTotalPoints,
+            todayPoints = newTodayPoints
+        )
+        
+        // Save to preferences
+        prefs.edit()
+            .putInt(PREF_TOTAL_POINTS, newTotalPoints)
+            .putInt(PREF_TODAY_POINTS, newTodayPoints)
             .apply()
         
         // Sync to Firebase
@@ -173,22 +253,31 @@ class UserRepository @Inject constructor(
         
         when (contestType) {
             "daily" -> {
-                if (currentStats.isEligibleForDaily && currentStats.adsWatched >= 10) {
+                if (currentStats.isEligibleForDaily && currentStats.contestAdsToday >= 10) {
                     prefs.edit().putLong(PREF_LAST_DAILY_DATE, today).apply()
+                    // Set deadline for next draw (24 hours from now)
+                    val deadline = today + (24 * 60 * 60 * 1000)
+                    prefs.edit().putLong(PREF_DAILY_CONTEST_DEADLINE, deadline).apply()
                     loadUserStats() // Refresh eligibility
                     return true
                 }
             }
             "weekly" -> {
-                if (currentStats.isEligibleForWeekly && currentStats.adsWatched >= 30) {
+                if (currentStats.isEligibleForWeekly && currentStats.contestAdsWeek >= 30) {
                     prefs.edit().putLong(PREF_LAST_WEEKLY_DATE, today).apply()
+                    // Set deadline for next draw (7 days from now)
+                    val deadline = today + (7 * 24 * 60 * 60 * 1000)
+                    prefs.edit().putLong(PREF_WEEKLY_CONTEST_DEADLINE, deadline).apply()
                     loadUserStats() // Refresh eligibility
                     return true
                 }
             }
             "monthly" -> {
-                if (currentStats.isEligibleForMonthly && currentStats.adsWatched >= 100) {
+                if (currentStats.isEligibleForMonthly && currentStats.contestAdsMonth >= 100) {
                     prefs.edit().putLong(PREF_LAST_MONTHLY_DATE, today).apply()
+                    // Set deadline for next draw (30 days from now)
+                    val deadline = today + (30 * 24 * 60 * 60 * 1000)
+                    prefs.edit().putLong(PREF_MONTHLY_CONTEST_DEADLINE, deadline).apply()
                     loadUserStats() // Refresh eligibility
                     return true
                 }

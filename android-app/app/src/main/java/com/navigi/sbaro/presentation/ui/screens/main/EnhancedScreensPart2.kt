@@ -23,7 +23,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.navigi.sbaro.R
+import com.navigi.sbaro.data.notification.NotificationManager
 import com.navigi.sbaro.data.repository.UserRepository
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun EnhancedContestsScreen(
@@ -64,12 +68,16 @@ fun EnhancedContestsScreen(
                 description = if (isArabic) "شاهد 10 إعلانات للمشاركة" else "Watch 10 ads to participate",
                 prize = "40 نقطة" + if (isArabic) "" else " points",
                 requirement = "10 ${if (isArabic) "إعلانات" else "ads"}",
-                userAds = userStats.adsWatched,
+                userAds = userStats.contestAdsToday,
                 isEligible = userStats.isEligibleForDaily,
+                deadline = userStats.dailyContestDeadline,
                 isArabic = isArabic,
                 onJoin = {
                     selectedContest = "daily"
                     showJoinDialog = true
+                },
+                onWatchAd = {
+                    userRepository.addContestAd()
                 }
             )
         }
@@ -81,12 +89,16 @@ fun EnhancedContestsScreen(
                 description = if (isArabic) "شاهد 30 إعلان للمشاركة" else "Watch 30 ads to participate",
                 prize = "150 نقطة" + if (isArabic) "" else " points",
                 requirement = "30 ${if (isArabic) "إعلان" else "ads"}",
-                userAds = userStats.adsWatched,
+                userAds = userStats.contestAdsWeek,
                 isEligible = userStats.isEligibleForWeekly,
+                deadline = userStats.weeklyContestDeadline,
                 isArabic = isArabic,
                 onJoin = {
                     selectedContest = "weekly"
                     showJoinDialog = true
+                },
+                onWatchAd = {
+                    userRepository.addContestAd()
                 }
             )
         }
@@ -98,12 +110,16 @@ fun EnhancedContestsScreen(
                 description = if (isArabic) "شاهد 100 إعلان للمشاركة" else "Watch 100 ads to participate",
                 prize = "600 نقطة" + if (isArabic) "" else " points",
                 requirement = "100 ${if (isArabic) "إعلان" else "ads"}",
-                userAds = userStats.adsWatched,
+                userAds = userStats.contestAdsMonth,
                 isEligible = userStats.isEligibleForMonthly,
+                deadline = userStats.monthlyContestDeadline,
                 isArabic = isArabic,
                 onJoin = {
                     selectedContest = "monthly"
                     showJoinDialog = true
+                },
+                onWatchAd = {
+                    userRepository.addContestAd()
                 }
             )
         }
@@ -162,18 +178,51 @@ private fun ContestCard(
     requirement: String,
     userAds: Int,
     isEligible: Boolean,
+    deadline: Long,
     isArabic: Boolean,
-    onJoin: () -> Unit
+    onJoin: () -> Unit,
+    onWatchAd: () -> Unit
 ) {
     val requiredAds = requirement.split(" ")[0].toIntOrNull() ?: 0
     val canJoin = userAds >= requiredAds && isEligible
+    val hasRequiredAds = userAds >= requiredAds
+    
+    // Countdown timer state
+    var timeRemaining by remember { mutableStateOf("") }
+    
+    LaunchedEffect(deadline) {
+        while (deadline > 0) {
+            val currentTime = System.currentTimeMillis()
+            if (deadline > currentTime) {
+                val diff = deadline - currentTime
+                val days = diff / (24 * 60 * 60 * 1000)
+                val hours = (diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)
+                val minutes = (diff % (60 * 60 * 1000)) / (60 * 1000)
+                val seconds = (diff % (60 * 1000)) / 1000
+                
+                timeRemaining = if (days > 0) {
+                    if (isArabic) "${days}د ${hours}س ${minutes}د" else "${days}d ${hours}h ${minutes}m"
+                } else if (hours > 0) {
+                    if (isArabic) "${hours}س ${minutes}د ${seconds}ث" else "${hours}h ${minutes}m ${seconds}s"
+                } else {
+                    if (isArabic) "${minutes}د ${seconds}ث" else "${minutes}m ${seconds}s"
+                }
+                delay(1000)
+            } else {
+                timeRemaining = if (isArabic) "انتهت المسابقة" else "Contest ended"
+                break
+            }
+        }
+    }
     
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (canJoin) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else MaterialTheme.colorScheme.surfaceVariant
+            containerColor = when {
+                hasRequiredAds -> Color(0xFF4CAF50) // Green when user has required ads
+                canJoin -> MaterialTheme.colorScheme.primaryContainer 
+                else -> MaterialTheme.colorScheme.surfaceVariant
+            }
         )
     ) {
         Column(
@@ -258,20 +307,62 @@ private fun ContestCard(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            Button(
-                onClick = onJoin,
-                enabled = canJoin,
-                modifier = Modifier.fillMaxWidth()
+            // Countdown timer
+            if (deadline > 0 && timeRemaining.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isArabic) "وقت السحب:" else "Draw in:",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = timeRemaining,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (hasRequiredAds) Color.White else MaterialTheme.colorScheme.primary
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            
+            // Action buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    if (!isEligible) {
-                        if (isArabic) "تم الانضمام بالفعل" else "Already Joined"
-                    } else if (userAds < requiredAds) {
-                        if (isArabic) "شاهد المزيد من الإعلانات" else "Watch More Ads"
-                    } else {
-                        if (isArabic) "انضم الآن" else "Join Now"
+                // Watch Ad for Contest button (if user needs more ads)
+                if (userAds < requiredAds) {
+                    Button(
+                        onClick = onWatchAd,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Text(if (isArabic) "شاهد إعلان" else "Watch Ad")
                     }
-                )
+                }
+                
+                // Join Contest button
+                Button(
+                    onClick = onJoin,
+                    enabled = canJoin,
+                    modifier = if (userAds < requiredAds) Modifier.weight(1f) else Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        if (!isEligible) {
+                            if (isArabic) "تم الانضمام بالفعل" else "Already Joined"
+                        } else if (userAds < requiredAds) {
+                            if (isArabic) "انضم" else "Join"
+                        } else {
+                            if (isArabic) "انضم الآن" else "Join Now"
+                        }
+                    )
+                }
             }
         }
     }
@@ -280,6 +371,7 @@ private fun ContestCard(
 @Composable
 fun EnhancedWithdrawScreen(
     userRepository: UserRepository,
+    notificationManager: NotificationManager,
     isArabic: Boolean
 ) {
     val userStats by userRepository.userStats.collectAsState()
@@ -326,6 +418,26 @@ fun EnhancedWithdrawScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+        }
+        
+        // Test notification button (for demonstration)
+        item {
+            Button(
+                onClick = {
+                    notificationManager.simulateWithdrawalApproval(
+                        userId = "current_user",
+                        amount = 50,
+                        method = "Binance Pay",
+                        isArabic = isArabic
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                Text(if (isArabic) "🧪 اختبار إشعار الموافقة" else "🧪 Test Approval Notification")
             }
         }
         

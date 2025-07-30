@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.navigi.sbaro.data.ads.AdMobManager
+import com.navigi.sbaro.data.notification.NotificationManager
 import com.navigi.sbaro.data.repository.UserRepository
 import com.navigi.sbaro.presentation.navigation.SbaroNavHost
 import com.navigi.sbaro.presentation.theme.NAVIGITheme
@@ -25,6 +26,9 @@ class MainActivity : ComponentActivity() {
     
     @Inject
     lateinit var userRepository: UserRepository
+    
+    @Inject
+    lateinit var notificationManager: NotificationManager
     
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -58,7 +62,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     SbaroNavHost(
                         adMobManager = adMobManager,
-                        userRepository = userRepository
+                        userRepository = userRepository,
+                        notificationManager = notificationManager
                     )
                 }
             }

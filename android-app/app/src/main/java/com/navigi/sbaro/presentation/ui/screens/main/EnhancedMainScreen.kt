@@ -32,6 +32,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.navigi.sbaro.R
 import com.navigi.sbaro.data.ads.AdMobManager
+import com.navigi.sbaro.data.notification.NotificationManager
 import com.navigi.sbaro.data.repository.ContestInfo
 import com.navigi.sbaro.data.repository.UserRepository
 import com.navigi.sbaro.data.repository.UserStats
@@ -46,7 +47,8 @@ import javax.inject.Inject
 fun EnhancedMainScreen(
     onNavigateToAuth: () -> Unit,
     userRepository: UserRepository,
-    adMobManager: AdMobManager
+    adMobManager: AdMobManager,
+    notificationManager: NotificationManager
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -106,12 +108,13 @@ fun EnhancedMainScreen(
                 )
             }
             
-            composable(SbaroDestinations.WITHDRAW) {
-                EnhancedWithdrawScreen(
-                    userRepository = userRepository,
-                    isArabic = isArabic
-                )
-            }
+                            composable(SbaroDestinations.WITHDRAW) { 
+                    EnhancedWithdrawScreen(
+                        userRepository = userRepository,
+                        notificationManager = notificationManager,
+                        isArabic = isArabic
+                    )
+                }
             
             composable(SbaroDestinations.PROFILE) {
                 EnhancedProfileScreen(
@@ -389,6 +392,7 @@ private fun EnhancedEarnScreen(
     val userStats by userRepository.userStats.collectAsState()
     var showRewardDialog by remember { mutableStateOf(false) }
     var rewardAmount by remember { mutableStateOf(0) }
+    var rewardUSD by remember { mutableStateOf(0.0) }
     var errorMessage by remember { mutableStateOf("") }
     
     LazyColumn(
@@ -432,7 +436,7 @@ private fun EnhancedEarnScreen(
                     )
                     
                     Text(
-                        text = if (isArabic) "احصل على 10 نقاط لكل إعلان" else "Earn 10 points per ad",
+                        text = if (isArabic) "احصل على 70% من ربح الإعلان" else "Earn 70% of ad profit",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -444,9 +448,14 @@ private fun EnhancedEarnScreen(
                             if (adMobManager.isRewardedAdReady()) {
                                 adMobManager.showRewardedAd(
                                     activity = context as Activity,
-                                    onRewarded = { points ->
-                                        userRepository.addPoints(10, "ad") // Always give 10 points
-                                        rewardAmount = 10
+                                    onRewarded = { adRevenue ->
+                                        // Use real AdMob profit calculation
+                                        userRepository.addPointsFromAd(adRevenue)
+                                        // Calculate user's actual points and USD value (70% of revenue)
+                                        val userShareUSD = adRevenue * 0.70
+                                        val userPoints = (userShareUSD * 100).toInt()
+                                        rewardAmount = userPoints
+                                        rewardUSD = userShareUSD
                                         showRewardDialog = true
                                     },
                                     onAdFailed = { error ->
@@ -526,8 +535,10 @@ private fun EnhancedEarnScreen(
             },
             text = {
                 Text(
-                    if (isArabic) "لقد حصلت على $rewardAmount نقطة!" 
-                    else "You earned $rewardAmount points!"
+                    if (isArabic) 
+                        "تهانينا!\nحصلت على $rewardAmount نقطة\n($${String.format("%.4f", rewardUSD)} - 70% من الربح)"
+                    else 
+                        "Congratulations!\nYou earned $rewardAmount points\n($${String.format("%.4f", rewardUSD)} - 70% of profit)"
                 )
             },
             confirmButton = {

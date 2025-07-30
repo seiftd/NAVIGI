@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.navigi.sbaro.data.ads.AdMobManager
+import com.navigi.sbaro.data.notification.NotificationManager
 import com.navigi.sbaro.data.repository.UserRepository
 import dagger.Module
 import dagger.Provides
@@ -35,4 +36,10 @@ object AppModule {
         firestore: FirebaseFirestore,
         auth: FirebaseAuth
     ): UserRepository = UserRepository(context, firestore, auth)
+    
+    @Provides
+    @Singleton
+    fun provideNotificationManager(
+        @ApplicationContext context: Context
+    ): NotificationManager = NotificationManager(context)
 }
