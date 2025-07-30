@@ -130,16 +130,15 @@ const theme = createTheme({
   },
 });
 
-// Initialize AOS
-React.useEffect(() => {
-  AOS.init({
-    duration: 1000,
-    easing: 'ease-in-out',
-    once: true,
-  });
-}, []);
-
 function App() {
+  // Initialize AOS
+  React.useEffect(() => {
+    AOS.init({
+      duration: 1000,
+      easing: 'ease-in-out',
+      once: true,
+    });
+  }, []);
   return (
     <Provider store={store}>
       <ThemeProvider theme={theme}>
