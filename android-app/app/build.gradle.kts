@@ -146,9 +146,19 @@ dependencies {
     // YouTube Player
     implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0")
     
-    // Offerwall SDKs
-    implementation("com.tapjoy:tapjoy-android-sdk:13.1.2")
-    implementation("com.pollfish:pollfish-android:6.4.1")
+    // Offerwall SDKs (Optional - can be excluded if not available)
+    // Note: These require specific maven repositories added in project-level build.gradle
+    
+    // Tapjoy SDK for game offers (Latest stable version)
+    // implementation("com.tapjoy:tapjoy-android-sdk:13.1.0")
+    
+    // Pollfish SDK for surveys (Latest stable version)  
+    // implementation("com.pollfish:pollfish-android:6.3.0")
+    
+    // Alternative: Use these only if above versions are not available
+    // You can uncomment these after adding proper repositories
+    // implementation("com.tapjoy:tapjoy-android-sdk:12.11.1")
+    // implementation("com.pollfish:pollfish-android:6.2.5")
     
     // Encryption
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
