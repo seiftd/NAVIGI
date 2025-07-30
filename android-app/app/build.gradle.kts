@@ -1,9 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    // Temporarily disabled - requires google-services.json configuration
-    // id("com.google.gms.google-services")
-    // id("com.google.firebase.crashlytics")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
     id("com.google.dagger.hilt.android")
     id("kotlin-kapt")
     id("org.jetbrains.kotlin.plugin.serialization")
@@ -25,9 +24,9 @@ android {
             useSupportLibrary = true
         }
 
-        buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3940256099942544~3347511713\"")
-        buildConfigField("String", "ADMOB_REWARDED_AD_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
-        buildConfigField("String", "ADMOB_INTERSTITIAL_AD_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
+        buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3874809248437139~9575307303\"")
+        buildConfigField("String", "ADMOB_REWARDED_AD_ID", "\"ca-app-pub-3874809248437139/9163910620\"")
+        buildConfigField("String", "ADMOB_INTERSTITIAL_AD_ID", "\"ca-app-pub-3874809248437139/9020440399\"")
         buildConfigField("String", "YOUTUBE_API_KEY", "\"YOUR_YOUTUBE_API_KEY\"")
     }
 
@@ -90,16 +89,15 @@ dependencies {
     implementation("androidx.compose.animation:animation")
     implementation("androidx.compose.foundation:foundation")
     
-    // Firebase (Temporarily disabled - requires google-services.json configuration)
-    // To enable: uncomment these lines and add your google-services.json file
-    // implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
-    // implementation("com.google.firebase:firebase-analytics")
-    // implementation("com.google.firebase:firebase-auth")
-    // implementation("com.google.firebase:firebase-firestore")
-    // implementation("com.google.firebase:firebase-messaging")
-    // implementation("com.google.firebase:firebase-crashlytics")
-    // implementation("com.google.firebase:firebase-config")
-    // implementation("com.google.firebase:firebase-storage")
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-crashlytics")
+    implementation("com.google.firebase:firebase-config")
+    implementation("com.google.firebase:firebase-storage")
     
     // Google Play Services
     implementation("com.google.android.gms:play-services-auth:20.7.0")
