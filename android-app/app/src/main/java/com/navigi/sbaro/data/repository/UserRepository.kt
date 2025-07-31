@@ -14,21 +14,37 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.random.Random
 
+enum class VipTier {
+    NONE,       // Regular user
+    KING,       // $2.5/month
+    EMPEROR,    // $9/month  
+    LORD        // $25/month
+}
+
 data class UserStats(
     val totalPoints: Int = 0,
     val todayPoints: Int = 0,
     val referralPoints: Int = 0,
+    val miningPoints: Int = 0,
     val adsWatched: Int = 0,
     val dailyEarnAds: Int = 0,
     val contestAdsToday: Int = 0,
     val contestAdsWeek: Int = 0,
     val contestAdsMonth: Int = 0,
     val vipContestAds: Int = 0,
+    val dailyCompetitionAds: Int = 0,
+    val weeklyCompetitionAds: Int = 0,
+    val monthlyCompetitionAds: Int = 0,
     val referralCode: String = "",
     val referredUsers: List<String> = emptyList(),
     val level1Earnings: Int = 0,
     val level2Earnings: Int = 0,
+    val level3Earnings: Int = 0,
     val contestsWon: Int = 0,
+    val streakDays: Int = 0,
+    val lastActiveDate: Long = 0,
+    val lastAdWatchTime: Long = 0,
+    val peakHourBonus: Boolean = false,
     val isEligibleForDaily: Boolean = true,
     val isEligibleForWeekly: Boolean = true,
     val isEligibleForMonthly: Boolean = true,
@@ -37,9 +53,14 @@ data class UserStats(
     val weeklyContestDeadline: Long = 0,
     val monthlyContestDeadline: Long = 0,
     val vipContestDeadline: Long = 0,
-    val isVip: Boolean = false,
+    val vipTier: VipTier = VipTier.NONE,
     val vipExpiryDate: Long = 0,
-    val dailyAdLimit: Int = 12
+    val dailyAdLimit: Int = 12,
+    val adCooldownMinutes: Int = 3,
+    val userAvatar: String = "",
+    val userName: String = "",
+    val deviceCount: Int = 1,
+    val isVpnDetected: Boolean = false
 )
 
 data class ContestInfo(

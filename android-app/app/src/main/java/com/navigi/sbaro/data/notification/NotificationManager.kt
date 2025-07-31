@@ -18,6 +18,23 @@ data class WithdrawalNotification(
     val message: String = ""
 )
 
+data class CompetitionNotification(
+    val competitionType: String, // "daily", "weekly", "monthly", "vip"
+    val prize: Int,
+    val winner: String,
+    val position: Int,
+    val totalParticipants: Int,
+    val drawTime: Long
+)
+
+data class SystemNotification(
+    val type: String, // "streak", "peak_hour", "vip_expired", "security", "referral"
+    val title: String,
+    val message: String,
+    val actionUrl: String? = null,
+    val priority: Int = 0 // 0=low, 1=medium, 2=high
+)
+
 @Singleton
 class NotificationManager @Inject constructor(
     private val context: Context
@@ -27,6 +44,9 @@ class NotificationManager @Inject constructor(
         private const val WITHDRAWAL_CHANNEL_ID = "withdrawal_notifications"
         private const val CONTEST_CHANNEL_ID = "contest_notifications"
         private const val GENERAL_CHANNEL_ID = "general_notifications"
+        private const val COMPETITION_CHANNEL_ID = "competition_notifications"
+        private const val SYSTEM_CHANNEL_ID = "system_notifications"
+        private const val VIP_CHANNEL_ID = "vip_notifications"
     }
     
     init {
@@ -67,10 +87,45 @@ class NotificationManager @Inject constructor(
                 description = "General app notifications"
             }
             
+            // Competition notifications channel
+            val competitionChannel = NotificationChannel(
+                COMPETITION_CHANNEL_ID,
+                "Competition Results",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Competition draw results and winners"
+                enableVibration(true)
+                enableLights(true)
+            }
+            
+            // System notifications channel
+            val systemChannel = NotificationChannel(
+                SYSTEM_CHANNEL_ID,
+                "System Updates",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "System updates, streaks, and bonuses"
+                enableVibration(true)
+            }
+            
+            // VIP notifications channel
+            val vipChannel = NotificationChannel(
+                VIP_CHANNEL_ID,
+                "VIP Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "VIP-exclusive notifications and updates"
+                enableVibration(true)
+                enableLights(true)
+            }
+            
             notificationManager.createNotificationChannels(listOf(
                 withdrawalChannel,
                 contestChannel,
-                generalChannel
+                generalChannel,
+                competitionChannel,
+                systemChannel,
+                vipChannel
             ))
         }
     }
@@ -179,5 +234,160 @@ class NotificationManager @Inject constructor(
         )
         
         showWithdrawalNotification(approvedWithdrawal, isArabic)
+    }
+    
+    fun showCompetitionResult(competition: CompetitionNotification, isArabic: Boolean = false) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        val (title, message) = if (competition.position <= getWinnerCount(competition.competitionType)) {
+            // Winner notification
+            if (isArabic) {
+                "🎉 تهانينا! فزت في المسابقة!" to "فزت بالمركز ${competition.position} في مسابقة ${getCompetitionName(competition.competitionType, isArabic)} وحصلت على ${competition.prize} نقطة!"
+            } else {
+                "🎉 Congratulations! You Won!" to "You placed #${competition.position} in ${getCompetitionName(competition.competitionType, isArabic)} competition and earned ${competition.prize} points!"
+            }
+        } else {
+            // Participation notification
+            if (isArabic) {
+                "مسابقة ${getCompetitionName(competition.competitionType, isArabic)}" to "انتهت المسابقة. لم تكن من الفائزين هذه المرة، ولكن استمر في المشاركة!"
+            } else {
+                "${getCompetitionName(competition.competitionType, isArabic)} Competition" to "Competition ended. You didn't win this time, but keep participating!"
+            }
+        }
+        
+        val notification = NotificationCompat.Builder(context, COMPETITION_CHANNEL_ID)
+            .setSmallIcon(if (competition.position <= getWinnerCount(competition.competitionType)) R.drawable.ic_trophy else R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+            
+        notificationManager.notify(competition.hashCode(), notification)
+    }
+    
+    fun showSystemNotification(system: SystemNotification, isArabic: Boolean = false) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        val channelId = when (system.type) {
+            "vip_expired", "vip_reminder" -> VIP_CHANNEL_ID
+            "security", "device_limit" -> SYSTEM_CHANNEL_ID
+            else -> GENERAL_CHANNEL_ID
+        }
+        
+        val priority = when (system.priority) {
+            2 -> NotificationCompat.PRIORITY_HIGH
+            1 -> NotificationCompat.PRIORITY_DEFAULT
+            else -> NotificationCompat.PRIORITY_LOW
+        }
+        
+        val icon = when (system.type) {
+            "streak" -> R.drawable.ic_check_circle
+            "peak_hour" -> R.drawable.ic_visibility
+            "vip_expired" -> R.drawable.ic_error
+            "security" -> R.drawable.ic_error
+            "referral" -> R.drawable.ic_people
+            else -> R.drawable.ic_notification
+        }
+        
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(icon)
+            .setContentTitle(system.title)
+            .setContentText(system.message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(system.message))
+            .setPriority(priority)
+            .setAutoCancel(true)
+            .build()
+            
+        notificationManager.notify(system.hashCode(), notification)
+    }
+    
+    fun showStreakNotification(streakDays: Int, isArabic: Boolean = false) {
+        val (title, message) = if (isArabic) {
+            "🔥 سلسلة نشاط!" to "أكملت ${streakDays} أيام متتالية! احصل على نقاط إضافية لاستمرار النشاط."
+        } else {
+            "🔥 Streak Active!" to "You've completed $streakDays consecutive days! Earn bonus points for continued activity."
+        }
+        
+        val systemNotification = SystemNotification(
+            type = "streak",
+            title = title,
+            message = message,
+            priority = 1
+        )
+        
+        showSystemNotification(systemNotification, isArabic)
+    }
+    
+    fun showPeakHourNotification(isArabic: Boolean = false) {
+        val (title, message) = if (isArabic) {
+            "⚡ ساعات الذروة!" to "ساعات الذروة نشطة الآن (8-11 مساءً)! احصل على +30% نقاط إضافية من مشاهدة الإعلانات."
+        } else {
+            "⚡ Peak Hours Active!" to "Peak hours are now active (8-11 PM)! Earn +30% bonus points from watching ads."
+        }
+        
+        val systemNotification = SystemNotification(
+            type = "peak_hour",
+            title = title,
+            message = message,
+            priority = 1
+        )
+        
+        showSystemNotification(systemNotification, isArabic)
+    }
+    
+    fun showVipExpiryNotification(daysLeft: Int, isArabic: Boolean = false) {
+        val (title, message) = if (isArabic) {
+            "👑 انتهاء VIP قريبًا" to "ستنتهي عضويتك VIP خلال ${daysLeft} أيام. جدد اشتراكك لمواصلة الاستفادة من المزايا الحصرية."
+        } else {
+            "👑 VIP Expiring Soon" to "Your VIP membership expires in $daysLeft days. Renew your subscription to continue enjoying exclusive benefits."
+        }
+        
+        val systemNotification = SystemNotification(
+            type = "vip_expired",
+            title = title,
+            message = message,
+            priority = 2
+        )
+        
+        showSystemNotification(systemNotification, isArabic)
+    }
+    
+    fun showReferralNotification(referralName: String, bonus: Int, isArabic: Boolean = false) {
+        val (title, message) = if (isArabic) {
+            "👥 مكافأة إحالة!" to "انضم ${referralName} باستخدام كودك! حصلت على ${bonus} نقطة كمكافأة إحالة."
+        } else {
+            "👥 Referral Bonus!" to "$referralName joined using your code! You earned $bonus points as referral bonus."
+        }
+        
+        val systemNotification = SystemNotification(
+            type = "referral",
+            title = title,
+            message = message,
+            priority = 1
+        )
+        
+        showSystemNotification(systemNotification, isArabic)
+    }
+    
+    private fun getCompetitionName(type: String, isArabic: Boolean): String {
+        return when (type) {
+            "daily" -> if (isArabic) "اليومية" else "Daily"
+            "weekly" -> if (isArabic) "الأسبوعية" else "Weekly"
+            "monthly" -> if (isArabic) "الشهرية" else "Monthly"
+            "vip" -> if (isArabic) "VIP الحصرية" else "VIP Exclusive"
+            else -> if (isArabic) "المسابقة" else "Competition"
+        }
+    }
+    
+    private fun getWinnerCount(competitionType: String): Int {
+        return when (competitionType) {
+            "daily" -> 1
+            "weekly" -> 5
+            "monthly" -> 10
+            "vip" -> 5
+            else -> 1
+        }
     }
 }
