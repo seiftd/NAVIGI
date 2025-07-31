@@ -24,8 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.navigi.sbaro.R
 import com.navigi.sbaro.data.notification.NotificationManager
-import com.navigi.sbaro.data.repository.VipTier
-import com.navigi.sbaro.data.repository.VipTier
 import com.navigi.sbaro.data.repository.UserRepository
 import com.navigi.sbaro.data.repository.VipTier
 import kotlinx.coroutines.delay
