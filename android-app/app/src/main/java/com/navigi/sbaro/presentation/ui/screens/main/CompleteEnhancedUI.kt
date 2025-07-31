@@ -130,7 +130,7 @@ private fun UserAvatarCard(
                     style = MaterialTheme.typography.headlineLarge,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = sp(48)
+                    fontSize = 48)
                 )
             }
             
@@ -225,7 +225,7 @@ private fun VipSubscriptionCard(
             Text(
                 text = "👑",
                 style = MaterialTheme.typography.headlineLarge,
-                fontSize = sp(64)
+                fontSize = 64)
             )
             
             Spacer(modifier = Modifier.height(12.dp))
