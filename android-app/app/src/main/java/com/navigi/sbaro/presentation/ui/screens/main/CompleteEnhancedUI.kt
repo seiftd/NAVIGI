@@ -23,6 +23,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clip
 import com.navigi.sbaro.data.ads.AdMobManager
 import com.navigi.sbaro.data.notification.NotificationManager
 import com.navigi.sbaro.data.repository.UserRepository
@@ -128,7 +130,7 @@ private fun UserAvatarCard(
                     style = MaterialTheme.typography.headlineLarge,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = androidx.compose.ui.unit.sp.invoke(48)
+                    fontSize = sp(48)
                 )
             }
             
@@ -223,7 +225,7 @@ private fun VipSubscriptionCard(
             Text(
                 text = "👑",
                 style = MaterialTheme.typography.headlineLarge,
-                fontSize = androidx.compose.ui.unit.sp.invoke(64)
+                fontSize = sp(64)
             )
             
             Spacer(modifier = Modifier.height(12.dp))
