@@ -11,6 +11,7 @@ import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.absoluteValue
 
 data class UserProfile(
     val userId: String,

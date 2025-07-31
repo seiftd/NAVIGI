@@ -24,7 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.navigi.sbaro.R
 import com.navigi.sbaro.data.notification.NotificationManager
+import com.navigi.sbaro.data.repository.VipTier
+import com.navigi.sbaro.data.repository.VipTier
 import com.navigi.sbaro.data.repository.UserRepository
+import com.navigi.sbaro.data.repository.VipTier
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
@@ -125,7 +128,7 @@ fun EnhancedContestsScreen(
         }
         
         // VIP Contest (only for VIP users)
-        if (userStats.isVip) {
+        if (userStats.vipTier != VipTier.NONE) {
             item {
                 ContestCard(
                     title = if (isArabic) "مسابقة VIP" else "VIP Contest",
@@ -925,7 +928,7 @@ fun VipUpgradeCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (userStats.isVip) Color(0xFF4CAF50) else Color(0xFFFFD700)
+            containerColor = if (userStats.vipTier != VipTier.NONE) Color(0xFF4CAF50) else Color(0xFFFFD700)
         )
     ) {
         Column(
@@ -941,17 +944,17 @@ fun VipUpgradeCard(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = if (userStats.isVip) {
+                text = if (userStats.vipTier != VipTier.NONE) {
                     if (isArabic) "أنت عضو VIP!" else "You are VIP!"
                 } else {
                     if (isArabic) "ترقى إلى VIP" else "Upgrade to VIP"
                 },
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (userStats.isVip) Color.White else Color.Black
+                color = if (userStats.vipTier != VipTier.NONE) Color.White else Color.Black
             )
             
-            if (userStats.isVip) {
+            if (userStats.vipTier != VipTier.NONE) {
                 Text(
                     text = "${userRepository.getRemainingVipDays()} ${if (isArabic) "أيام متبقية" else "days remaining"}",
                     style = MaterialTheme.typography.bodyMedium,
@@ -969,7 +972,7 @@ fun VipUpgradeCard(
             Spacer(modifier = Modifier.height(16.dp))
             
             // VIP Benefits
-            if (!userStats.isVip) {
+            if (userStats.vipTier == VipTier.NONE) {
                 Column(
                     horizontalAlignment = Alignment.Start
                 ) {

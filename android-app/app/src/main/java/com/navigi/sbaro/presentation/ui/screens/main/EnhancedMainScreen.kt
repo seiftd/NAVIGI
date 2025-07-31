@@ -36,6 +36,7 @@ import com.navigi.sbaro.data.notification.NotificationManager
 import com.navigi.sbaro.data.repository.ContestInfo
 import com.navigi.sbaro.data.repository.UserRepository
 import com.navigi.sbaro.data.repository.UserStats
+import com.navigi.sbaro.data.repository.VipTier
 import com.navigi.sbaro.presentation.navigation.SbaroDestinations
 import com.navigi.sbaro.presentation.navigation.bottomNavItems
 import java.text.SimpleDateFormat
@@ -184,14 +185,14 @@ private fun EnhancedHomeScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "${userStats.totalPoints} SBARO ${if (userStats.isVip) "👑" else ""}",
+                        text = "${userStats.totalPoints} SBARO ${if (userStats.vipTier != VipTier.NONE) "👑" else ""}",
                         style = MaterialTheme.typography.headlineLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
                     
                     // VIP Status
-                    if (userStats.isVip) {
+                    if (userStats.vipTier != VipTier.NONE) {
                         Text(
                             text = "VIP • ${userRepository.getRemainingVipDays()} ${if (isArabic) "أيام متبقية" else "days left"}",
                             style = MaterialTheme.typography.bodySmall,
@@ -488,7 +489,7 @@ private fun EnhancedEarnScreen(
                     }
                     
                     // VIP status if applicable
-                    if (userStats.isVip) {
+                    if (userStats.vipTier != VipTier.NONE) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
