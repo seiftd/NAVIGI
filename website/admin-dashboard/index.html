@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAVIGI Admin Dashboard</title>
+    <link rel="stylesheet" href="admin-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="sbaro-icon">SB</div>
+                <h2>NAVIGI Admin Dashboard</h2>
+                <p>Secure Administrator Access</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">📧 Email Address</label>
+                    <input type="email" id="email" placeholder="seiftouatllol@gmail.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">🔐 Password</label>
+                    <input type="password" id="password" placeholder="Enter password" required>
+                </div>
+                <div class="form-group">
+                    <label for="twofa">📱 2FA Code (Optional)</label>
+                    <input type="text" id="twofa" placeholder="Enter 6-digit code">
+                </div>
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login to Dashboard
+                </button>
+                <div class="login-info">
+                    <p><strong>Demo Credentials:</strong></p>
+                    <p>Email: seiftouatllol@gmail.com</p>
+                    <p>Password: seif0662</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Main -->
+    <div id="dashboardMain" class="dashboard-container" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sbaro-icon">SB</div>
+                <span>NAVIGI Admin</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" data-tab="overview" class="nav-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span data-en="Overview" data-ar="نظرة عامة">Overview</span>
+                </a>
+                <a href="#" data-tab="vip-management" class="nav-item">
+                    <i class="fas fa-crown"></i>
+                    <span data-en="VIP Management" data-ar="إدارة VIP">VIP Management</span>
+                </a>
+                <a href="#" data-tab="users" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span data-en="Users" data-ar="المستخدمون">Users</span>
+                </a>
+                <a href="#" data-tab="contests" class="nav-item">
+                    <i class="fas fa-trophy"></i>
+                    <span data-en="Contests" data-ar="المسابقات">Contests</span>
+                </a>
+                <a href="#" data-tab="withdrawals" class="nav-item">
+                    <i class="fas fa-money-bill"></i>
+                    <span data-en="Withdrawals" data-ar="السحوبات">Withdrawals</span>
+                </a>
+                <a href="#" data-tab="ads" class="nav-item">
+                    <i class="fas fa-ad"></i>
+                    <span data-en="Ad Revenue" data-ar="أرباح الإعلانات">Ad Revenue</span>
+                </a>
+                <a href="#" data-tab="notifications" class="nav-item">
+                    <i class="fas fa-bell"></i>
+                    <span data-en="Notifications" data-ar="الإشعارات">Notifications</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="language-toggle" onclick="toggleAdminLanguage()">
+                    <i class="fas fa-globe"></i>
+                    <span id="adminLangText">العربية</span>
+                </button>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span data-en="Logout" data-ar="تسجيل خروج">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <h1 id="pageTitle" data-en="Dashboard Overview" data-ar="نظرة عامة على لوحة التحكم">Dashboard Overview</h1>
+                <div class="header-actions">
+                    <div class="admin-info">
+                        <span data-en="Welcome, Admin" data-ar="مرحباً، المدير">Welcome, Admin</span>
+                        <div class="admin-avatar">A</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Overview Tab -->
+            <div id="overview-tab" class="tab-content active">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3 id="totalUsers">12,438</h3>
+                            <p data-en="Total Users" data-ar="إجمالي المستخدمين">Total Users</p>
+                            <span class="stat-change positive">+5.2%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👑</div>
+                        <div class="stat-info">
+                            <h3 id="vipUsers">847</h3>
+                            <p data-en="VIP Users" data-ar="مستخدمو VIP">VIP Users</p>
+                            <span class="stat-change positive">+12.8%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <h3 id="totalRevenue">$24,562</h3>
+                            <p data-en="Monthly Revenue" data-ar="الإيرادات الشهرية">Monthly Revenue</p>
+                            <span class="stat-change positive">+8.4%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📺</div>
+                        <div class="stat-info">
+                            <h3 id="adsWatched">1.2M</h3>
+                            <p data-en="Ads Watched Today" data-ar="الإعلانات المشاهدة اليوم">Ads Watched Today</p>
+                            <span class="stat-change positive">+3.1%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <h3 data-en="Revenue Overview" data-ar="نظرة عامة على الإيرادات">Revenue Overview</h3>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 data-en="User Growth" data-ar="نمو المستخدمين">User Growth</h3>
+                        <canvas id="userChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="activity-section">
+                    <h3 data-en="Recent Activity" data-ar="النشاط الحديث">Recent Activity</h3>
+                    <div class="activity-list" id="activityList">
+                        <!-- Activities will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIP Management Tab -->
+            <div id="vip-management-tab" class="tab-content">
+                <div class="section-header">
+                    <h2 data-en="VIP Users Management" data-ar="إدارة مستخدمي VIP">VIP Users Management</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-primary" onclick="exportVipData()">
+                            <i class="fas fa-download"></i>
+                            <span data-en="Export Data" data-ar="تصدير البيانات">Export Data</span>
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshVipData()">
+                            <i class="fas fa-refresh"></i>
+                            <span data-en="Refresh" data-ar="تحديث">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- VIP Statistics -->
+                <div class="vip-stats-grid">
+                    <div class="vip-stat-card king">
+                        <div class="vip-tier-header">
+                            <h3>👑 KING TIER</h3>
+                            <span class="tier-price">$2.50/month</span>
+                        </div>
+                        <div class="vip-numbers">
+                            <div class="vip-count">342</div>
+                            <div class="vip-revenue">$855/month</div>
+                        </div>
+                        <div class="vip-details">
+                            <p>16 ads/day • 1min cooldown</p>
+                            <p data-en="40% of VIP users" data-ar="40% من مستخدمي VIP">40% of VIP users</p>
+                        </div>
+                    </div>
+
+                    <div class="vip-stat-card emperor">
+                        <div class="vip-tier-header">
+                            <h3>👑 EMPEROR TIER</h3>
+                            <span class="tier-price">$9.00/month</span>
+                        </div>
+                        <div class="vip-numbers">
+                            <div class="vip-count">398</div>
+                            <div class="vip-revenue">$3,582/month</div>
+                        </div>
+                        <div class="vip-details">
+                            <p>20 ads/day • VIP competitions</p>
+                            <p data-en="47% of VIP users" data-ar="47% من مستخدمي VIP">47% of VIP users</p>
+                        </div>
+                    </div>
+
+                    <div class="vip-stat-card lord">
+                        <div class="vip-tier-header">
+                            <h3>👑 LORD TIER</h3>
+                            <span class="tier-price">$25.00/month</span>
+                        </div>
+                        <div class="vip-numbers">
+                            <div class="vip-count">107</div>
+                            <div class="vip-revenue">$2,675/month</div>
+                        </div>
+                        <div class="vip-details">
+                            <p>25 ads/day • Priority withdrawals</p>
+                            <p data-en="13% of VIP users" data-ar="13% من مستخدمي VIP">13% of VIP users</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIP Users Table -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 data-en="VIP Users List" data-ar="قائمة مستخدمي VIP">VIP Users List</h3>
+                        <div class="table-filters">
+                            <select id="tierFilter">
+                                <option value="all" data-en="All Tiers" data-ar="جميع المستويات">All Tiers</option>
+                                <option value="king">King Tier</option>
+                                <option value="emperor">Emperor Tier</option>
+                                <option value="lord">Lord Tier</option>
+                            </select>
+                            <input type="text" id="vipSearch" placeholder="Search users...">
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="vipUsersTable">
+                            <thead>
+                                <tr>
+                                    <th data-en="User ID" data-ar="معرف المستخدم">User ID</th>
+                                    <th data-en="Email" data-ar="البريد الإلكتروني">Email</th>
+                                    <th data-en="VIP Tier" data-ar="مستوى VIP">VIP Tier</th>
+                                    <th data-en="Start Date" data-ar="تاريخ البداية">Start Date</th>
+                                    <th data-en="Expiry Date" data-ar="تاريخ الانتهاء">Expiry Date</th>
+                                    <th data-en="Days Left" data-ar="الأيام المتبقية">Days Left</th>
+                                    <th data-en="Revenue" data-ar="الإيرادات">Revenue</th>
+                                    <th data-en="Actions" data-ar="الإجراءات">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vipUsersBody">
+                                <!-- VIP users will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users-tab" class="tab-content">
+                <div class="section-header">
+                    <h2 data-en="User Management" data-ar="إدارة المستخدمين">User Management</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-primary" onclick="addUser()">
+                            <i class="fas fa-plus"></i>
+                            <span data-en="Add User" data-ar="إضافة مستخدم">Add User</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="table-container">
+                    <table class="data-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th data-en="User ID" data-ar="معرف المستخدم">User ID</th>
+                                <th data-en="Email" data-ar="البريد الإلكتروني">Email</th>
+                                <th data-en="Points" data-ar="النقاط">Points</th>
+                                <th data-en="Ads Watched" data-ar="الإعلانات المشاهدة">Ads Watched</th>
+                                <th data-en="Referrals" data-ar="الإحالات">Referrals</th>
+                                <th data-en="Join Date" data-ar="تاريخ الانضمام">Join Date</th>
+                                <th data-en="Status" data-ar="الحالة">Status</th>
+                                <th data-en="Actions" data-ar="الإجراءات">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersBody">
+                            <!-- Users will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Contests Tab -->
+            <div id="contests-tab" class="tab-content">
+                <div class="section-header">
+                    <h2 data-en="Contest Management" data-ar="إدارة المسابقات">Contest Management</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-primary" onclick="createContest()">
+                            <i class="fas fa-plus"></i>
+                            <span data-en="Create Contest" data-ar="إنشاء مسابقة">Create Contest</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Contests -->
+                <div class="contests-grid">
+                    <div class="contest-card daily">
+                        <div class="contest-header">
+                            <h3>🏆 Daily Contest</h3>
+                            <span class="contest-status active">Active</span>
+                        </div>
+                        <div class="contest-details">
+                            <p><strong>Participants:</strong> 2,847</p>
+                            <p><strong>Prize Pool:</strong> $486.30</p>
+                            <p><strong>Ends in:</strong> <span id="dailyCountdown">5h 23m</span></p>
+                            <p><strong>Winner:</strong> 1 person (30% of pool)</p>
+                        </div>
+                        <div class="contest-actions">
+                            <button class="btn btn-sm" onclick="viewContestDetails('daily')">
+                                <span data-en="View Details" data-ar="عرض التفاصيل">View Details</span>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="endContest('daily')">
+                                <span data-en="End Early" data-ar="إنهاء مبكر">End Early</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="contest-card weekly">
+                        <div class="contest-header">
+                            <h3>🏆 Weekly Contest</h3>
+                            <span class="contest-status active">Active</span>
+                        </div>
+                        <div class="contest-details">
+                            <p><strong>Participants:</strong> 8,234</p>
+                            <p><strong>Prize Pool:</strong> $1,247.80</p>
+                            <p><strong>Ends in:</strong> <span id="weeklyCountdown">2d 14h</span></p>
+                            <p><strong>Winners:</strong> 5 people (10% each)</p>
+                        </div>
+                        <div class="contest-actions">
+                            <button class="btn btn-sm" onclick="viewContestDetails('weekly')">
+                                <span data-en="View Details" data-ar="عرض التفاصيل">View Details</span>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="endContest('weekly')">
+                                <span data-en="End Early" data-ar="إنهاء مبكر">End Early</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="contest-card monthly">
+                        <div class="contest-header">
+                            <h3>🏆 Monthly Contest</h3>
+                            <span class="contest-status active">Active</span>
+                        </div>
+                        <div class="contest-details">
+                            <p><strong>Participants:</strong> 15,672</p>
+                            <p><strong>Prize Pool:</strong> $3,842.90</p>
+                            <p><strong>Ends in:</strong> <span id="monthlyCountdown">18d 7h</span></p>
+                            <p><strong>Winners:</strong> 10 people (5% each)</p>
+                        </div>
+                        <div class="contest-actions">
+                            <button class="btn btn-sm" onclick="viewContestDetails('monthly')">
+                                <span data-en="View Details" data-ar="عرض التفاصيل">View Details</span>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="endContest('monthly')">
+                                <span data-en="End Early" data-ar="إنهاء مبكر">End Early</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Withdrawals Tab -->
+            <div id="withdrawals-tab" class="tab-content">
+                <div class="section-header">
+                    <h2 data-en="Withdrawal Requests" data-ar="طلبات السحب">Withdrawal Requests</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-success" onclick="approveAll()">
+                            <i class="fas fa-check-double"></i>
+                            <span data-en="Approve All" data-ar="موافقة على الكل">Approve All</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Withdrawal Requests Table -->
+                <div class="table-container">
+                    <table class="data-table" id="withdrawalsTable">
+                        <thead>
+                            <tr>
+                                <th data-en="Request ID" data-ar="معرف الطلب">Request ID</th>
+                                <th data-en="User Email" data-ar="بريد المستخدم">User Email</th>
+                                <th data-en="Method" data-ar="الطريقة">Method</th>
+                                <th data-en="Amount" data-ar="المبلغ">Amount</th>
+                                <th data-en="Points" data-ar="النقاط">Points</th>
+                                <th data-en="Request Date" data-ar="تاريخ الطلب">Request Date</th>
+                                <th data-en="Status" data-ar="الحالة">Status</th>
+                                <th data-en="Actions" data-ar="الإجراءات">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="withdrawalsBody">
+                            <!-- Withdrawals will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Ads Tab -->
+            <div id="ads-tab" class="tab-content">
+                <div class="section-header">
+                    <h2 data-en="Ad Revenue Management" data-ar="إدارة أرباح الإعلانات">Ad Revenue Management</h2>
+                </div>
+
+                <!-- Ad Revenue Stats -->
+                <div class="ad-stats-grid">
+                    <div class="ad-stat-card">
+                        <h4 data-en="Today's Revenue" data-ar="إيرادات اليوم">Today's Revenue</h4>
+                        <div class="ad-revenue">$1,248.67</div>
+                        <div class="ad-breakdown">
+                            <p data-en="User Share (70%): $873.07" data-ar="نصيب المستخدم (70%): $873.07">User Share (70%): $873.07</p>
+                            <p data-en="Admin Share (30%): $375.60" data-ar="نصيب الإدارة (30%): $375.60">Admin Share (30%): $375.60</p>
+                        </div>
+                    </div>
+                    
+                    <div class="ad-stat-card">
+                        <h4 data-en="Ads Watched Today" data-ar="الإعلانات المشاهدة اليوم">Ads Watched Today</h4>
+                        <div class="ad-count">62,433</div>
+                        <div class="ad-breakdown">
+                            <p data-en="Average per user: 5.1 ads" data-ar="المتوسط لكل مستخدم: 5.1 إعلان">Average per user: 5.1 ads</p>
+                            <p data-en="Avg revenue per ad: $0.02" data-ar="متوسط الإيراد لكل إعلان: $0.02">Avg revenue per ad: $0.02</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div id="notifications-tab" class="tab-content">
+                <div class="section-header">
+                    <h2 data-en="Send Notifications" data-ar="إرسال الإشعارات">Send Notifications</h2>
+                </div>
+
+                <!-- Notification Form -->
+                <div class="notification-form">
+                    <div class="form-group">
+                        <label data-en="Message Type" data-ar="نوع الرسالة">Message Type</label>
+                        <select id="notificationType">
+                            <option value="general" data-en="General Announcement" data-ar="إعلان عام">General Announcement</option>
+                            <option value="contest" data-en="Contest Update" data-ar="تحديث المسابقة">Contest Update</option>
+                            <option value="vip" data-en="VIP Notification" data-ar="إشعار VIP">VIP Notification</option>
+                            <option value="system" data-en="System Alert" data-ar="تنبيه النظام">System Alert</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label data-en="Target Audience" data-ar="الجمهور المستهدف">Target Audience</label>
+                        <select id="targetAudience">
+                            <option value="all" data-en="All Users" data-ar="جميع المستخدمين">All Users</option>
+                            <option value="vip" data-en="VIP Users Only" data-ar="مستخدمو VIP فقط">VIP Users Only</option>
+                            <option value="free" data-en="Free Users Only" data-ar="المستخدمون المجانيون فقط">Free Users Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label data-en="Title (English)" data-ar="العنوان (الإنجليزية)">Title (English)</label>
+                        <input type="text" id="titleEn" placeholder="Enter English title">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label data-en="Title (Arabic)" data-ar="العنوان (العربية)">Title (Arabic)</label>
+                        <input type="text" id="titleAr" placeholder="أدخل العنوان بالعربية">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label data-en="Message (English)" data-ar="الرسالة (الإنجليزية)">Message (English)</label>
+                        <textarea id="messageEn" placeholder="Enter English message"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label data-en="Message (Arabic)" data-ar="الرسالة (العربية)">Message (Arabic)</label>
+                        <textarea id="messageAr" placeholder="أدخل الرسالة بالعربية"></textarea>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="sendNotification()">
+                        <i class="fas fa-paper-plane"></i>
+                        <span data-en="Send Notification" data-ar="إرسال الإشعار">Send Notification</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="admin-script.js"></script>
+</body>
+</html>

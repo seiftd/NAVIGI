@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAVIGI (SBARO) - Earn Points by Watching Ads</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <div class="sbaro-icon">SB</div>
+                <span>NAVIGI</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" data-en="Home" data-ar="الرئيسية">Home</a></li>
+                <li><a href="#features" data-en="Features" data-ar="المميزات">Features</a></li>
+                <li><a href="#vip" data-en="VIP Upgrade" data-ar="ترقية VIP">VIP Upgrade</a></li>
+                <li><a href="#admin" data-en="Admin Dashboard" data-ar="لوحة الإدارة">Admin Dashboard</a></li>
+                <li><a href="#download" data-en="Download" data-ar="تحميل">Download</a></li>
+                <li class="language-toggle">
+                    <button id="langToggle" onclick="toggleLanguage()">
+                        <i class="fas fa-globe"></i>
+                        <span id="langText">العربية</span>
+                    </button>
+                </li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title" data-en="NAVIGI (SBARO)" data-ar="نافيجي (سبارو)">NAVIGI (SBARO)</h1>
+                <p class="hero-subtitle" data-en="Watch Ads, Earn Points, Win Contests!" data-ar="شاهد الإعلانات، اكسب النقاط، اربح المسابقات!">Watch Ads, Earn Points, Win Contests!</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <span class="stat-number">70%</span>
+                        <span class="stat-label" data-en="Ad Revenue Share" data-ar="نصيب أرباح الإعلانات">Ad Revenue Share</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">$0.018</span>
+                        <span class="stat-label" data-en="Min Ad Value" data-ar="قيمة الإعلان الأدنى">Min Ad Value</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">3+</span>
+                        <span class="stat-label" data-en="VIP Tiers" data-ar="مستويات VIP">VIP Tiers</span>
+                    </div>
+                </div>
+                <div class="hero-buttons">
+                    <a href="#download" class="btn btn-primary" data-en="Download App" data-ar="تحميل التطبيق">Download App</a>
+                    <a href="#vip" class="btn btn-secondary" data-en="Upgrade to VIP" data-ar="ترقية إلى VIP">Upgrade to VIP</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="app-preview">
+                            <div class="points-display">
+                                <span>1,250</span>
+                                <div class="sb-icon">SB</div>
+                                <span>👑</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title" data-en="Why Choose NAVIGI?" data-ar="لماذا تختار نافيجي؟">Why Choose NAVIGI?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3 data-en="Earn Real Money" data-ar="اكسب مالاً حقيقياً">Earn Real Money</h3>
+                    <p data-en="Get 70% of ad revenue directly to your account" data-ar="احصل على 70% من أرباح الإعلانات مباشرة في حسابك">Get 70% of ad revenue directly to your account</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3 data-en="Daily Contests" data-ar="مسابقات يومية">Daily Contests</h3>
+                    <p data-en="Win up to 30% of daily ad revenue pool" data-ar="اربح حتى 30% من تجمع أرباح الإعلانات اليومية">Win up to 30% of daily ad revenue pool</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3 data-en="Referral System" data-ar="نظام الإحالة">Referral System</h3>
+                    <p data-en="Earn 7% commission from referrals" data-ar="اكسب 7% عمولة من الإحالات">Earn 7% commission from referrals</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👑</div>
+                    <h3 data-en="VIP Membership" data-ar="عضوية VIP">VIP Membership</h3>
+                    <p data-en="Unlock premium features and higher limits" data-ar="افتح المميزات المتقدمة والحدود الأعلى">Unlock premium features and higher limits</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💳</div>
+                    <h3 data-en="Multiple Withdrawals" data-ar="سحوبات متعددة">Multiple Withdrawals</h3>
+                    <p data-en="Binance Pay, BaridiMob, Google Play, Flexy" data-ar="بينانس باي، باريدي موب، جوجل بلاي، فليكسي">Binance Pay, BaridiMob, Google Play, Flexy</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3 data-en="Bilingual Support" data-ar="دعم ثنائي اللغة">Bilingual Support</h3>
+                    <p data-en="Full Arabic and English interface" data-ar="واجهة كاملة بالعربية والإنجليزية">Full Arabic and English interface</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VIP Upgrade Guide Section -->
+    <section id="vip" class="vip-section">
+        <div class="container">
+            <h2 class="section-title" data-en="VIP Membership Tiers" data-ar="مستويات عضوية VIP">VIP Membership Tiers</h2>
+            
+            <div class="vip-tiers">
+                <div class="vip-tier king">
+                    <div class="tier-header">
+                        <h3>👑 KING TIER</h3>
+                        <span class="price">$2.50/month</span>
+                    </div>
+                    <ul class="tier-benefits">
+                        <li>✅ 16 ads per day (vs 12 free)</li>
+                        <li>✅ 1-minute ad cooldown</li>
+                        <li>✅ 10 daily mining points</li>
+                        <li>✅ Priority support</li>
+                    </ul>
+                    <button class="btn btn-king" onclick="selectVipTier('king')">
+                        <span data-en="Choose King" data-ar="اختر الملك">Choose King</span>
+                    </button>
+                </div>
+
+                <div class="vip-tier emperor popular">
+                    <div class="popular-badge" data-en="Most Popular" data-ar="الأكثر شعبية">Most Popular</div>
+                    <div class="tier-header">
+                        <h3>👑 EMPEROR TIER</h3>
+                        <span class="price">$9.00/month</span>
+                    </div>
+                    <ul class="tier-benefits">
+                        <li>✅ 20 ads per day</li>
+                        <li>✅ VIP-exclusive competitions</li>
+                        <li>✅ 15 daily mining points</li>
+                        <li>✅ Advanced statistics</li>
+                    </ul>
+                    <button class="btn btn-emperor" onclick="selectVipTier('emperor')">
+                        <span data-en="Choose Emperor" data-ar="اختر الإمبراطور">Choose Emperor</span>
+                    </button>
+                </div>
+
+                <div class="vip-tier lord">
+                    <div class="tier-header">
+                        <h3>👑 LORD TIER</h3>
+                        <span class="price">$25.00/month</span>
+                    </div>
+                    <ul class="tier-benefits">
+                        <li>✅ 25 ads per day</li>
+                        <li>✅ Priority withdrawals</li>
+                        <li>✅ 20 daily mining points</li>
+                        <li>✅ Exclusive contests</li>
+                        <li>✅ Personal support manager</li>
+                    </ul>
+                    <button class="btn btn-lord" onclick="selectVipTier('lord')">
+                        <span data-en="Choose Lord" data-ar="اختر اللورد">Choose Lord</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- VIP Upgrade Steps -->
+            <div class="upgrade-guide">
+                <h3 data-en="How to Upgrade to VIP - Step by Step" data-ar="كيفية الترقية إلى VIP - خطوة بخطوة">How to Upgrade to VIP - Step by Step</h3>
+                
+                <div class="steps-container">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4 data-en="Choose Your VIP Tier" data-ar="اختر مستوى VIP الخاص بك">Choose Your VIP Tier</h4>
+                            <p data-en="Select from King ($2.50), Emperor ($9), or Lord ($25) tier above" data-ar="اختر من مستوى الملك (2.50$) أو الإمبراطور (9$) أو اللورد (25$) أعلاه">Select from King ($2.50), Emperor ($9), or Lord ($25) tier above</p>
+                            <div class="step-image">
+                                <div class="mock-step-img step1">📱 Select VIP Tier</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4 data-en="Send USDT to TRON Address" data-ar="أرسل USDT إلى عنوان ترون">Send USDT to TRON Address</h4>
+                            <p data-en="Send the exact amount to our official TRON TRC20 address" data-ar="أرسل المبلغ المحدد إلى عنوان ترون TRC20 الرسمي الخاص بنا">Send the exact amount to our official TRON TRC20 address</p>
+                            <div class="payment-info">
+                                <div class="wallet-address">
+                                    <label data-en="TRON TRC20 Address:" data-ar="عنوان ترون TRC20:">TRON TRC20 Address:</label>
+                                    <div class="address-box">
+                                        <code id="tronAddress">TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX</code>
+                                        <button onclick="copyAddress()" class="copy-btn">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="qr-code" id="qrCode">
+                                    <!-- QR Code will be generated here -->
+                                    <div class="qr-placeholder">QR Code</div>
+                                </div>
+                            </div>
+                            <div class="step-image">
+                                <div class="mock-step-img step2">💳 Send USDT Payment</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4 data-en="Submit Payment Proof" data-ar="قدم إثبات الدفع">Submit Payment Proof</h4>
+                            <p data-en="Send transaction hash and screenshot to our support" data-ar="أرسل هاش المعاملة ولقطة الشاشة إلى الدعم الخاص بنا">Send transaction hash and screenshot to our support</p>
+                            <div class="contact-info">
+                                <div class="contact-method">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>seiftouatllol@gmail.com</span>
+                                </div>
+                                <div class="contact-method">
+                                    <i class="fab fa-telegram"></i>
+                                    <span>@NAVIGISupport</span>
+                                </div>
+                            </div>
+                            <div class="step-image">
+                                <div class="mock-step-img step3">📧 Submit Proof</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4 data-en="VIP Activation" data-ar="تفعيل VIP">VIP Activation</h4>
+                            <p data-en="We'll activate your VIP within 2-4 hours after verification" data-ar="سنقوم بتفعيل VIP الخاص بك خلال 2-4 ساعات بعد التحقق">We'll activate your VIP within 2-4 hours after verification</p>
+                            <div class="step-image">
+                                <div class="mock-step-img step4">✅ VIP Activated</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Admin Dashboard Section -->
+    <section id="admin" class="admin-section">
+        <div class="container">
+            <h2 class="section-title" data-en="Admin Dashboard Access" data-ar="الوصول للوحة الإدارة">Admin Dashboard Access</h2>
+            <div class="admin-info">
+                <p data-en="Manage users, VIP subscriptions, contests, and withdrawals" data-ar="إدارة المستخدمين واشتراكات VIP والمسابقات والسحوبات">Manage users, VIP subscriptions, contests, and withdrawals</p>
+                <a href="admin-dashboard/index.html" class="btn btn-admin" target="_blank">
+                    <i class="fas fa-shield-alt"></i>
+                    <span data-en="Access Admin Dashboard" data-ar="الوصول للوحة الإدارة">Access Admin Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="download">
+        <div class="container">
+            <h2 class="section-title" data-en="Download NAVIGI App" data-ar="تحميل تطبيق نافيجي">Download NAVIGI App</h2>
+            <p class="download-subtitle" data-en="Start earning points today!" data-ar="ابدأ في كسب النقاط اليوم!">Start earning points today!</p>
+            <div class="download-buttons">
+                <a href="#" class="download-btn android">
+                    <i class="fab fa-android"></i>
+                    <div>
+                        <span class="download-text" data-en="Download for" data-ar="تحميل لـ">Download for</span>
+                        <span class="download-platform">Android</span>
+                    </div>
+                </a>
+                <a href="#" class="download-btn github">
+                    <i class="fab fa-github"></i>
+                    <div>
+                        <span class="download-text" data-en="Source Code" data-ar="الكود المصدري">Source Code</span>
+                        <span class="download-platform">GitHub</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="sbaro-icon">SB</div>
+                    <span>NAVIGI</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#" data-en="Privacy Policy" data-ar="سياسة الخصوصية">Privacy Policy</a>
+                    <a href="#" data-en="Terms of Service" data-ar="شروط الخدمة">Terms of Service</a>
+                    <a href="#" data-en="Support" data-ar="الدعم">Support</a>
+                </div>
+                <div class="footer-social">
+                    <a href="#"><i class="fab fa-telegram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p data-en="© 2024 NAVIGI (SBARO). All rights reserved." data-ar="© 2024 نافيجي (سبارو). جميع الحقوق محفوظة.">© 2024 NAVIGI (SBARO). All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- VIP Selection Modal -->
+    <div id="vipModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modalTitle">VIP Upgrade Selected</h3>
+            <div id="modalBody">
+                <p id="selectedTier"></p>
+                <div class="payment-instructions">
+                    <h4 data-en="Payment Instructions:" data-ar="تعليمات الدفع:">Payment Instructions:</h4>
+                    <ol>
+                        <li data-en="Send exact amount to TRON address" data-ar="أرسل المبلغ المحدد إلى عنوان ترون">Send exact amount to TRON address</li>
+                        <li data-en="Copy transaction hash" data-ar="انسخ هاش المعاملة">Copy transaction hash</li>
+                        <li data-en="Email us the proof" data-ar="أرسل لنا الإثبات عبر البريد">Email us the proof</li>
+                    </ol>
+                    <div class="contact-final">
+                        <strong>📧 seiftouatllol@gmail.com</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
