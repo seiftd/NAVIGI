@@ -1232,90 +1232,6 @@ fun VipUpgradeCard(
             }
         }
     }
-    
-    // Payment Dialog
-    if (showPaymentDialog) {
-        AlertDialog(
-            onDismissRequest = { showPaymentDialog = false },
-            title = {
-                Text(
-                    text = "Payment for $selectedVipTier",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "Please complete your payment to upgrade to $selectedVipTier for $selectedVipPrice",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    // TRC20 Address
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                text = "TRC20 USDT Address:",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            TextButton(
-                                onClick = {
-                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    val clip = ClipData.newPlainText("TRC20 Address", "TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX")
-                                    clipboard.setPrimaryClip(clip)
-                                    Toast.makeText(context, "Address copied to clipboard", Toast.LENGTH_SHORT).show()
-                                }
-                            ) {
-                                Icon(Icons.Default.ContentCopy, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Copy Address")
-                            }
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = "After making the payment, please provide your transaction hash for verification.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showPaymentDialog = false
-                        // Here you would navigate to the full payment screen
-                        // For now, we'll just close the dialog
-                    }
-                ) {
-                    Text("Proceed to Payment")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showPaymentDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
 }
 
 @Composable
@@ -1396,14 +1312,7 @@ private fun VipTierCard(
             Spacer(modifier = Modifier.height(12.dp))
             
                                 Button(
-                        onClick = {
-                            // Navigate to payment screen
-                            // This would be handled by navigation
-                            // For now, we'll show a dialog with payment info
-                            showPaymentDialog = true
-                            selectedVipTier = title
-                            selectedVipPrice = price
-                        },
+                        onClick = onUpgrade,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = color)
                     ) {
