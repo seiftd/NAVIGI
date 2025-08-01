@@ -540,6 +540,14 @@
                         <i class="fas fa-trophy"></i>
                         Contests
                     </a>
+                    <a href="#vip" class="nav-link" data-section="vip">
+                        <i class="fas fa-crown"></i>
+                        VIP Management
+                    </a>
+                    <a href="#notifications" class="nav-link" data-section="notifications">
+                        <i class="fas fa-bell"></i>
+                        Notifications
+                    </a>
                     <a href="#restart" class="nav-link" data-section="restart">
                         <i class="fas fa-sync-alt"></i>
                         System Control
@@ -662,6 +670,110 @@
                     </div>
                 </section>
 
+                <!-- VIP Management Section -->
+                <section id="vipSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>VIP Management</h2>
+                        <button class="btn-primary" onclick="refreshVipRequests()">
+                            <i class="fas fa-sync"></i>
+                            Refresh Requests
+                        </button>
+                    </div>
+
+                    <div class="vip-requests-container">
+                        <h3>Pending VIP Requests</h3>
+                        <div class="vip-requests-grid" id="vipRequestsGrid">
+                            <!-- VIP requests will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="vip-actions-container" style="margin-top: 30px;">
+                        <h3>Promote User to VIP</h3>
+                        <div class="promote-user-form" style="background: white; padding: 20px; border-radius: 10px;">
+                            <div class="form-group">
+                                <label>User ID</label>
+                                <input type="text" id="promoteUserId" placeholder="Enter user ID or username">
+                            </div>
+                            <div class="form-group">
+                                <label>VIP Tier</label>
+                                <select id="promoteVipTier">
+                                    <option value="KING">KING - $2.50/month</option>
+                                    <option value="EMPEROR">EMPEROR - $9.00/month</option>
+                                    <option value="LORD">LORD - $25.00/month</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Duration (days)</label>
+                                <input type="number" id="promoteDuration" value="30" min="1">
+                            </div>
+                            <button class="btn-primary" onclick="promoteUserToVip()">
+                                <i class="fas fa-crown"></i>
+                                Promote to VIP
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Notifications Section -->
+                <section id="notificationsSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Send Notifications</h2>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div style="flex: 1;">
+                                <h3>Send to All Users</h3>
+                                <div class="form-group" style="margin-top: 15px;">
+                                    <label>Message</label>
+                                    <textarea id="broadcastMessage" placeholder="Enter message to send to all users" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; height: 100px;"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Points to Give (optional)</label>
+                                    <input type="number" id="broadcastPoints" placeholder="0" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                                <button class="btn-primary" onclick="sendBroadcastNotification()">
+                                    <i class="fas fa-bullhorn"></i>
+                                    Send to All Users
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div style="flex: 1;">
+                                <h3>Send to Specific User</h3>
+                                <div class="form-group" style="margin-top: 15px;">
+                                    <label>User ID</label>
+                                    <input type="text" id="specificUserId" placeholder="Enter user ID" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Message</label>
+                                    <textarea id="specificMessage" placeholder="Enter message" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; height: 80px;"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Points to Give (optional)</label>
+                                    <input type="number" id="specificPoints" placeholder="0" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                                <button class="btn-primary" onclick="sendSpecificNotification()">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Send to User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="notification-templates" style="margin-top: 30px;">
+                        <h3>Quick Templates</h3>
+                        <div class="template-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn-primary" onclick="useTemplate('daily_winner')">Daily Winner</button>
+                            <button class="btn-primary" onclick="useTemplate('weekly_winner')">Weekly Winner</button>
+                            <button class="btn-primary" onclick="useTemplate('monthly_winner')">Monthly Winner</button>
+                            <button class="btn-primary" onclick="useTemplate('daily_reset')">Daily Reset</button>
+                            <button class="btn-primary" onclick="useTemplate('maintenance')">Maintenance</button>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- System Control Section -->
                 <section id="restartSection" class="dashboard-section">
                     <div class="section-header">
@@ -701,6 +813,11 @@
                             <button class="btn-primary" onclick="syncDatabase()">
                                 <i class="fas fa-database"></i>
                                 Sync Database
+                            </button>
+                            
+                            <button class="btn-primary" onclick="resetDailyProgress()">
+                                <i class="fas fa-calendar-day"></i>
+                                Reset Daily Ad Progress
                             </button>
                         </div>
                     </div>
@@ -901,19 +1018,25 @@
             document.getElementById('activeUsers').textContent = stats.activeUsers || 0;
         }
 
-        async function loadSectionData(section) {
-            switch(section) {
-                case 'users':
-                    await loadUsers();
-                    break;
-                case 'transactions':
-                    await loadTransactions();
-                    break;
-                case 'contests':
-                    await loadContests();
-                    break;
-            }
-        }
+                 async function loadSectionData(section) {
+             switch(section) {
+                 case 'users':
+                     await loadUsers();
+                     break;
+                 case 'transactions':
+                     await loadTransactions();
+                     break;
+                 case 'contests':
+                     await loadContests();
+                     break;
+                 case 'vip':
+                     await loadVipRequests();
+                     break;
+                 case 'notifications':
+                     // No initial data needed
+                     break;
+             }
+         }
 
         async function loadUsers() {
             try {
@@ -1252,14 +1375,267 @@
             }, 3000);
         }
 
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                document.getElementById('dashboard').style.display = 'none';
-                document.getElementById('loginScreen').style.display = 'flex';
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-            }
-        }
+                 function logout() {
+             if (confirm('Are you sure you want to logout?')) {
+                 document.getElementById('dashboard').style.display = 'none';
+                 document.getElementById('loginScreen').style.display = 'flex';
+                 document.getElementById('username').value = '';
+                 document.getElementById('password').value = '';
+             }
+         }
+
+         // VIP Management Functions
+         async function loadVipRequests() {
+             try {
+                 const response = await fetch(`${adminAPI.baseURL}/admin-vip-requests?platform=${currentPlatform}`);
+                 const requests = await response.json();
+                 displayVipRequests(requests);
+             } catch (error) {
+                 console.error('Failed to load VIP requests:', error);
+                 // Show demo data
+                 displayVipRequests([
+                     {
+                         id: 'vip_123',
+                         user_id: '123456789',
+                         username: '@cryptoking',
+                         tier: 'EMPEROR',
+                         amount: '$9.00',
+                         payment_method: 'TON',
+                         transaction_hash: 'abc123...def456',
+                         submitted_at: '2024-01-15 10:30:00',
+                         status: 'pending'
+                     },
+                     {
+                         id: 'vip_124',
+                         user_id: '987654321',
+                         username: '@pointmaster',
+                         tier: 'KING',
+                         amount: '$2.50',
+                         payment_method: 'TRC20',
+                         transaction_hash: 'xyz789...abc123',
+                         submitted_at: '2024-01-15 09:15:00',
+                         status: 'pending'
+                     }
+                 ]);
+             }
+         }
+
+         function displayVipRequests(requests) {
+             const grid = document.getElementById('vipRequestsGrid');
+             if (requests.length === 0) {
+                 grid.innerHTML = '<p style="text-align: center; color: #718096;">No pending VIP requests</p>';
+                 return;
+             }
+
+             grid.innerHTML = requests.map(request => `
+                 <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #667eea;">
+                     <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 15px;">
+                         <div>
+                             <h4>${request.username || 'User ID: ' + request.user_id}</h4>
+                             <p><strong>User ID:</strong> ${request.user_id}</p>
+                             <p><strong>VIP Tier:</strong> ${request.tier} (${request.amount})</p>
+                             <p><strong>Payment:</strong> ${request.payment_method}</p>
+                             <p><strong>TX Hash:</strong> ${request.transaction_hash}</p>
+                             <p><strong>Submitted:</strong> ${request.submitted_at}</p>
+                         </div>
+                     </div>
+                     <div style="display: flex; gap: 10px;">
+                         <button class="btn-primary" onclick="approveVipRequest('${request.id}', '${request.user_id}', '${request.tier}')">
+                             <i class="fas fa-check"></i> Approve
+                         </button>
+                         <button class="btn-danger" onclick="rejectVipRequest('${request.id}')">
+                             <i class="fas fa-times"></i> Reject
+                         </button>
+                     </div>
+                 </div>
+             `).join('');
+         }
+
+         async function approveVipRequest(requestId, userId, tier) {
+             try {
+                 await fetch(`${adminAPI.baseURL}/admin-approve-vip-request`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({
+                         request_id: requestId,
+                         user_id: userId,
+                         vip_tier: tier,
+                         duration: 30,
+                         platform: currentPlatform
+                     })
+                 });
+                 
+                 showToast(`VIP ${tier} approved for user ${userId}!`, 'success');
+                 loadVipRequests();
+             } catch (error) {
+                 showToast('Failed to approve VIP request: ' + error.message, 'error');
+             }
+         }
+
+         async function rejectVipRequest(requestId) {
+             try {
+                 await fetch(`${adminAPI.baseURL}/admin-reject-vip-request`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({ request_id: requestId })
+                 });
+                 
+                 showToast('VIP request rejected!', 'success');
+                 loadVipRequests();
+             } catch (error) {
+                 showToast('Failed to reject VIP request: ' + error.message, 'error');
+             }
+         }
+
+         async function promoteUserToVip() {
+             const userId = document.getElementById('promoteUserId').value;
+             const tier = document.getElementById('promoteVipTier').value;
+             const duration = document.getElementById('promoteDuration').value;
+
+             if (!userId) {
+                 showToast('Please enter a user ID', 'error');
+                 return;
+             }
+
+             try {
+                 await fetch(`${adminAPI.baseURL}/admin-promote-user-vip`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({
+                         user_id: userId,
+                         vip_tier: tier,
+                         duration: parseInt(duration),
+                         platform: currentPlatform
+                     })
+                 });
+                 
+                 showToast(`User ${userId} promoted to VIP ${tier} for ${duration} days!`, 'success');
+                 
+                 // Clear form
+                 document.getElementById('promoteUserId').value = '';
+                 document.getElementById('promoteDuration').value = '30';
+             } catch (error) {
+                 showToast('Failed to promote user: ' + error.message, 'error');
+             }
+         }
+
+         async function refreshVipRequests() {
+             showToast('Refreshing VIP requests...', 'info');
+             await loadVipRequests();
+             showToast('VIP requests refreshed!', 'success');
+         }
+
+         // Notification Functions
+         async function sendBroadcastNotification() {
+             const message = document.getElementById('broadcastMessage').value;
+             const points = document.getElementById('broadcastPoints').value;
+
+             if (!message) {
+                 showToast('Please enter a message', 'error');
+                 return;
+             }
+
+             try {
+                 await fetch(`${adminAPI.baseURL}/admin-broadcast-notification`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({
+                         message: message,
+                         points: points ? parseInt(points) : 0,
+                         platform: currentPlatform
+                     })
+                 });
+                 
+                 showToast('Broadcast notification sent to all users!', 'success');
+                 
+                 // Clear form
+                 document.getElementById('broadcastMessage').value = '';
+                 document.getElementById('broadcastPoints').value = '';
+             } catch (error) {
+                 showToast('Failed to send broadcast: ' + error.message, 'error');
+             }
+         }
+
+         async function sendSpecificNotification() {
+             const userId = document.getElementById('specificUserId').value;
+             const message = document.getElementById('specificMessage').value;
+             const points = document.getElementById('specificPoints').value;
+
+             if (!userId || !message) {
+                 showToast('Please enter user ID and message', 'error');
+                 return;
+             }
+
+             try {
+                 await fetch(`${adminAPI.baseURL}/admin-specific-notification`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({
+                         user_id: userId,
+                         message: message,
+                         points: points ? parseInt(points) : 0,
+                         platform: currentPlatform
+                     })
+                 });
+                 
+                 showToast(`Notification sent to user ${userId}!`, 'success');
+                 
+                 // Clear form
+                 document.getElementById('specificUserId').value = '';
+                 document.getElementById('specificMessage').value = '';
+                 document.getElementById('specificPoints').value = '';
+             } catch (error) {
+                 showToast('Failed to send notification: ' + error.message, 'error');
+             }
+         }
+
+         function useTemplate(templateType) {
+             const templates = {
+                 daily_winner: {
+                     message: '🎉 Congratulations! You won the daily contest and received bonus points!',
+                     points: 220
+                 },
+                 weekly_winner: {
+                     message: '🏆 Amazing! You won the weekly contest! Here are your reward points!',
+                     points: 275
+                 },
+                 monthly_winner: {
+                     message: '👑 INCREDIBLE! You won the monthly contest and received VIP King status plus bonus points!',
+                     points: 275
+                 },
+                 daily_reset: {
+                     message: '🌅 Daily tasks have been reset! Start earning points with fresh ads and activities!',
+                     points: 0
+                 },
+                 maintenance: {
+                     message: '🔧 System maintenance completed! Thank you for your patience. Enjoy improved performance!',
+                     points: 5
+                 }
+             };
+
+             const template = templates[templateType];
+             if (template) {
+                 document.getElementById('broadcastMessage').value = template.message;
+                 document.getElementById('broadcastPoints').value = template.points;
+             }
+         }
+
+         // System Control Functions (Additional)
+         async function resetDailyProgress() {
+             if (confirm('⚠️ This will reset daily ad progress for all users. Are you sure?')) {
+                 try {
+                     await fetch(`${adminAPI.baseURL}/admin-reset-daily-progress`, {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({ platform: currentPlatform })
+                     });
+                     
+                     showToast('Daily ad progress reset for all users!', 'success');
+                 } catch (error) {
+                     showToast('Failed to reset daily progress: ' + error.message, 'error');
+                 }
+             }
+         }
     </script>
 </body>
 </html>
