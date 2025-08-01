@@ -10,7 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.navigi.sbaro.data.ads.AdMobManager
+import com.navigi.sbaro.data.ads.AdsterraManager
 import com.navigi.sbaro.data.notification.NotificationManager
 import com.navigi.sbaro.data.repository.UserRepository
 import com.navigi.sbaro.presentation.navigation.SbaroNavHost
@@ -22,7 +22,7 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     
     @Inject
-    lateinit var adMobManager: AdMobManager
+    lateinit var adsterraManager: AdsterraManager
     
     @Inject
     lateinit var userRepository: UserRepository
@@ -36,8 +36,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        // Initialize AdMob
-        adMobManager.initialize(this)
+        // Initialize Adsterra
+        adsterraManager.initialize(this)
         
         // Keep the splash screen on-screen while loading
         splashScreen.setKeepOnScreenCondition {
@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     SbaroNavHost(
-                        adMobManager = adMobManager,
+                        adsterraManager = adsterraManager,
                         userRepository = userRepository,
                         notificationManager = notificationManager
                     )

@@ -32,7 +32,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.navigi.sbaro.R
-import com.navigi.sbaro.data.ads.AdMobManager
+import com.navigi.sbaro.data.ads.AdsterraManager
 import com.navigi.sbaro.data.notification.NotificationManager
 import com.navigi.sbaro.data.repository.ContestInfo
 import com.navigi.sbaro.data.repository.UserRepository
@@ -49,7 +49,7 @@ import javax.inject.Inject
 fun EnhancedMainScreen(
     onNavigateToAuth: () -> Unit,
     userRepository: UserRepository,
-    adMobManager: AdMobManager,
+    adsterraManager: AdsterraManager,
     notificationManager: NotificationManager
 ) {
     val navController = rememberNavController()
@@ -90,6 +90,7 @@ fun EnhancedMainScreen(
             composable(SbaroDestinations.HOME) {
                 EnhancedHomeScreen(
                     userRepository = userRepository,
+                    adsterraManager = adsterraManager,
                     isArabic = isArabic,
                     onLanguageToggle = { isArabic = !isArabic }
                 )
@@ -98,7 +99,7 @@ fun EnhancedMainScreen(
             composable(SbaroDestinations.EARN) {
                 EnhancedEarnScreen(
                     userRepository = userRepository,
-                    adMobManager = adMobManager,
+                    adsterraManager = adsterraManager,
                     isArabic = isArabic
                 )
             }
@@ -430,7 +431,7 @@ private fun ContestNewsCard(
 @Composable
 private fun EnhancedEarnScreen(
     userRepository: UserRepository,
-    adMobManager: AdMobManager,
+    adsterraManager: AdsterraManager,
     isArabic: Boolean
 ) {
     val context = LocalContext.current
@@ -543,11 +544,11 @@ private fun EnhancedEarnScreen(
                                 } else {
                                     "Daily limit reached (${userStats.dailyAdLimit} ads)"
                                 }
-                            } else if (adMobManager.isRewardedAdReady()) {
-                                adMobManager.showRewardedAd(
+                            } else if (adsterraManager.isRewardedAdReady()) {
+                                adsterraManager.showRewardedAd(
                                     activity = context as Activity,
                                     onRewarded = { adRevenue ->
-                                        // Use real AdMob profit calculation with limit check
+                                        // Use real Adsterra profit calculation with limit check
                                         val success = userRepository.addPointsFromAd(adRevenue)
                                         if (success) {
                                             // Calculate user's actual points and USD value (70% of revenue)
@@ -574,16 +575,15 @@ private fun EnhancedEarnScreen(
                                 } else {
                                     "Ad not ready, try again in a moment"
                                 }
-                                adMobManager.loadRewardedAd(context)
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = userStats.dailyEarnAds < userStats.dailyAdLimit && adMobManager.isRewardedAdReady()
+                        enabled = userStats.dailyEarnAds < userStats.dailyAdLimit && adsterraManager.isRewardedAdReady()
                     ) {
                         Text(
                             when {
                                 userStats.dailyEarnAds >= userStats.dailyAdLimit -> if (isArabic) "الحد اليومي مكتمل" else "Daily Limit Reached"
-                                adMobManager.isRewardedAdReady() -> if (isArabic) "شاهد الإعلان" else "Watch Ad"
+                                adsterraManager.isRewardedAdReady() -> if (isArabic) "شاهد الإعلان" else "Watch Ad"
                                 else -> if (isArabic) "جاري التحميل..." else "Loading..."
                             }
                         )
@@ -591,9 +591,9 @@ private fun EnhancedEarnScreen(
                     
                     Text(
                         text = if (isArabic) "الإعلان جاهز: " else "Ad Ready: " + 
-                              if (adMobManager.isRewardedAdReady()) "✅" else "⏳",
+                              if (adsterraManager.isRewardedAdReady()) "✅" else "⏳",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (adMobManager.isRewardedAdReady()) 
+                        color = if (adsterraManager.isRewardedAdReady()) 
                             MaterialTheme.colorScheme.primary 
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )

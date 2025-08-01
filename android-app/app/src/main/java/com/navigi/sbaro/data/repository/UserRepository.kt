@@ -189,7 +189,7 @@ class UserRepository @Inject constructor(
             weeklyContestDeadline = weeklyDeadline,
             monthlyContestDeadline = monthlyDeadline,
             vipContestDeadline = vipDeadline,
-            vipTier = if (currentVipStatus) VipTier.KING else VipTier.NONE,
+            vipTier = if (currentVipStatus) VipTier.EMPEROR else VipTier.NONE,
             vipExpiryDate = vipExpiryDate,
             dailyAdLimit = dailyAdLimit
         )
