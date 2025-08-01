@@ -6,6 +6,8 @@
     <title>NAVIGI (SBARO) - Earn Points by Watching Ads</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -19,6 +21,7 @@
                 <li><a href="#home" data-en="Home" data-ar="الرئيسية">Home</a></li>
                 <li><a href="#features" data-en="Features" data-ar="المميزات">Features</a></li>
                 <li><a href="#vip" data-en="VIP Upgrade" data-ar="ترقية VIP">VIP Upgrade</a></li>
+                <li><a href="payment.html" data-en="VIP Payment" data-ar="دفع VIP">VIP Payment</a></li>
                 <li><a href="#admin" data-en="Admin Dashboard" data-ar="لوحة الإدارة">Admin Dashboard</a></li>
                 <li><a href="#download" data-en="Download" data-ar="تحميل">Download</a></li>
                 <li class="language-toggle">
@@ -133,7 +136,7 @@
                         <li>✅ 10 daily mining points</li>
                         <li>✅ Priority support</li>
                     </ul>
-                    <button class="btn btn-king" onclick="selectVipTier('king')">
+                    <button class="btn btn-king" onclick="goToPayment('king')">
                         <span data-en="Choose King" data-ar="اختر الملك">Choose King</span>
                     </button>
                 </div>
@@ -150,7 +153,7 @@
                         <li>✅ 15 daily mining points</li>
                         <li>✅ Advanced statistics</li>
                     </ul>
-                    <button class="btn btn-emperor" onclick="selectVipTier('emperor')">
+                    <button class="btn btn-emperor" onclick="goToPayment('emperor')">
                         <span data-en="Choose Emperor" data-ar="اختر الإمبراطور">Choose Emperor</span>
                     </button>
                 </div>
@@ -167,7 +170,7 @@
                         <li>✅ Exclusive contests</li>
                         <li>✅ Personal support manager</li>
                     </ul>
-                    <button class="btn btn-lord" onclick="selectVipTier('lord')">
+                    <button class="btn btn-lord" onclick="goToPayment('lord')">
                         <span data-en="Choose Lord" data-ar="اختر اللورد">Choose Lord</span>
                     </button>
                 </div>

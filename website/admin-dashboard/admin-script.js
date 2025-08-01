@@ -88,7 +88,8 @@ let charts = {};
 // Demo Credentials
 const ADMIN_CREDENTIALS = {
     email: 'seiftouatllol@gmail.com',
-    password: 'seif0662'
+    password: 'seif0662',
+    twofa: '112023'
 };
 
 // Sample Data
@@ -269,8 +270,12 @@ function handleLogin(e) {
         password: ADMIN_CREDENTIALS.password 
     });
 
-    // Validate credentials (case-insensitive email)
-    if (email === ADMIN_CREDENTIALS.email.toLowerCase() && password === ADMIN_CREDENTIALS.password) {
+    // Validate credentials (case-insensitive email, optional 2FA)
+    const isEmailValid = email === ADMIN_CREDENTIALS.email.toLowerCase();
+    const isPasswordValid = password === ADMIN_CREDENTIALS.password;
+    const is2FAValid = !twofa || twofa === ADMIN_CREDENTIALS.twofa;
+    
+    if (isEmailValid && isPasswordValid && is2FAValid) {
         // Hide login screen and show dashboard
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('dashboardMain').style.display = 'flex';
@@ -294,6 +299,7 @@ function handleLogin(e) {
 function quickLogin() {
     document.getElementById('email').value = 'seiftouatllol@gmail.com';
     document.getElementById('password').value = 'seif0662';
+    document.getElementById('twofa').value = '112023';
     
     // Trigger login
     const loginEvent = new Event('submit');

@@ -93,6 +93,12 @@ function selectVipTier(tier) {
     modal.style.display = 'block';
 }
 
+// Go to Payment Page
+function goToPayment(tier) {
+    const userId = 'USR' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    window.location.href = `payment.html?tier=${tier}&userId=${userId}`;
+}
+
 // Copy TRON address functionality
 function copyAddress() {
     const address = document.getElementById('tronAddress').textContent;
@@ -119,6 +125,61 @@ function copyAddress() {
     });
 }
 
+// Generate QR Code for TRON address
+function generateQRCode() {
+    const qrContainer = document.getElementById('qrCode');
+    const tronAddress = 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX';
+    
+    if (qrContainer && typeof QRCode !== 'undefined') {
+        // Clear existing content
+        qrContainer.innerHTML = '';
+        
+        // Create canvas for QR code
+        const canvas = document.createElement('canvas');
+        qrContainer.appendChild(canvas);
+        
+        QRCode.toCanvas(canvas, tronAddress, {
+            width: 200,
+            height: 200,
+            colorDark: '#2C3E50',
+            colorLight: '#FFFFFF',
+            margin: 2,
+            errorCorrectionLevel: 'M'
+        }, function(error) {
+            if (error) {
+                console.error('QR Code generation error:', error);
+                // Fallback to placeholder
+                qrContainer.innerHTML = `
+                    <div class="qr-placeholder" style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 2px solid #ddd; margin: 0 auto; border-radius: 8px;">
+                        <div style="text-align: center;">
+                            <i class="fas fa-qrcode" style="font-size: 3rem; color: #3498DB; margin-bottom: 10px; display: block;"></i>
+                            <p style="margin: 0; color: #2C3E50; font-size: 0.9rem; font-weight: bold;">TRON QR Code</p>
+                            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.8rem;">Scan to pay USDT</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Add a label below the QR code
+                const label = document.createElement('p');
+                label.textContent = 'Scan with TRON wallet';
+                label.style.cssText = 'text-align: center; margin-top: 10px; font-size: 0.9rem; color: #666; font-weight: 500;';
+                qrContainer.appendChild(label);
+            }
+        });
+    } else if (qrContainer) {
+        // Fallback if QR library not available
+        qrContainer.innerHTML = `
+            <div class="qr-placeholder" style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 2px solid #ddd; margin: 0 auto; border-radius: 8px;">
+                <div style="text-align: center;">
+                    <i class="fas fa-qrcode" style="font-size: 3rem; color: #3498DB; margin-bottom: 10px; display: block;"></i>
+                    <p style="margin: 0; color: #2C3E50; font-size: 0.9rem; font-weight: bold;">TRON QR Code</p>
+                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.8rem;">Scan to pay USDT</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
 // Modal functionality
 window.onclick = function(event) {
     const modal = document.getElementById('vipModal');
@@ -139,6 +200,9 @@ document.addEventListener('keydown', function(event) {
 
 // Smooth scrolling for navigation links
 document.addEventListener('DOMContentLoaded', function() {
+    // Generate QR code
+    generateQRCode();
+    
     // Smooth scrolling
     const navLinks = document.querySelectorAll('a[href^="#"]');
     navLinks.forEach(link => {
@@ -373,5 +437,7 @@ document.addEventListener('DOMContentLoaded', initializeParallax);
 // Export functions for global use
 window.toggleLanguage = toggleLanguage;
 window.selectVipTier = selectVipTier;
+window.goToPayment = goToPayment;
 window.copyAddress = copyAddress;
+window.generateQRCode = generateQRCode;
 window.showNotification = showNotification;
