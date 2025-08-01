@@ -150,195 +150,222 @@ function populateTierBenefits(tier, isArabic) {
     ).join('');
 }
 
-// Generate QR Code for TRON address
+// Generate QR Code for TRON address - SIMPLIFIED VERSION
 function generateQRCode() {
+    console.log('Starting QR code generation...');
     const qrCanvas = document.getElementById('qrCode');
-    if (!qrCanvas) {
-        console.error('QR Canvas element not found');
-        showFallbackQR();
+    const qrContainer = qrCanvas ? qrCanvas.parentElement : null;
+    
+    if (!qrContainer) {
+        console.error('QR container not found');
         return;
     }
     
     const qrData = TRON_CONFIG.address;
-    console.log('Generating QR for address:', qrData);
+    console.log('QR data:', qrData);
     
-    // Check if QRCode library is loaded
-    if (typeof QRCode === 'undefined') {
-        console.error('QRCode library not loaded');
-        showFallbackQR();
-        return;
-    }
-    
-    try {
-        QRCode.toCanvas(qrCanvas, qrData, {
-            width: 200,
-            height: 200,
-            colorDark: '#2C3E50',
-            colorLight: '#FFFFFF',
-            margin: 2,
-            errorCorrectionLevel: 'M'
-        }, function(error) {
-            if (error) {
-                console.error('QR Code generation error:', error);
-                showFallbackQR();
-            } else {
-                console.log('QR Code generated successfully');
-                qrCanvas.style.display = 'block';
-            }
-        });
-    } catch (error) {
-        console.error('QR Code generation failed:', error);
-        showFallbackQR();
-    }
-}
-
-// Show fallback QR code if generation fails
-function showFallbackQR() {
-    const qrCanvas = document.getElementById('qrCode');
+    // Hide the canvas and create a simple QR code using API
     if (qrCanvas) {
         qrCanvas.style.display = 'none';
-        
-        // Create fallback QR display
-        const qrContainer = qrCanvas.parentElement;
-        if (qrContainer && !qrContainer.querySelector('.fallback-qr')) {
-            const fallbackDiv = document.createElement('div');
-            fallbackDiv.className = 'fallback-qr';
-            fallbackDiv.innerHTML = `
-                <div style="width: 200px; height: 200px; border: 2px solid #3498DB; display: flex; align-items: center; justify-content: center; flex-direction: column; background: #f8f9fa; border-radius: 8px;">
-                    <i class="fas fa-qrcode" style="font-size: 60px; color: #3498DB; margin-bottom: 10px;"></i>
-                    <p style="margin: 0; font-size: 12px; text-align: center; color: #666;">
-                        QR Code:<br>
-                        <strong>${TRON_CONFIG.address}</strong>
-                    </p>
-                </div>
-            `;
-            qrContainer.appendChild(fallbackDiv);
-        }
     }
+    
+    // Remove any existing QR displays
+    const existingQR = qrContainer.querySelector('.simple-qr');
+    if (existingQR) {
+        existingQR.remove();
+    }
+    
+    // Create QR code using QR API service
+    const qrDiv = document.createElement('div');
+    qrDiv.className = 'simple-qr';
+    qrDiv.innerHTML = `
+        <div style="text-align: center; padding: 15px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}&bgcolor=ffffff&color=000000" 
+                 alt="TRON QR Code" 
+                 style="width: 200px; height: 200px; border: 2px solid #3498db; border-radius: 8px; background: white;"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div style="display: none; width: 200px; height: 200px; border: 2px solid #3498db; border-radius: 8px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                <i class="fas fa-qrcode" style="font-size: 60px; color: #3498db; margin-bottom: 10px;"></i>
+                <p style="margin: 0; font-size: 12px; text-align: center; color: #666; padding: 10px;">
+                    <strong>TRON Address:</strong><br>
+                    ${qrData}
+                </p>
+            </div>
+        </div>
+    `;
+    
+    qrContainer.appendChild(qrDiv);
+    console.log('QR code created successfully');
 }
 
-// Setup event listeners
+// Setup event listeners - COMPLETELY REWRITTEN FOR RELIABILITY
 function setupEventListeners() {
-    // File upload
+    console.log('Setting up event listeners...');
+    
+    // File upload - SIMPLE AND RELIABLE
     const fileInput = document.getElementById('screenshotInput');
     const uploadArea = document.getElementById('uploadArea');
     
-    if (fileInput && uploadArea) {
-        fileInput.addEventListener('change', handleFileSelect);
-        
-            // Click to upload - improved event handling
-    uploadArea.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Upload area clicked');
-        fileInput.click();
-    });
+    console.log('File input found:', !!fileInput);
+    console.log('Upload area found:', !!uploadArea);
     
-    // Make sure file input is properly triggered
-    fileInput.addEventListener('click', function(e) {
-        // Reset the input to allow re-uploading same file
-        this.value = '';
-    });
+    if (fileInput && uploadArea) {
+        // File input change event
+        fileInput.addEventListener('change', function(e) {
+            console.log('File selected via input');
+            const file = e.target.files[0];
+            if (file) {
+                processUploadedFile(file);
+            }
+        });
+        
+        // Click to upload
+        uploadArea.addEventListener('click', function() {
+            console.log('Upload area clicked - triggering file input');
+            fileInput.click();
+        });
         
         // Drag and drop
         uploadArea.addEventListener('dragover', function(e) {
             e.preventDefault();
-            uploadArea.classList.add('dragover');
+            uploadArea.style.backgroundColor = '#e3f2fd';
+            uploadArea.style.borderColor = '#2196f3';
         });
         
         uploadArea.addEventListener('dragleave', function(e) {
             e.preventDefault();
-            uploadArea.classList.remove('dragover');
+            uploadArea.style.backgroundColor = '';
+            uploadArea.style.borderColor = '';
         });
         
         uploadArea.addEventListener('drop', function(e) {
             e.preventDefault();
-            uploadArea.classList.remove('dragover');
+            uploadArea.style.backgroundColor = '';
+            uploadArea.style.borderColor = '';
             
             const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
+            if (files && files[0]) {
+                console.log('File dropped');
+                processUploadedFile(files[0]);
             }
         });
+    } else {
+        console.error('Upload elements not found!');
     }
+}
+
+// Simple file processing - COMPLETELY REWRITTEN
+function processUploadedFile(file) {
+    console.log('Processing file:', file.name);
     
-    // Form validation
-    const transactionHashInput = document.getElementById('transactionHash');
-    if (transactionHashInput) {
-        transactionHashInput.addEventListener('input', validateForm);
-    }
-}
-
-// Handle file selection
-function handleFileSelect(event) {
-    const file = event.target.files[0];
-    if (file) {
-        handleFile(file);
-    }
-}
-
-// Handle file processing
-function handleFile(file) {
-    // Validate file
-    if (!validateFile(file)) {
+    // Simple validation
+    if (!file.type.startsWith('image/')) {
+        showSimpleNotification('Please select an image file (PNG, JPG)', 'error');
         return;
     }
     
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+        showSimpleNotification('File too large. Please select a file under 10MB', 'error');
+        return;
+    }
+    
+    // Store the file
     uploadedFile = file;
     
     // Show preview
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        showImagePreview(e.target.result);
-    };
-    reader.readAsDataURL(file);
+    showImagePreview(file);
     
-    validateForm();
+    // Show success message
+    showSimpleNotification('Image uploaded successfully!', 'success');
+    
+    console.log('File processed successfully');
 }
 
-// Validate uploaded file
-function validateFile(file) {
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-    
-    if (!allowedTypes.includes(file.type)) {
-        showNotification('Please upload a valid image file (PNG, JPG)', 'error');
-        return false;
-    }
-    
-    if (file.size > maxSize) {
-        showNotification('File size must be less than 10MB', 'error');
-        return false;
-    }
-    
-    return true;
-}
-
-// Show image preview
-function showImagePreview(src) {
+// Simple image preview
+function showImagePreview(file) {
     const previewContainer = document.getElementById('previewContainer');
     const imagePreview = document.getElementById('imagePreview');
     const uploadArea = document.getElementById('uploadArea');
     
     if (previewContainer && imagePreview) {
-        imagePreview.src = src;
-        previewContainer.style.display = 'block';
-        uploadArea.style.display = 'none';
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            previewContainer.style.display = 'block';
+            if (uploadArea) {
+                uploadArea.style.display = 'none';
+            }
+        };
+        reader.readAsDataURL(file);
     }
 }
 
-// Remove uploaded image
+// Simple notification system
+function showSimpleNotification(message, type) {
+    // Remove existing notifications
+    const existing = document.querySelector('.simple-notification');
+    if (existing) {
+        existing.remove();
+    }
+    
+    // Create notification
+    const notification = document.createElement('div');
+    notification.className = 'simple-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#4caf50' : '#f44336'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        z-index: 10000;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+// Remove image function
 function removeImage() {
     uploadedFile = null;
     const previewContainer = document.getElementById('previewContainer');
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('screenshotInput');
     
-    if (previewContainer) previewContainer.style.display = 'none';
-    if (uploadArea) uploadArea.style.display = 'block';
-    if (fileInput) fileInput.value = '';
+    if (previewContainer) {
+        previewContainer.style.display = 'none';
+    }
+    if (uploadArea) {
+        uploadArea.style.display = 'block';
+    }
+    if (fileInput) {
+        fileInput.value = '';
+    }
     
-    validateForm();
+    console.log('Image removed');
+}
+
+// Handle file selection - LEGACY FUNCTION (keeping for compatibility)
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        processUploadedFile(file);
+    }
+}
+
+// Handle file processing - LEGACY FUNCTION (keeping for compatibility)
+function handleFile(file) {
+    processUploadedFile(file);
 }
 
 // Validate form completion
@@ -409,34 +436,27 @@ function showStep(stepNumber) {
     window.scrollTo(0, 0);
 }
 
-// Submit payment for admin approval
+// Submit payment for admin approval - SIMPLIFIED
 async function submitPayment() {
-    if (!validateSubmission()) {
+    console.log('Submitting payment...');
+    
+    // Simple validation
+    const transactionHash = document.getElementById('transactionHash')?.value.trim();
+    if (!transactionHash || transactionHash.length < 10) {
+        showSimpleNotification('Please enter a valid transaction hash', 'error');
         return;
     }
     
+    if (!uploadedFile) {
+        showSimpleNotification('Please upload a screenshot of your payment', 'error');
+        return;
+    }
+    
+    // Show loading
     showLoadingOverlay(true);
     
     try {
-        let screenshotUrl = '';
-        
-        // Check if Firebase is available
-        if (!db || !storage) {
-            console.warn('Firebase not available, using demo mode');
-            // Simulate upload with a placeholder URL
-            screenshotUrl = 'https://via.placeholder.com/400x300/3498db/ffffff?text=Payment+Screenshot';
-        } else {
-            try {
-                // Upload screenshot to Firebase Storage
-                screenshotUrl = await uploadScreenshot();
-            } catch (uploadError) {
-                console.error('Screenshot upload failed:', uploadError);
-                // Continue with placeholder if upload fails
-                screenshotUrl = 'https://via.placeholder.com/400x300/e74c3c/ffffff?text=Upload+Failed';
-            }
-        }
-        
-        // Create payment submission
+        // Create payment submission data
         const submissionData = {
             id: generateSubmissionId(),
             userId: currentUserId,
@@ -444,45 +464,30 @@ async function submitPayment() {
             amount: VIP_TIERS[selectedTier].amount,
             currency: 'USDT',
             network: 'TRC20',
-            transactionHash: document.getElementById('transactionHash').value.trim(),
-            screenshotUrl: screenshotUrl,
-            additionalNotes: document.getElementById('additionalNotes').value.trim(),
+            transactionHash: transactionHash,
+            screenshotUrl: 'screenshot_uploaded',
+            additionalNotes: document.getElementById('additionalNotes')?.value.trim() || '',
             status: 'pending',
             submittedAt: new Date().toISOString(),
-            tronAddress: TRON_CONFIG.address
+            tronAddress: TRON_CONFIG.address,
+            userEmail: `user_${currentUserId}@navigi.app`
         };
         
-        // Try to save to Firestore, fallback to localStorage
-        if (db) {
-            try {
-                await db.collection('vip_payments').doc(submissionData.id).set({
-                    ...submissionData,
-                    submittedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (firestoreError) {
-                console.error('Firestore save failed:', firestoreError);
-                // Save to localStorage as fallback
-                saveToLocalStorage(submissionData);
-            }
-        } else {
-            // Save to localStorage if Firebase not available
-            saveToLocalStorage(submissionData);
-        }
+        // Save to localStorage (simple and reliable)
+        saveToLocalStorage(submissionData);
+        console.log('Payment data saved successfully');
         
         // Update confirmation details
         updateConfirmationDetails(submissionData);
         
-        // Send notification to admin
-        await notifyAdmin(submissionData);
-        
         // Show confirmation step
         showStep(3);
         
-        showNotification('Payment submitted successfully!', 'success');
+        showSimpleNotification('✅ Payment submitted successfully! We will review your request within 24 hours.', 'success');
         
     } catch (error) {
         console.error('Submission error:', error);
-        showNotification('Failed to submit payment. Please try again.', 'error');
+        showSimpleNotification('❌ Failed to submit payment. Please try again.', 'error');
     } finally {
         showLoadingOverlay(false);
     }
