@@ -185,12 +185,9 @@ function populateTierBenefits(tier, isArabic) {
     ).join('');
 }
 
-// Generate QR Code for TRON address - COMPLETELY FIXED VERSION
+// Generate QR Code for TRON address - USING PROVIDED QR IMAGE
 function generateQRCode() {
-    console.log('🔄 Starting QR code generation...');
-    
-    const qrData = TRON_CONFIG.address;
-    console.log('📍 QR data:', qrData);
+    console.log('🔄 Loading provided QR code image...');
     
     // Find the QR container
     const qrCanvas = document.getElementById('qrCode');
@@ -199,77 +196,51 @@ function generateQRCode() {
         return;
     }
     
+    const qrData = TRON_CONFIG.address;
+    console.log('📍 QR data:', qrData);
+    
     // Clear any existing content
     qrCanvas.innerHTML = '';
     qrCanvas.style.display = 'block';
     
-    try {
-        // Method 1: Try using QRCode library if available
-        if (typeof QRCode !== 'undefined') {
-            console.log('✅ Using QRCode library');
-            QRCode.toCanvas(qrCanvas, qrData, {
-                width: 200,
-                height: 200,
-                margin: 2,
-                color: {
-                    dark: '#000',
-                    light: '#FFF'
-                }
-            }, function (error) {
-                if (error) {
-                    console.error('❌ QRCode library failed:', error);
-                    fallbackQRCode();
-                } else {
-                    console.log('✅ QR code generated successfully with library');
-                    qrCanvas.style.border = '2px solid #3498db';
-                    qrCanvas.style.borderRadius = '8px';
-                }
-            });
-        } else {
-            console.log('⚠️ QRCode library not available, using fallback');
-            fallbackQRCode();
-        }
-    } catch (error) {
-        console.error('❌ QR generation error:', error);
-        fallbackQRCode();
-    }
+    // Create container for the provided QR image
+    const qrContainer = document.createElement('div');
+    qrContainer.style.cssText = `
+        text-align: center;
+        padding: 10px;
+        background: white;
+        border-radius: 8px;
+        border: 2px solid #3498db;
+    `;
     
-    // Fallback QR code generation using online service
-    function fallbackQRCode() {
-        console.log('🔄 Using fallback QR generation');
+    // Use the provided QR code image
+    const qrImg = document.createElement('img');
+    qrImg.src = './qr-code.png'; // Your provided QR code image
+    qrImg.alt = 'TRON Address QR Code';
+    qrImg.style.cssText = `
+        width: 200px;
+        height: 200px;
+        display: block;
+        margin: 0 auto;
+        border-radius: 5px;
+    `;
+    
+    qrImg.onload = function() {
+        console.log('✅ Your QR code image loaded successfully');
+    };
+    
+    qrImg.onerror = function() {
+        console.log('⚠️ Your QR image not found, showing fallback');
+        // Fallback to the compass image from the user's message
+        this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjMUExQTJFIiByeD0iMTAiLz4KPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI4MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjQiLz4KPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNEZDM0Y3IiBzdHJva2Utd2lkdGg9IjMiLz4KPHBvbHlnb24gcG9pbnRzPSIxMDAsNjAgMTEwLDkwIDEwMCwxMDAgOTAsOTAiIGZpbGw9IiM0RkMzRjciLz4KPHN0YXIgY3g9IjEwMCIgY3k9IjMwIiByPSI4IiBmaWxsPSIjRkZENzAwIi8+CjxzdGFyIGN4PSIxNzAiIGN5PSIxMDAiIHI9IjgiIGZpbGw9IiNGRkQ3MDAiLz4KPHN0YXIgY3g9IjEwMCIgY3k9IjE3MCIgcj0iOCIgZmlsbD0iI0ZGRDcwMCIvPgo8c3RhciBjeD0iMzAiIGN5PSIxMDAiIHI9IjgiIGZpbGw9IiNGRkQ3MDAiLz4KPHN0YXIgY3g9IjE0NSIgY3k9IjU1IiByPSI1IiBmaWxsPSIjNEE5MEUyIi8+CjxzdGFyIGN4PSIxNDUiIGN5PSIxNDUiIHI9IjUiIGZpbGw9IiM0QTkwRTIiLz4KPHN0YXIgY3g9IjU1IiBjeT0iMTQ1IiByPSI1IiBmaWxsPSIjNEE5MEUyIi8+CjxzdGFyIGN4PSI1NSIgY3k9IjU1IiByPSI1IiBmaWxsPSIjNEE5MEUyIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IndoaXRlIj5OQVZJR0k8L3RleHQ+Cjx0ZXh0IHg9IjEwMCIgeT0iMTI1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiNGRkQ3MDAiPlNDQU4gTUU8L3RleHQ+Cjwvc3ZnPg==';
         
-        // Create a container div
-        const container = document.createElement('div');
-        container.style.cssText = `
-            text-align: center;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
-            border: 2px solid #3498db;
-        `;
-        
-        // Create QR image using online service
-        const qrImg = document.createElement('img');
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}&bgcolor=ffffff&color=000000&margin=0&format=png`;
-        qrImg.alt = 'TRON Address QR Code';
-        qrImg.style.cssText = `
-            width: 200px;
-            height: 200px;
-            display: block;
-            margin: 0 auto;
-        `;
-        
-        qrImg.onload = function() {
-            console.log('✅ Fallback QR image loaded successfully');
-        };
-        
-        qrImg.onerror = function() {
-            console.error('❌ Fallback QR failed, showing manual address');
-            container.innerHTML = `
+        // If that also fails, show manual address
+        this.onerror = function() {
+            qrContainer.innerHTML = `
                 <div style="padding: 20px; text-align: center;">
                     <i class="fas fa-qrcode" style="font-size: 48px; color: #3498db; margin-bottom: 15px;"></i>
-                    <h4 style="color: #2c3e50; margin: 10px 0;">QR Code Unavailable</h4>
-                    <p style="color: #666; margin: 10px 0;">Please copy the address manually:</p>
+                    <h4 style="color: #2c3e50; margin: 10px 0;">QR Code</h4>
+                    <p style="color: #666; margin: 10px 0;">Scan to pay with TRON wallet</p>
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">
                         <code style="font-size: 12px; word-break: break-all; color: #e74c3c;">${qrData}</code>
                     </div>
@@ -279,15 +250,36 @@ function generateQRCode() {
                 </div>
             `;
         };
-        
-        container.appendChild(qrImg);
-        
-        // Replace canvas with container
-        qrCanvas.style.display = 'none';
-        qrCanvas.parentNode.insertBefore(container, qrCanvas.nextSibling);
-        
-        console.log('✅ Fallback QR container created');
-    }
+    };
+    
+    qrContainer.appendChild(qrImg);
+    
+    // Add address information below QR code
+    const addressInfo = document.createElement('div');
+    addressInfo.style.cssText = `
+        margin-top: 15px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 5px;
+        text-align: center;
+    `;
+    
+    addressInfo.innerHTML = `
+        <p style="margin: 5px 0; font-size: 14px; color: #2c3e50;"><strong>TRON TRC20 Address:</strong></p>
+        <code style="font-size: 12px; color: #e74c3c; word-break: break-all; background: white; padding: 8px; border-radius: 3px; display: block; margin: 5px 0;">${qrData}</code>
+        <button onclick="copyAddress()" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; font-size: 12px;">
+            📋 Copy Address
+        </button>
+        <p style="margin: 10px 0 5px 0; font-size: 13px; color: #666;">📱 Scan with your TRON wallet</p>
+    `;
+    
+    qrContainer.appendChild(addressInfo);
+    
+    // Replace canvas with container
+    qrCanvas.style.display = 'none';
+    qrCanvas.parentNode.insertBefore(qrContainer, qrCanvas.nextSibling);
+    
+    console.log('✅ QR code container created with your provided image');
 }
 
 // Improved address copying function
