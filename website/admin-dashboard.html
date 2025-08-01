@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAVIGI SBARO - Admin Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Admin Dashboard CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Login Screen */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Dashboard */
+        .dashboard {
+            min-height: 100vh;
+            background: #f8fafc;
+        }
+
+        .dashboard-header {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            color: #2d3748;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .platform-switcher {
+            display: flex;
+            gap: 10px;
+        }
+
+        .platform-btn {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .platform-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .logout-btn {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .dashboard-main {
+            display: flex;
+            min-height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 250px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: #4a5568;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-link i {
+            margin-right: 12px;
+            width: 20px;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .dashboard-section {
+            display: none;
+        }
+
+        .dashboard-section.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-header h2 {
+            color: #2d3748;
+            font-size: 1.8rem;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-right: 20px;
+        }
+
+        .stat-card.users .stat-icon { background: #667eea; }
+        .stat-card.revenue .stat-icon { background: #48bb78; }
+        .stat-card.transactions .stat-icon { background: #ed8936; }
+        .stat-card.active-users .stat-icon { background: #38b2ac; }
+
+        .stat-info h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .stat-info p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .restart-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            border-left: 5px solid #e53e3e;
+        }
+
+        .restart-section h3 {
+            color: #e53e3e;
+            margin-bottom: 15px;
+        }
+
+        .restart-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .users-table-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th {
+            background: #f7fafc;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .users-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .vip-badge {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .vip-badge.king { background: #ffd700; color: #744210; }
+        .vip-badge.emperor { background: #9f7aea; color: white; }
+        .vip-badge.lord { background: #e53e3e; color: white; }
+        .vip-badge.free { background: #e2e8f0; color: #4a5568; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #718096;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 10001;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success { background: #48bb78; }
+        .toast.error { background: #e53e3e; }
+        .toast.info { background: #4299e1; }
+
+        @media (max-width: 768px) {
+            .dashboard-main {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                order: 2;
+            }
+            
+            .content-area {
+                order: 1;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3>Loading Admin Dashboard...</h3>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🚀 NAVIGI SBARO</h1>
+                <h2>Admin Dashboard</h2>
+                <p>Manage your Telegram Bot & Mobile App</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Admin Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login to Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="dashboard" style="display: none;">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>🚀 NAVIGI SBARO Admin</h1>
+                <div class="platform-switcher">
+                    <button class="platform-btn active" data-platform="telegram_bot">
+                        <i class="fab fa-telegram"></i>
+                        Telegram Bot
+                    </button>
+                    <button class="platform-btn" data-platform="mobile_app">
+                        <i class="fas fa-mobile-alt"></i>
+                        Mobile App
+                    </button>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="admin-info">
+                    <span id="adminName">Admin</span>
+                    <button id="logoutBtn" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav class="sidebar-nav">
+                    <a href="#overview" class="nav-link active" data-section="overview">
+                        <i class="fas fa-chart-line"></i>
+                        Overview
+                    </a>
+                    <a href="#users" class="nav-link" data-section="users">
+                        <i class="fas fa-users"></i>
+                        Users
+                    </a>
+                    <a href="#transactions" class="nav-link" data-section="transactions">
+                        <i class="fas fa-credit-card"></i>
+                        Transactions
+                    </a>
+                    <a href="#contests" class="nav-link" data-section="contests">
+                        <i class="fas fa-trophy"></i>
+                        Contests
+                    </a>
+                    <a href="#restart" class="nav-link" data-section="restart">
+                        <i class="fas fa-sync-alt"></i>
+                        System Control
+                    </a>
+                    <a href="#settings" class="nav-link" data-section="settings">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Overview Section -->
+                <section id="overviewSection" class="dashboard-section active">
+                    <div class="section-header">
+                        <h2>Dashboard Overview</h2>
+                        <div class="platform-indicator">
+                            <span id="currentPlatform">Telegram Bot</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card users">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalUsers">0</h3>
+                                <p>Total Users</p>
+                            </div>
+                        </div>
+
+                        <div class="stat-card revenue">
+                            <div class="stat-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalRevenue">$0</h3>
+                                <p>Total Revenue</p>
+                            </div>
+                        </div>
+
+                        <div class="stat-card transactions">
+                            <div class="stat-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalTransactions">0</h3>
+                                <p>Transactions</p>
+                            </div>
+                        </div>
+
+                        <div class="stat-card active-users">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="activeUsers">0</h3>
+                                <p>Active Today</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users Section -->
+                <section id="usersSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>User Management</h2>
+                        <button class="btn-primary" onclick="refreshUsers()">
+                            <i class="fas fa-sync"></i>
+                            Refresh Users
+                        </button>
+                    </div>
+
+                    <div class="users-table-container">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Platform</th>
+                                    <th>Points</th>
+                                    <th>Balance</th>
+                                    <th>VIP Status</th>
+                                    <th>VIP Expires</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- Users will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Transactions Section -->
+                <section id="transactionsSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Transaction Management</h2>
+                    </div>
+
+                    <div class="transactions-grid" id="transactionsGrid">
+                        <!-- Transaction cards will be loaded here -->
+                    </div>
+                </section>
+
+                <!-- Contests Section -->
+                <section id="contestsSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Contest Management</h2>
+                        <button class="btn-primary" onclick="processContestWinners()">
+                            <i class="fas fa-trophy"></i>
+                            Process Winners
+                        </button>
+                    </div>
+
+                    <div class="contests-grid" id="contestsGrid">
+                        <!-- Contest cards will be loaded here -->
+                    </div>
+                </section>
+
+                <!-- System Control Section -->
+                <section id="restartSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>System Control</h2>
+                    </div>
+
+                    <div class="restart-section">
+                        <h3>⚠️ System Restart & Control</h3>
+                        <p>Use these controls to restart or reset system components. <strong>Use with caution!</strong></p>
+                        
+                        <div class="restart-actions">
+                            <button class="btn-primary" onclick="restartBot()">
+                                <i class="fab fa-telegram"></i>
+                                Restart Telegram Bot
+                            </button>
+                            
+                            <button class="btn-primary" onclick="restartMobileApp()">
+                                <i class="fas fa-mobile-alt"></i>
+                                Restart Mobile App
+                            </button>
+                            
+                            <button class="btn-danger" onclick="resetAllContests()">
+                                <i class="fas fa-trophy"></i>
+                                Reset All Contests
+                            </button>
+                            
+                            <button class="btn-danger" onclick="resetAllUsers()">
+                                <i class="fas fa-users"></i>
+                                Reset All Users
+                            </button>
+                            
+                            <button class="btn-primary" onclick="clearCache()">
+                                <i class="fas fa-broom"></i>
+                                Clear System Cache
+                            </button>
+                            
+                            <button class="btn-primary" onclick="syncDatabase()">
+                                <i class="fas fa-database"></i>
+                                Sync Database
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settingsSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>System Settings</h2>
+                        <button class="btn-primary" onclick="saveSettings()">
+                            <i class="fas fa-save"></i>
+                            Save Settings
+                        </button>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div style="flex: 1;">
+                                <h3>Ad Configuration</h3>
+                                <div class="form-group" style="margin-top: 15px;">
+                                    <label>Points per Ad</label>
+                                    <input type="number" id="pointsPerAd" value="1.1" step="0.1" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Ad Duration (seconds)</label>
+                                    <input type="number" id="adDuration" value="30" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Cooldown Between Ads (minutes)</label>
+                                    <input type="number" id="adCooldown" value="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                                <div class="form-group">
+                                    <label>VIP Cooldown (minutes)</label>
+                                    <input type="number" id="vipCooldown" value="1" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div style="flex: 1;">
+                                <h3>Contest Settings</h3>
+                                <div class="form-group" style="margin-top: 15px;">
+                                    <label>Daily Winners</label>
+                                    <input type="number" id="dailyWinners" value="1" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Weekly Winners</label>
+                                    <input type="number" id="weeklyWinners" value="5" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Monthly Winners</label>
+                                    <input type="number" id="monthlyWinners" value="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Title</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Modal content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Admin Dashboard JavaScript
+        let currentPlatform = 'telegram_bot';
+        let adminAPI = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hide loading screen after 2 seconds
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.display = 'none';
+            }, 2000);
+
+            // Handle login
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Handle platform switching
+            document.querySelectorAll('.platform-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchPlatform(btn.dataset.platform));
+            });
+
+            // Handle navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showSection(link.dataset.section);
+                });
+            });
+
+            // Handle logout
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+        });
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Simple auth (replace with real authentication)
+            if (username === 'admin' && password === 'navigi2024') {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                
+                // Initialize admin API
+                initializeAdminAPI();
+                loadDashboardData();
+                
+                showToast('Welcome to NAVIGI SBARO Admin Dashboard!', 'success');
+            } else {
+                showToast('Invalid credentials!', 'error');
+            }
+        }
+
+        function initializeAdminAPI() {
+            // Initialize with your backend URL
+            adminAPI = {
+                baseURL: 'https://navigiu.netlify.app/.netlify/functions',
+                platform: currentPlatform
+            };
+        }
+
+        function switchPlatform(platform) {
+            currentPlatform = platform;
+            
+            // Update UI
+            document.querySelectorAll('.platform-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.platform === platform);
+            });
+            
+            document.getElementById('currentPlatform').textContent = 
+                platform === 'telegram_bot' ? 'Telegram Bot' : 'Mobile App';
+            
+            // Reload data for new platform
+            loadDashboardData();
+            
+            showToast(`Switched to ${platform === 'telegram_bot' ? 'Telegram Bot' : 'Mobile App'}`, 'info');
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.dashboard-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName + 'Section').classList.add('active');
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.section === sectionName);
+            });
+
+            // Load section-specific data
+            loadSectionData(sectionName);
+        }
+
+        async function loadDashboardData() {
+            try {
+                // Load real data from backend
+                const stats = await fetchDashboardStats();
+                updateStatsDisplay(stats);
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+                // Show demo data
+                updateStatsDisplay({
+                    totalUsers: 1250,
+                    totalRevenue: 5420.50,
+                    totalTransactions: 234,
+                    activeUsers: 89
+                });
+            }
+        }
+
+        async function fetchDashboardStats() {
+            const response = await fetch(`${adminAPI.baseURL}/admin-dashboard-stats?platform=${currentPlatform}`);
+            return await response.json();
+        }
+
+        function updateStatsDisplay(stats) {
+            document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+            document.getElementById('totalRevenue').textContent = `$${(stats.totalRevenue || 0).toFixed(2)}`;
+            document.getElementById('totalTransactions').textContent = stats.totalTransactions || 0;
+            document.getElementById('activeUsers').textContent = stats.activeUsers || 0;
+        }
+
+        async function loadSectionData(section) {
+            switch(section) {
+                case 'users':
+                    await loadUsers();
+                    break;
+                case 'transactions':
+                    await loadTransactions();
+                    break;
+                case 'contests':
+                    await loadContests();
+                    break;
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                // Load real users from backend
+                const users = await fetchUsers();
+                displayUsers(users);
+            } catch (error) {
+                console.error('Failed to load users:', error);
+                // Show demo users
+                displayUsers([
+                    {
+                        id: 123456789,
+                        name: 'John Doe',
+                        username: '@johndoe',
+                        platform: currentPlatform,
+                        points: 1250,
+                        balance: 12.50,
+                        vipStatus: 'EMPEROR',
+                        vipExpires: '2024-02-15',
+                        joinedAt: '2024-01-01'
+                    }
+                ]);
+            }
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>
+                        <div>
+                            <strong>${user.name}</strong><br>
+                            <small style="color: #718096;">${user.username || 'ID: ' + user.id}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <i class="fa${currentPlatform === 'telegram_bot' ? 'b fa-telegram' : 's fa-mobile-alt'}"></i>
+                        ${currentPlatform === 'telegram_bot' ? 'Telegram' : 'Mobile'}
+                    </td>
+                    <td>${user.points}</td>
+                    <td>$${user.balance.toFixed(2)}</td>
+                    <td>
+                        <span class="vip-badge ${user.vipStatus.toLowerCase()}">
+                            ${user.vipStatus}
+                        </span>
+                    </td>
+                    <td>${user.vipExpires || 'Never'}</td>
+                    <td>
+                        <button class="btn-primary" onclick="editUser(${user.id})" style="padding: 5px 10px; font-size: 12px;">
+                            Edit
+                        </button>
+                        <button class="btn-primary" onclick="approveVIP(${user.id})" style="padding: 5px 10px; font-size: 12px; margin-left: 5px;">
+                            VIP
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function fetchUsers() {
+            const response = await fetch(`${adminAPI.baseURL}/admin-users?platform=${currentPlatform}`);
+            return await response.json();
+        }
+
+        async function loadTransactions() {
+            // Load pending transactions that need approval
+            const tbody = document.getElementById('transactionsGrid');
+            tbody.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4>VIP Payment Request</h4>
+                    <p><strong>User:</strong> @cryptoking</p>
+                    <p><strong>Tier:</strong> EMPEROR ($9.00)</p>
+                    <p><strong>Payment Method:</strong> TON</p>
+                    <p><strong>Transaction Hash:</strong> abc123...def456</p>
+                    <div style="margin-top: 15px;">
+                        <button class="btn-primary" onclick="approveTransaction('tx_123')">Approve</button>
+                        <button class="btn-danger" onclick="rejectTransaction('tx_123')">Reject</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadContests() {
+            const grid = document.getElementById('contestsGrid');
+            grid.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4>Daily Contest</h4>
+                    <p><strong>Participants:</strong> 156 users</p>
+                    <p><strong>Total Ads Watched:</strong> 1,560</p>
+                    <p><strong>Prize Pool:</strong> 312 points (20% of total)</p>
+                    <p><strong>Status:</strong> Active</p>
+                </div>
+                <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4>Weekly Contest</h4>
+                    <p><strong>Participants:</strong> 89 users</p>
+                    <p><strong>Total Ads Watched:</strong> 2,670</p>
+                    <p><strong>Prize Pool:</strong> 267 points per winner (10% each)</p>
+                    <p><strong>Status:</strong> Active</p>
+                </div>
+            `;
+        }
+
+        // System Control Functions
+        async function restartBot() {
+            if (confirm('Are you sure you want to restart the Telegram Bot? This will temporarily disconnect all users.')) {
+                try {
+                    await fetch(`${adminAPI.baseURL}/admin-restart-bot`, { method: 'POST' });
+                    showToast('Telegram Bot restarted successfully!', 'success');
+                } catch (error) {
+                    showToast('Failed to restart bot: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function restartMobileApp() {
+            if (confirm('Are you sure you want to restart the Mobile App services?')) {
+                try {
+                    await fetch(`${adminAPI.baseURL}/admin-restart-app`, { method: 'POST' });
+                    showToast('Mobile App services restarted successfully!', 'success');
+                } catch (error) {
+                    showToast('Failed to restart app: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function resetAllContests() {
+            if (confirm('⚠️ This will reset ALL contests and clear all participant data. Are you absolutely sure?')) {
+                try {
+                    await fetch(`${adminAPI.baseURL}/admin-reset-contests`, { method: 'POST' });
+                    showToast('All contests have been reset!', 'success');
+                    loadContests();
+                } catch (error) {
+                    showToast('Failed to reset contests: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function resetAllUsers() {
+            if (confirm('⚠️ DANGER: This will reset ALL user data including points, balances, and VIP status. This action cannot be undone!')) {
+                const confirmation = prompt('Type "RESET ALL USERS" to confirm:');
+                if (confirmation === 'RESET ALL USERS') {
+                    try {
+                        await fetch(`${adminAPI.baseURL}/admin-reset-users`, { method: 'POST' });
+                        showToast('All user data has been reset!', 'success');
+                        loadUsers();
+                    } catch (error) {
+                        showToast('Failed to reset users: ' + error.message, 'error');
+                    }
+                }
+            }
+        }
+
+        async function clearCache() {
+            try {
+                await fetch(`${adminAPI.baseURL}/admin-clear-cache`, { method: 'POST' });
+                showToast('System cache cleared successfully!', 'success');
+            } catch (error) {
+                showToast('Failed to clear cache: ' + error.message, 'error');
+            }
+        }
+
+        async function syncDatabase() {
+            try {
+                await fetch(`${adminAPI.baseURL}/admin-sync-database`, { method: 'POST' });
+                showToast('Database synchronized successfully!', 'success');
+                loadDashboardData();
+            } catch (error) {
+                showToast('Failed to sync database: ' + error.message, 'error');
+            }
+        }
+
+        // User Management Functions
+        function editUser(userId) {
+            showModal('Edit User', `
+                <div class="form-group">
+                    <label>Points</label>
+                    <input type="number" id="editPoints" placeholder="Enter points">
+                </div>
+                <div class="form-group">
+                    <label>Balance ($)</label>
+                    <input type="number" id="editBalance" step="0.01" placeholder="Enter balance">
+                </div>
+                <div class="form-group">
+                    <label>VIP Status</label>
+                    <select id="editVipStatus">
+                        <option value="FREE">FREE</option>
+                        <option value="KING">KING</option>
+                        <option value="EMPEROR">EMPEROR</option>
+                        <option value="LORD">LORD</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="saveUserChanges(${userId})">Save Changes</button>
+            `);
+        }
+
+        function approveVIP(userId) {
+            showModal('Approve VIP', `
+                <div class="form-group">
+                    <label>VIP Tier</label>
+                    <select id="vipTier">
+                        <option value="KING">KING - $2.50/month</option>
+                        <option value="EMPEROR">EMPEROR - $9.00/month</option>
+                        <option value="LORD">LORD - $25.00/month</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Duration (days)</label>
+                    <input type="number" id="vipDuration" value="30" min="1">
+                </div>
+                <button class="btn-primary" onclick="processVIPApproval(${userId})">Approve VIP</button>
+            `);
+        }
+
+        async function processVIPApproval(userId) {
+            const tier = document.getElementById('vipTier').value;
+            const duration = document.getElementById('vipDuration').value;
+            
+            try {
+                await fetch(`${adminAPI.baseURL}/admin-approve-vip`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        vip_tier: tier,
+                        duration: parseInt(duration),
+                        platform: currentPlatform
+                    })
+                });
+                
+                showToast(`VIP ${tier} approved for ${duration} days!`, 'success');
+                closeModal();
+                loadUsers();
+            } catch (error) {
+                showToast('Failed to approve VIP: ' + error.message, 'error');
+            }
+        }
+
+        async function approveTransaction(txId) {
+            try {
+                await fetch(`${adminAPI.baseURL}/admin-approve-transaction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transaction_id: txId, approved: true })
+                });
+                
+                showToast('Transaction approved!', 'success');
+                loadTransactions();
+            } catch (error) {
+                showToast('Failed to approve transaction: ' + error.message, 'error');
+            }
+        }
+
+        async function rejectTransaction(txId) {
+            try {
+                await fetch(`${adminAPI.baseURL}/admin-approve-transaction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transaction_id: txId, approved: false })
+                });
+                
+                showToast('Transaction rejected!', 'success');
+                loadTransactions();
+            } catch (error) {
+                showToast('Failed to reject transaction: ' + error.message, 'error');
+            }
+        }
+
+        async function processContestWinners() {
+            if (confirm('Process contest winners and distribute rewards?')) {
+                try {
+                    await fetch(`${adminAPI.baseURL}/admin-process-winners`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ platform: currentPlatform })
+                    });
+                    
+                    showToast('Contest winners processed successfully!', 'success');
+                    loadContests();
+                } catch (error) {
+                    showToast('Failed to process winners: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function refreshUsers() {
+            showToast('Refreshing users...', 'info');
+            await loadUsers();
+            showToast('Users refreshed!', 'success');
+        }
+
+        async function saveSettings() {
+            const settings = {
+                pointsPerAd: parseFloat(document.getElementById('pointsPerAd').value),
+                adDuration: parseInt(document.getElementById('adDuration').value),
+                adCooldown: parseInt(document.getElementById('adCooldown').value),
+                vipCooldown: parseInt(document.getElementById('vipCooldown').value),
+                dailyWinners: parseInt(document.getElementById('dailyWinners').value),
+                weeklyWinners: parseInt(document.getElementById('weeklyWinners').value),
+                monthlyWinners: parseInt(document.getElementById('monthlyWinners').value)
+            };
+
+            try {
+                await fetch(`${adminAPI.baseURL}/admin-update-settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ settings, platform: currentPlatform })
+                });
+                
+                showToast('Settings saved successfully!', 'success');
+            } catch (error) {
+                showToast('Failed to save settings: ' + error.message, 'error');
+            }
+        }
+
+        // Utility Functions
+        function showModal(title, content) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = content;
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                document.getElementById('dashboard').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+            }
+        }
+    </script>
+</body>
+</html>

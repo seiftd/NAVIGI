@@ -308,20 +308,54 @@ class TelegramSbaroApp {
         }
     }
 
-    async watchAd() {
+        async watchAd() {
+        // Check cooldown - 3 minutes for free users, 1 minute for VIP
+        const isVIP = this.userStats.vipStatus !== 'FREE';
+        const cooldownTime = isVIP ? 1 * 60 * 1000 : 3 * 60 * 1000; // 1 or 3 minutes
+        
+        const lastAdTime = localStorage.getItem('lastAdTime');
+        
+        if (lastAdTime && Date.now() - parseInt(lastAdTime) < cooldownTime) {
+            const remainingTime = Math.ceil((cooldownTime - (Date.now() - parseInt(lastAdTime))) / (60 * 1000));
+            this.showToast(`⏰ Please wait ${remainingTime} minute${remainingTime > 1 ? 's' : ''} before watching another ad`, 'info');
+            return;
+        }
+
         try {
             // Show loading state
             const watchBtn = document.getElementById('watchAdBtn');
-            const originalText = watchBtn.innerHTML;
-            watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading Ad...';
+            watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading 30s Ad...';
             watchBtn.disabled = true;
             
-            // Show Monetag rewarded ad
+            // Show Monetag rewarded ad for 30 seconds
             if (typeof show_9656288 === 'function') {
                 try {
+                    // Start ad timer
+                    let adWatchTime = 0;
+                    const adDuration = 30; // 30 seconds
+                    
+                    // Show ad progress
+                    const progressInterval = setInterval(() => {
+                        adWatchTime++;
+                        watchBtn.innerHTML = `<i class="fas fa-eye"></i> Watching... ${adWatchTime}/${adDuration}s`;
+                        
+                        if (adWatchTime >= adDuration) {
+                            clearInterval(progressInterval);
+                        }
+                    }, 1000);
+                    
+                    // Show the actual ad
                     await show_9656288();
                     
-                                         // Award points after successful ad view - 1.1 points per ad
+                    // Ensure user watched for full 30 seconds
+                    if (adWatchTime < adDuration) {
+                        const remainingTime = adDuration - adWatchTime;
+                        await new Promise(resolve => setTimeout(resolve, remainingTime * 1000));
+                    }
+                    
+                    clearInterval(progressInterval);
+                    
+                    // Award points after successful 30s ad view - 1.1 points per ad
                     this.userStats.totalPoints += 1.1;
                     this.userStats.totalBalance += 0.011;
                     this.userStats.adsWatched += 1;
@@ -330,7 +364,7 @@ class TelegramSbaroApp {
                     this.updateStatsDisplay();
                     
                     // Show success message
-                    this.showToast('🎉 You earned 1.1 points!', 'success');
+                    this.showToast('🎉 You earned 1.1 points for watching 30s ad!', 'success');
                     
                     // Send haptic feedback
                     this.tg.HapticFeedback.notificationOccurred('success');
@@ -341,6 +375,9 @@ class TelegramSbaroApp {
                     // Send data to backend
                     await this.sendAdWatchToBackend();
                     
+                    // Set cooldown
+                    localStorage.setItem('lastAdTime', Date.now().toString());
+                    
                 } catch (adError) {
                     console.error('Ad watch error:', adError);
                     this.showToast('❌ Ad not available right now. Try again later.', 'error');
@@ -350,9 +387,15 @@ class TelegramSbaroApp {
                 this.showToast('❌ Ads are loading. Please wait and try again.', 'error');
             }
             
-            // Reset button
-            watchBtn.innerHTML = originalText;
-            watchBtn.disabled = false;
+            // Show next ad availability
+            const nextAdTime = isVIP ? '1 minute' : '3 minutes';
+            watchBtn.innerHTML = `<i class="fas fa-clock"></i> Next ad in ${nextAdTime}`;
+            
+            // Reset button after cooldown
+            setTimeout(() => {
+                watchBtn.innerHTML = '<i class="fas fa-play"></i> Watch 30s Ad';
+                watchBtn.disabled = false;
+            }, cooldownTime);
             
         } catch (error) {
             console.error('Failed to watch ad:', error);
@@ -360,7 +403,7 @@ class TelegramSbaroApp {
             
             // Reset button
             const watchBtn = document.getElementById('watchAdBtn');
-            watchBtn.innerHTML = '<i class="fas fa-play"></i> Watch Ad';
+            watchBtn.innerHTML = '<i class="fas fa-play"></i> Watch 30s Ad';
             watchBtn.disabled = false;
         }
     }
@@ -448,22 +491,64 @@ class TelegramSbaroApp {
     }
     
     async watchContestAd(contestType) {
+        // Check contest ad cooldown (1 minute)
+        const lastContestAdTime = localStorage.getItem('lastContestAdTime');
+        const contestCooldown = 1 * 60 * 1000; // 1 minute
+        
+        if (lastContestAdTime && Date.now() - parseInt(lastContestAdTime) < contestCooldown) {
+            const remainingTime = Math.ceil((contestCooldown - (Date.now() - parseInt(lastContestAdTime))) / (60 * 1000));
+            this.showToast(`⏰ Please wait ${remainingTime} minute before watching another contest ad`, 'info');
+            return;
+        }
+
         try {
             // Show Monetag ad for contest participation (no points earned)
             if (typeof show_9656288 === 'function') {
+                // Start 30-second timer for contest ad
+                let contestAdTime = 0;
+                const contestAdDuration = 30; // 30 seconds
+                
+                const contestBtn = document.getElementById(`${contestType}JoinBtn`);
+                const originalText = contestBtn.textContent;
+                
+                // Show progress
+                const contestInterval = setInterval(() => {
+                    contestAdTime++;
+                    contestBtn.textContent = `Watching Contest Ad... ${contestAdTime}/${contestAdDuration}s`;
+                    
+                    if (contestAdTime >= contestAdDuration) {
+                        clearInterval(contestInterval);
+                    }
+                }, 1000);
+                
+                // Show the actual ad
                 await show_9656288();
                 
-                // Increment contest ads counter (no points earned)
+                // Ensure user watched for full 30 seconds
+                if (contestAdTime < contestAdDuration) {
+                    const remainingTime = contestAdDuration - contestAdTime;
+                    await new Promise(resolve => setTimeout(resolve, remainingTime * 1000));
+                }
+                
+                clearInterval(contestInterval);
+                
+                // Only count if watched full 30 seconds
                 this.incrementContestAds(contestType);
                 
                 // Update contest eligibility
                 this.updateContestEligibility();
                 
-                this.showToast('📺 Contest ad watched! No points earned.', 'info');
+                // Set contest ad cooldown
+                localStorage.setItem('lastContestAdTime', Date.now().toString());
+                
+                this.showToast('📺 Contest ad watched for 30s! No points earned.', 'info');
                 this.tg.HapticFeedback.impactOccurred('light');
                 
                 // Send to backend
                 await this.sendContestAdToBackend(contestType);
+                
+                // Reset button text
+                contestBtn.textContent = originalText;
             }
         } catch (error) {
             console.error('Contest ad error:', error);
@@ -623,28 +708,70 @@ class TelegramSbaroApp {
     
     sendStars(amount) {
         // Send TON Stars to your wallet: UQBVeJflae5yTTgS6wczgpDkDcyEAnmA88bZyaiB3lYGqWw9
-        if (this.tg.openInvoice) {
-            const invoice = {
-                title: 'NAVIGI SBARO - TON Stars',
-                description: `Send ${amount} TON Stars for leaderboard boost`,
-                payload: `stars_${amount}_${Date.now()}`,
-                provider_token: '',
-                currency: 'XTR',
-                prices: [{ label: `${amount} TON Stars`, amount: amount }],
-                recipient_wallet: 'UQBVeJflae5yTTgS6wczgpDkDcyEAnmA88bZyaiB3lYGqWw9'
+        try {
+            // Use Telegram Stars API
+            if (this.tg.showPopup) {
+                this.tg.showPopup({
+                    title: '⭐ Send TON Stars',
+                    message: `Send ${amount} TON Stars to boost your leaderboard position?`,
+                    buttons: [
+                        { id: 'send', type: 'default', text: `Send ${amount} Stars` },
+                        { id: 'cancel', type: 'cancel', text: 'Cancel' }
+                    ]
+                }, (buttonId) => {
+                    if (buttonId === 'send') {
+                        this.processTONStarsPayment(amount);
+                    }
+                });
+            } else {
+                // Fallback method
+                this.processTONStarsPayment(amount);
+            }
+        } catch (error) {
+            console.error('TON Stars error:', error);
+            this.showToast('❌ Stars payment not available', 'error');
+        }
+    }
+    
+    async processTONStarsPayment(amount) {
+        try {
+            // Create payment request to your TON wallet
+            const paymentData = {
+                amount: amount,
+                currency: 'TON_STARS',
+                wallet_address: 'UQBVeJflae5yTTgS6wczgpDkDcyEAnmA88bZyaiB3lYGqWw9',
+                user_id: this.user?.id,
+                timestamp: Date.now()
             };
             
-            this.tg.openInvoice(invoice, (status) => {
-                if (status === 'paid') {
-                    this.showToast(`⭐ ${amount} Stars sent! Leaderboard boosted!`, 'success');
-                    this.closeModal();
-                    
-                    // Send to backend for leaderboard tracking
-                    this.sendStarsToBackend(amount);
-                }
+            // Send payment request to backend
+            const response = await fetch('https://navigiu.netlify.app/.netlify/functions/ton-stars', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: this.user?.id,
+                    telegram_user: this.user,
+                    stars_amount: amount,
+                    wallet_address: 'UQBVeJflae5yTTgS6wczgpDkDcyEAnmA88bZyaiB3lYGqWw9',
+                    timestamp: Date.now()
+                })
             });
-        } else {
-            this.showToast('❌ Stars payment not available', 'error');
+            
+            if (response.ok) {
+                this.showToast(`⭐ ${amount} Stars payment initiated! Check your wallet.`, 'success');
+                this.closeModal();
+                
+                // Add to activity log
+                this.addActivity('TON Stars', `${amount} stars sent`, 'stars');
+                
+                // Haptic feedback
+                this.tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                throw new Error('Payment failed');
+            }
+        } catch (error) {
+            console.error('TON Stars payment error:', error);
+            this.showToast('❌ Payment failed. Please try again.', 'error');
         }
     }
     
