@@ -136,42 +136,57 @@ function generateDemoUserId() {
 
 // Initialize tier information
 function initializeTier() {
-    const tier = VIP_TIERS[selectedTier] || VIP_TIERS.king;
-    const isArabic = document.documentElement.getAttribute('lang') === 'ar';
+    // Get tier from URL or default to king
+    const tier = selectedTier || 'king';
     
-    console.log('Initializing tier:', {
-        selectedTier: selectedTier,
-        tier: tier,
-        tierName: tier.name,
-        tierPrice: tier.price
-    });
-    
-    // Update tier info
-    const tierIcon = document.getElementById('tierIcon');
-    const tierName = document.getElementById('tierName');
-    const tierPrice = document.getElementById('tierPrice');
-    const paymentAmount = document.getElementById('paymentAmount');
-    
-    if (tierIcon) tierIcon.textContent = tier.icon;
-    if (tierName) tierName.textContent = tier.name[isArabic ? 'ar' : 'en'];
-    if (tierPrice) tierPrice.textContent = tier.price + '/month';
-    if (paymentAmount) paymentAmount.textContent = tier.price;
-    
-    console.log('Tier elements updated:', {
-        icon: tierIcon?.textContent,
-        name: tierName?.textContent,
-        price: tierPrice?.textContent,
-        amount: paymentAmount?.textContent
-    });
-    
-    // Update tier colors
-    const tierInfo = document.getElementById('tierInfo');
-    if (tierInfo) {
-        tierInfo.style.background = `linear-gradient(135deg, ${tier.color} 0%, #2ECC71 100%)`;
+    if (!VIP_TIERS[tier]) {
+        console.warn('Unknown tier:', tier, 'defaulting to king');
+        selectedTier = 'king';
+    } else {
+        selectedTier = tier;
     }
     
-    // Populate benefits
+    console.log('✅ Initialized tier:', selectedTier);
+    
+    // Update tier display
+    updateTierDisplay();
+}
+
+// Update tier display function
+function updateTierDisplay() {
+    const tier = VIP_TIERS[selectedTier];
+    if (!tier) return;
+    
+    const isArabic = document.documentElement.getAttribute('lang') === 'ar';
+    
+    // Update tier name and price
+    const tierNameEl = document.getElementById('tierName');
+    const tierPriceEl = document.getElementById('tierPrice');
+    const paymentAmountEl = document.getElementById('paymentAmount');
+    
+    if (tierNameEl) {
+        tierNameEl.textContent = tier.name[isArabic ? 'ar' : 'en'];
+        tierNameEl.style.color = tier.color;
+    }
+    
+    if (tierPriceEl) {
+        tierPriceEl.textContent = tier.price + '/month';
+    }
+    
+    if (paymentAmountEl) {
+        paymentAmountEl.textContent = tier.price;
+    }
+    
+    // Update tier icon
+    const tierIconEl = document.getElementById('tierIcon');
+    if (tierIconEl) {
+        tierIconEl.textContent = tier.icon;
+    }
+    
+    // Update benefits
     populateTierBenefits(tier, isArabic);
+    
+    console.log('✅ Tier display updated for:', selectedTier);
 }
 
 // Populate tier benefits
@@ -1149,3 +1164,139 @@ window.returnToApp = returnToApp;
 window.trackPayment = trackPayment;
 window.toggleLanguage = toggleLanguage;
 window.removeImage = removeImage;
+window.goToTransactionPage = goToTransactionPage;
+window.submitTransaction = submitTransaction;
+window.copyEmail = copyEmail;
+
+// New function to go to transaction page
+function goToTransactionPage() {
+    console.log('🔄 Going to transaction submission page...');
+    showStep(2);
+}
+
+// New function to submit transaction to admin
+async function submitTransaction() {
+    console.log('🔄 Submitting transaction to admin...');
+    
+    const transactionHash = document.getElementById('transactionHash')?.value.trim();
+    
+    if (!transactionHash || transactionHash.length < 10) {
+        showToast('❌ Please enter a valid transaction hash', 'error');
+        document.getElementById('transactionHash')?.focus();
+        return;
+    }
+    
+    // Show loading
+    showLoadingOverlay(true);
+    const doneBtn = document.getElementById('doneBtn');
+    if (doneBtn) {
+        doneBtn.disabled = true;
+        doneBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Submitting to Admin...</span>';
+    }
+    
+    try {
+        // Create submission data for admin
+        const submissionData = {
+            id: generateSubmissionId(),
+            userId: currentUserId || 'web_user_' + Date.now(),
+            tier: selectedTier || 'king',
+            tierName: VIP_TIERS[selectedTier]?.name.en || 'KING TIER',
+            amount: VIP_TIERS[selectedTier]?.amount || '2.50',
+            currency: 'USDT',
+            network: 'TRC20',
+            transactionHash: transactionHash,
+            status: 'pending_admin_review',
+            submittedAt: new Date().toISOString(),
+            tronAddress: TRON_CONFIG.address,
+            userEmail: `user_${currentUserId || 'web'}@navigi.app`,
+            submissionMethod: 'website',
+            supportEmail: 'navigisup@gmail.com',
+            approvalTime: '2 hours',
+            notes: 'User submitted transaction hash, screenshot sent to support email'
+        };
+        
+        // Save to localStorage
+        saveToLocalStorage(submissionData);
+        
+        // Send to admin dashboard if Firebase available
+        if (db) {
+            try {
+                await db.collection('vip_transactions').add(submissionData);
+                await db.collection('admin_notifications').add({
+                    type: 'vip_transaction_submitted',
+                    title: 'New VIP Transaction Submitted',
+                    message: `User submitted ${submissionData.tierName} payment - Hash: ${transactionHash.substring(0, 20)}...`,
+                    submissionId: submissionData.id,
+                    userId: submissionData.userId,
+                    tier: submissionData.tier,
+                    amount: submissionData.amount,
+                    transactionHash: transactionHash,
+                    isRead: false,
+                    priority: 'high',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('✅ Transaction submitted to admin dashboard');
+            } catch (firebaseError) {
+                console.warn('⚠️ Firebase submission failed:', firebaseError);
+            }
+        }
+        
+        // Update confirmation details
+        updateConfirmationDetails(submissionData);
+        
+        // Show success step
+        showStep(3);
+        
+        showToast('✅ Transaction submitted to admin! Check your email for updates.', 'success');
+        
+        console.log('✅ Transaction submission completed');
+        
+    } catch (error) {
+        console.error('❌ Transaction submission error:', error);
+        showToast('❌ Failed to submit transaction. Please try again.', 'error');
+        
+        // Reset button
+        if (doneBtn) {
+            doneBtn.disabled = false;
+            doneBtn.innerHTML = '<i class="fas fa-check"></i> <span>Done - Submit to Admin</span>';
+        }
+    } finally {
+        showLoadingOverlay(false);
+    }
+}
+
+// Function to copy support email
+function copyEmail() {
+    const email = 'navigisup@gmail.com';
+    
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(email).then(() => {
+            showToast('✅ Support email copied to clipboard!', 'success');
+        }).catch(() => {
+            fallbackCopyEmail(email);
+        });
+    } else {
+        fallbackCopyEmail(email);
+    }
+}
+
+// Fallback email copy
+function fallbackCopyEmail(email) {
+    const textArea = document.createElement('textarea');
+    textArea.value = email;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showToast('✅ Support email copied to clipboard!', 'success');
+    } catch (err) {
+        showToast('❌ Copy failed. Email: navigisup@gmail.com', 'error');
+    } finally {
+        document.body.removeChild(textArea);
+    }
+}
