@@ -84,14 +84,7 @@
                                 </div>
                             </div>
                             
-                            <div class="qr-section">
-                                <label data-en="Scan QR Code:" data-ar="امسح رمز QR:">Scan QR Code:</label>
-                                <div class="qr-container">
-                                    <canvas id="qrCode" style="display: none;"></canvas>
-                                    <div id="qrCodeDisplay"></div>
-                                    <p class="qr-note" data-en="Scan with your TRON wallet" data-ar="امسح باستخدام محفظة ترون الخاصة بك">Scan with your TRON wallet</p>
-                                </div>
-                            </div>
+                            <!-- QR Code section removed as requested -->
                         </div>
                         
                         <div class="payment-warnings">
@@ -109,11 +102,73 @@
                         </div>
                     </div>
                     
-                    <button class="next-btn" onclick="goToStep2()" data-en="I've Sent the Payment" data-ar="لقد أرسلت الدفعة">I've Sent the Payment</button>
+                    <button class="next-btn" onclick="goToTransactionPage()" data-en="Send Payment" data-ar="إرسال الدفعة">Send Payment</button>
                 </div>
 
-                <!-- Step 2: Upload Proof -->
+                <!-- Step 2: Transaction Submission -->
                 <div class="step" id="step2">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <h3 data-en="Submit Transaction Hash" data-ar="إرسال هاش المعاملة">Submit Transaction Hash</h3>
+                    </div>
+                    
+                    <div class="transaction-submission">
+                        <div class="info-card">
+                            <div class="info-header">
+                                <i class="fas fa-info-circle"></i>
+                                <h4 data-en="Payment Instructions" data-ar="تعليمات الدفع">Payment Instructions</h4>
+                            </div>
+                            <ol>
+                                <li data-en="Send the exact amount to the TRON address above" data-ar="أرسل المبلغ المحدد إلى عنوان ترون أعلاه">Send the exact amount to the TRON address above</li>
+                                <li data-en="Copy your transaction hash from your wallet" data-ar="انسخ هاش المعاملة من محفظتك">Copy your transaction hash from your wallet</li>
+                                <li data-en="Enter the transaction hash below" data-ar="أدخل هاش المعاملة أدناه">Enter the transaction hash below</li>
+                                <li data-en="Send screenshot to our support email" data-ar="أرسل لقطة الشاشة لبريد الدعم">Send screenshot to our support email</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label data-en="Transaction Hash (Required):" data-ar="هاش المعاملة (مطلوب):">Transaction Hash (Required):</label>
+                            <input type="text" id="transactionHash" placeholder="Enter your transaction hash..." required>
+                            <small data-en="Copy this from your TRON wallet after sending payment" data-ar="انسخ هذا من محفظة ترون بعد إرسال الدفعة">Copy this from your TRON wallet after sending payment</small>
+                        </div>
+                        
+                        <div class="support-section">
+                            <div class="support-card">
+                                <h4 data-en="Send Transaction Screenshot" data-ar="أرسل لقطة شاشة المعاملة">Send Transaction Screenshot</h4>
+                                <p data-en="Please send a screenshot of your transaction to:" data-ar="يرجى إرسال لقطة شاشة للمعاملة إلى:">Please send a screenshot of your transaction to:</p>
+                                <div class="email-container">
+                                    <i class="fas fa-envelope"></i>
+                                    <a href="mailto:navigisup@gmail.com" class="support-email">navigisup@gmail.com</a>
+                                    <button onclick="copyEmail()" class="copy-email-btn" title="Copy email">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <p class="email-note" data-en="Include your transaction hash in the email" data-ar="قم بتضمين هاش المعاملة في البريد الإلكتروني">Include your transaction hash in the email</p>
+                            </div>
+                        </div>
+                        
+                        <div class="approval-notice">
+                            <div class="notice-card">
+                                <i class="fas fa-clock"></i>
+                                <div>
+                                    <h4 data-en="Approval Time" data-ar="وقت الموافقة">Approval Time</h4>
+                                    <p data-en="Admin will approve your VIP upgrade within 2 hours after verification" data-ar="سيوافق المشرف على ترقية VIP الخاصة بك خلال ساعتين بعد التحقق">Admin will approve your VIP upgrade within 2 hours after verification</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-buttons">
+                        <button class="back-btn" onclick="goToStep1()" data-en="Back" data-ar="رجوع">Back</button>
+                        <button class="done-btn" onclick="submitTransaction()" id="doneBtn">
+                            <i class="fas fa-check"></i>
+                            <span data-en="Done - Submit to Admin" data-ar="تم - إرسال للمشرف">Done - Submit to Admin</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Old Upload Proof (Hidden) -->
+                <div class="step" id="step2_old" style="display: none;">
                     <div class="step-header">
                         <div class="step-number">2</div>
                         <h3 data-en="Upload Payment Proof" data-ar="ارفع إثبات الدفع">Upload Payment Proof</h3>
