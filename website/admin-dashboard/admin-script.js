@@ -288,23 +288,12 @@ function handleLogin(e) {
         console.error('Login failed - credentials mismatch');
         showNotification('Invalid credentials. Please try again.', 'error');
         
-        // Show expected credentials in console for debugging
-        console.log('Use these credentials:');
-        console.log('Email: seiftouatllol@gmail.com');
-        console.log('Password: seif0662');
+        // Login failed
+        console.log('Invalid credentials entered');
     }
 }
 
-// Quick Login Function for Demo
-function quickLogin() {
-    document.getElementById('email').value = 'seiftouatllol@gmail.com';
-    document.getElementById('password').value = 'seif0662';
-    document.getElementById('twofa').value = '112023';
-    
-    // Trigger login
-    const loginEvent = new Event('submit');
-    document.getElementById('loginForm').dispatchEvent(loginEvent);
-}
+
 
 // Initialize Dashboard
 function initializeDashboard() {
@@ -1347,4 +1336,3 @@ window.viewVipPaymentDetails = viewVipPaymentDetails;
 window.viewScreenshot = viewScreenshot;
 window.refreshVipPayments = refreshVipPayments;
 window.approveAllVipPayments = approveAllVipPayments;
-window.quickLogin = quickLogin;

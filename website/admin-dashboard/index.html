@@ -20,27 +20,22 @@
             <form id="loginForm" class="login-form">
                 <div class="form-group">
                     <label for="email">📧 Email Address</label>
-                    <input type="email" id="email" placeholder="Enter admin email" required>
+                    <input type="email" id="email" placeholder="Enter admin email" autocomplete="off" required>
                 </div>
                 <div class="form-group">
                     <label for="password">🔐 Password</label>
-                    <input type="password" id="password" placeholder="Enter password" required>
+                    <input type="password" id="password" placeholder="Enter password" autocomplete="off" required>
                 </div>
                 <div class="form-group">
                     <label for="twofa">📱 2FA Code (Optional)</label>
-                    <input type="text" id="twofa" placeholder="Enter 6-digit code">
+                    <input type="text" id="twofa" placeholder="Enter 6-digit code" autocomplete="off">
                 </div>
                 <button type="submit" class="login-btn">
                     <i class="fas fa-sign-in-alt"></i>
                     Login to Dashboard
                 </button>
                 
-                <div style="margin-top: 15px; text-align: center;">
-                    <button type="button" onclick="quickLogin()" class="btn btn-secondary" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                        <i class="fas fa-bolt"></i>
-                        Quick Login (Demo)
-                    </button>
-                </div>
+
                 <div class="login-info">
                     <p><strong>Secure Admin Access</strong></p>
                     <p>🔐 Enter your administrator credentials</p>
