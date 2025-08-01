@@ -335,8 +335,8 @@ private fun generateQRCode(content: String, width: Int, height: Int): Bitmap? {
 }
 
 private fun sendPaymentToAdmin(userEmail: String, transactionId: String, vipTier: String, price: String) {
-    // This would typically send to your admin dashboard
-    // For now, we'll just log it
+    // This would typically send to your backend API
+    // For now, we'll just log it and simulate success
     android.util.Log.d("PaymentSubmission", """
         Payment Submitted:
         Email: $userEmail
@@ -345,4 +345,10 @@ private fun sendPaymentToAdmin(userEmail: String, transactionId: String, vipTier
         Price: $price
         Timestamp: ${System.currentTimeMillis()}
     """.trimIndent())
+    
+    // TODO: Implement actual API call to backend
+    // Example:
+    // val apiService = RetrofitClient.apiService
+    // val request = VipPaymentRequest(userEmail, transactionId, vipTier, price)
+    // apiService.submitVipPayment(request)
 }

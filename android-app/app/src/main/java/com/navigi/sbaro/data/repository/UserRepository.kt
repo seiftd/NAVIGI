@@ -109,6 +109,7 @@ class UserRepository @Inject constructor(
         private const val PREF_VIP_CONTEST_DEADLINE = "vip_contest_deadline"
         private const val PREF_IS_VIP = "is_vip"
         private const val PREF_VIP_EXPIRY_DATE = "vip_expiry_date"
+        private const val PREF_VIP_TIER = "vip_tier"
         private const val PREF_LAST_AD_RESET_DATE = "last_ad_reset_date"
     }
     
@@ -142,6 +143,12 @@ class UserRepository @Inject constructor(
         val isVip = prefs.getBoolean(PREF_IS_VIP, false)
         val vipExpiryDate = prefs.getLong(PREF_VIP_EXPIRY_DATE, 0)
         val currentVipStatus = isVip && vipExpiryDate > System.currentTimeMillis()
+        val vipTierName = prefs.getString(PREF_VIP_TIER, VipTier.NONE.name)
+        val currentVipTier = try {
+            VipTier.valueOf(vipTierName!!)
+        } catch (e: Exception) {
+            VipTier.NONE
+        }
         val dailyAdLimit = if (currentVipStatus) 25 else 12
         
         // Update VIP status if expired
@@ -189,7 +196,7 @@ class UserRepository @Inject constructor(
             weeklyContestDeadline = weeklyDeadline,
             monthlyContestDeadline = monthlyDeadline,
             vipContestDeadline = vipDeadline,
-            vipTier = if (currentVipStatus) VipTier.EMPEROR else VipTier.NONE,
+            vipTier = if (currentVipStatus) currentVipTier else VipTier.NONE,
             vipExpiryDate = vipExpiryDate,
             dailyAdLimit = dailyAdLimit
         )
@@ -477,5 +484,40 @@ class UserRepository @Inject constructor(
     fun resetTodayPoints() {
         _userStats.value = _userStats.value.copy(todayPoints = 0)
         prefs.edit().putInt(PREF_TODAY_POINTS, 0).apply()
+    }
+    
+    fun upgradeVipTier(tierName: String, durationDays: Int = 30) {
+        val vipTier = when (tierName.uppercase()) {
+            "KING TIER", "KING" -> VipTier.KING
+            "EMPEROR TIER", "EMPEROR" -> VipTier.EMPEROR
+            "LORD TIER", "LORD" -> VipTier.LORD
+            else -> VipTier.NONE
+        }
+        
+        if (vipTier != VipTier.NONE) {
+            val expiryDate = System.currentTimeMillis() + (durationDays * 24 * 60 * 60 * 1000L)
+            prefs.edit()
+                .putBoolean(PREF_IS_VIP, true)
+                .putString(PREF_VIP_TIER, vipTier.name)
+                .putLong(PREF_VIP_EXPIRY_DATE, expiryDate)
+                .apply()
+            
+            // Reload user stats to reflect changes
+            loadUserStats()
+        }
+    }
+    
+    fun getRemainingVipDays(): Int {
+        val vipExpiryDate = prefs.getLong(PREF_VIP_EXPIRY_DATE, 0)
+        val currentTime = System.currentTimeMillis()
+        return if (vipExpiryDate > currentTime) {
+            ((vipExpiryDate - currentTime) / (24 * 60 * 60 * 1000)).toInt()
+        } else {
+            0
+        }
+    }
+    
+    fun isUserLoggedIn(): Boolean {
+        return auth.currentUser != null
     }
 }

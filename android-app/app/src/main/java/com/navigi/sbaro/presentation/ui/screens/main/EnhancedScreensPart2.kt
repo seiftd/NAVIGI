@@ -20,8 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -674,11 +674,26 @@ fun EnhancedProfileScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    Text(
-                        text = userRepository.getUserEmail(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable {
+                            clipboardManager.setText(AnnotatedString(userRepository.getUserEmail()))
+                            // Show a toast or snackbar here
+                        }
+                    ) {
+                        Text(
+                            text = userRepository.getUserEmail(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            Icons.Default.ContentCopy,
+                            contentDescription = "Copy Email",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     
                     Text(
                         text = "ID: ${userRepository.getUserId().take(8)}",

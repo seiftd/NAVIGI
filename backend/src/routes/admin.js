@@ -257,4 +257,98 @@ router.post('/notifications', adminMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/admin/vip-approvals
+ * @desc    Process VIP upgrade payment approval
+ * @access  Admin
+ */
+router.post('/vip-approvals', adminMiddleware, async (req, res) => {
+  try {
+    const { userEmail, transactionHash, vipTier, price, approved } = req.body;
+
+    if (!userEmail || !transactionHash || !vipTier) {
+      return res.status(400).json({
+        success: false,
+        error: 'User email, transaction hash, and VIP tier are required'
+      });
+    }
+
+    // TODO: Update user VIP status in Firestore
+    // TODO: Send notification to user
+    
+    if (approved) {
+      // Upgrade user to VIP tier
+      logger.info(`VIP upgrade approved for ${userEmail} to ${vipTier}`, {
+        transactionHash,
+        price,
+        adminEmail: req.admin.email
+      });
+
+      // TODO: Send success notification to user
+    } else {
+      logger.info(`VIP upgrade rejected for ${userEmail}`, {
+        transactionHash,
+        reason: req.body.reason || 'Payment not verified'
+      });
+
+      // TODO: Send rejection notification to user
+    }
+
+    res.json({
+      success: true,
+      message: approved ? 'VIP upgrade approved successfully' : 'VIP upgrade rejected'
+    });
+
+  } catch (error) {
+    logger.error('VIP approval error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/admin/vip-requests
+ * @desc    Get pending VIP upgrade requests
+ * @access  Admin
+ */
+router.get('/vip-requests', adminMiddleware, async (req, res) => {
+  try {
+    // TODO: Get VIP requests from Firestore
+    const vipRequests = [
+      {
+        id: 'vip1',
+        userEmail: 'user@example.com',
+        transactionHash: '0x1234567890abcdef',
+        vipTier: 'EMPEROR TIER',
+        price: '$9',
+        requestedAt: '2024-01-15T14:30:00Z',
+        status: 'PENDING'
+      },
+      {
+        id: 'vip2',
+        userEmail: 'user2@example.com',
+        transactionHash: '0xabcdef1234567890',
+        vipTier: 'KING TIER',
+        price: '$2.5',
+        requestedAt: '2024-01-15T12:15:00Z',
+        status: 'PENDING'
+      }
+    ];
+
+    res.json({
+      success: true,
+      vipRequests
+    });
+
+  } catch (error) {
+    logger.error('Get VIP requests error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+});
+
 module.exports = router;

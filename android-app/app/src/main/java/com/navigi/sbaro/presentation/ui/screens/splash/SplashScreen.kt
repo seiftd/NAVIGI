@@ -52,26 +52,13 @@ fun SplashScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(32.dp)
         ) {
-            // App Logo/Icon placeholder
-            Card(
+            // App Logo
+            Icon(
+                painter = painterResource(id = R.drawable.ic_app_logo),
+                contentDescription = "NAVIGI Logo",
                 modifier = Modifier.size(120.dp),
-                shape = MaterialTheme.shapes.large,
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.2f)
-                )
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "N",
-                        fontSize = 48.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-            }
+                tint = Color.Unspecified
+            )
             
             Spacer(modifier = Modifier.height(24.dp))
             

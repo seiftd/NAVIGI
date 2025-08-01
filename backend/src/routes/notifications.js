@@ -343,6 +343,61 @@ router.post('/admin/send', adminMiddleware, async (req, res) => {
 });
 
 /**
+ * @route   POST /api/notifications/admin-message
+ * @desc    Send admin message to users (admin only)
+ * @access  Admin
+ */
+router.post('/admin-message', adminMiddleware, async (req, res) => {
+  try {
+    const { title, message, recipients, urgent } = req.body;
+
+    if (!title || !message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Title and message are required'
+      });
+    }
+
+    // TODO: Store notification in Firestore
+    // TODO: Send FCM push notification to users
+    
+    const notification = {
+      id: `admin_${Date.now()}`,
+      type: urgent ? 'ADMIN_URGENT' : 'ADMIN_MESSAGE',
+      title,
+      message,
+      data: {
+        adminEmail: req.admin.email,
+        priority: urgent ? 'high' : 'normal'
+      },
+      recipients: recipients || 'all', // 'all' or array of user IDs
+      createdAt: new Date().toISOString(),
+      sentBy: req.admin.email
+    };
+
+    logger.info(`Admin notification sent`, {
+      notificationId: notification.id,
+      title,
+      recipients: recipients || 'all',
+      adminEmail: req.admin.email
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Admin notification sent successfully',
+      notificationId: notification.id
+    });
+
+  } catch (error) {
+    logger.error('Send admin notification error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+});
+
+/**
  * @route   GET /api/notifications/admin/templates
  * @desc    Get notification templates
  * @access  Admin
