@@ -11,6 +11,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -39,26 +41,13 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Logo placeholder
-        Card(
+        // App Logo
+        Icon(
+            painter = painterResource(id = R.drawable.ic_app_logo),
+            contentDescription = "NAVIGI Logo",
             modifier = Modifier.size(80.dp),
-            shape = MaterialTheme.shapes.large,
-            colors = CardDefaults.cardColors(
-                containerColor = Primary.copy(alpha = 0.1f)
-            )
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "N",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Primary,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+            tint = Color.Unspecified
+        )
         
         Spacer(modifier = Modifier.height(32.dp))
         
@@ -158,16 +147,38 @@ fun LoginScreen(
         
         // Google Sign-In button
         OutlinedButton(
-            onClick = { /* TODO: Implement Google Sign-In */ },
+            onClick = {
+                isLoading = true
+                // TODO: Implement proper Google Sign-In with Firebase Auth
+                // For now, simulate successful Google login
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    onNavigateToMain()
+                }, 1000)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             enabled = !isLoading
         ) {
-            Text(
-                text = stringResource(R.string.login_with_google),
-                style = MaterialTheme.typography.titleMedium
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Google icon placeholder
+                    Text(text = "G", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.login_with_google),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
         }
         
         Spacer(modifier = Modifier.height(32.dp))

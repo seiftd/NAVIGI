@@ -200,4 +200,51 @@ router.post('/watch-ad', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/users/vip-payment
+ * @desc    Submit VIP upgrade payment for approval
+ * @access  Private
+ */
+router.post('/vip-payment', authMiddleware, async (req, res) => {
+  try {
+    const { userEmail, transactionHash, vipTier, price } = req.body;
+
+    if (!userEmail || !transactionHash || !vipTier || !price) {
+      return res.status(400).json({
+        success: false,
+        error: 'All fields are required: userEmail, transactionHash, vipTier, price'
+      });
+    }
+
+    // TODO: Store VIP payment request in Firestore
+    // TODO: Send notification to admin dashboard
+    
+    const paymentRequest = {
+      id: `vip_${Date.now()}`,
+      userId: req.user.userId,
+      userEmail,
+      transactionHash,
+      vipTier,
+      price,
+      status: 'PENDING',
+      submittedAt: new Date().toISOString()
+    };
+
+    logger.info(`VIP payment request submitted`, paymentRequest);
+
+    res.status(201).json({
+      success: true,
+      message: 'VIP payment request submitted successfully. You will be notified once it is processed.',
+      requestId: paymentRequest.id
+    });
+
+  } catch (error) {
+    logger.error('VIP payment submission error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+});
+
 module.exports = router;

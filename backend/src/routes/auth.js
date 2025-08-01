@@ -252,4 +252,64 @@ router.post('/verify-email', async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/auth/google
+ * @desc    Google OAuth login
+ * @access  Public
+ */
+router.post('/google', async (req, res) => {
+  try {
+    const { idToken, email, displayName, photoURL } = req.body;
+
+    if (!idToken || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Google ID token and email are required'
+      });
+    }
+
+    // TODO: Verify Google ID token with Firebase Admin SDK
+    // For now, we'll trust the client verification
+    
+    // Check if user exists in Firebase/Firestore
+    // TODO: Implement Firestore user lookup and creation
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: email.replace('@', '_').replace('.', '_'), // Temporary user ID
+        email: email,
+        isAdmin: false,
+        loginMethod: 'google'
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    logger.info(`Google login successful: ${email}`);
+
+    res.json({
+      success: true,
+      message: 'Google login successful',
+      token,
+      user: {
+        id: email.replace('@', '_').replace('.', '_'),
+        email,
+        displayName: displayName || 'Google User',
+        photoURL: photoURL || '',
+        sbaroPoints: 0,
+        referralCode: `SBARO-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        loginMethod: 'google'
+      }
+    });
+
+  } catch (error) {
+    logger.error('Google login error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error during Google login'
+    });
+  }
+});
+
 module.exports = router;
