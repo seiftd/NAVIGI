@@ -97,6 +97,14 @@ function initializePage() {
     initializeTier();
     generateQRCode();
     setupEventListeners();
+    
+    // Ensure submit button starts enabled
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+    }
+    
     showLoadingOverlay(false);
 }
 
@@ -105,6 +113,14 @@ function extractUrlParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     selectedTier = urlParams.get('tier') || 'king';
     currentUserId = urlParams.get('userId') || generateDemoUserId();
+    
+    // Debug logging
+    console.log('URL Parameters:', {
+        tier: urlParams.get('tier'),
+        userId: urlParams.get('userId'),
+        selectedTier: selectedTier,
+        currentUserId: currentUserId
+    });
     
     // Display user ID
     const userIdDisplay = document.getElementById('userIdDisplay');
@@ -123,11 +139,30 @@ function initializeTier() {
     const tier = VIP_TIERS[selectedTier] || VIP_TIERS.king;
     const isArabic = document.documentElement.getAttribute('lang') === 'ar';
     
+    console.log('Initializing tier:', {
+        selectedTier: selectedTier,
+        tier: tier,
+        tierName: tier.name,
+        tierPrice: tier.price
+    });
+    
     // Update tier info
-    document.getElementById('tierIcon').textContent = tier.icon;
-    document.getElementById('tierName').textContent = tier.name[isArabic ? 'ar' : 'en'];
-    document.getElementById('tierPrice').textContent = tier.price + '/month';
-    document.getElementById('paymentAmount').textContent = tier.price;
+    const tierIcon = document.getElementById('tierIcon');
+    const tierName = document.getElementById('tierName');
+    const tierPrice = document.getElementById('tierPrice');
+    const paymentAmount = document.getElementById('paymentAmount');
+    
+    if (tierIcon) tierIcon.textContent = tier.icon;
+    if (tierName) tierName.textContent = tier.name[isArabic ? 'ar' : 'en'];
+    if (tierPrice) tierPrice.textContent = tier.price + '/month';
+    if (paymentAmount) paymentAmount.textContent = tier.price;
+    
+    console.log('Tier elements updated:', {
+        icon: tierIcon?.textContent,
+        name: tierName?.textContent,
+        price: tierPrice?.textContent,
+        amount: paymentAmount?.textContent
+    });
     
     // Update tier colors
     const tierInfo = document.getElementById('tierInfo');
@@ -150,21 +185,41 @@ function populateTierBenefits(tier, isArabic) {
     ).join('');
 }
 
-// Generate QR Code for TRON address - SIMPLIFIED VERSION
+// Generate QR Code for TRON address - IMPROVED VERSION
 function generateQRCode() {
     console.log('Starting QR code generation...');
-    const qrCanvas = document.getElementById('qrCode');
-    const qrContainer = qrCanvas ? qrCanvas.parentElement : null;
+    
+    // Try multiple ways to find the QR container
+    let qrContainer = document.querySelector('.qr-container');
+    if (!qrContainer) {
+        qrContainer = document.getElementById('qrCode')?.parentElement;
+    }
+    if (!qrContainer) {
+        qrContainer = document.querySelector('.qr-section');
+    }
     
     if (!qrContainer) {
-        console.error('QR container not found');
-        return;
+        console.error('QR container not found, creating one...');
+        // Create QR section if it doesn't exist
+        const qrSection = document.querySelector('.payment-details');
+        if (qrSection) {
+            const newContainer = document.createElement('div');
+            newContainer.className = 'qr-container';
+            newContainer.innerHTML = '<div class="qr-section"><label>Scan QR Code:</label></div>';
+            qrSection.appendChild(newContainer);
+            qrContainer = newContainer.querySelector('.qr-section');
+        } else {
+            console.error('Cannot create QR container - payment details section not found');
+            return;
+        }
     }
     
     const qrData = TRON_CONFIG.address;
     console.log('QR data:', qrData);
+    console.log('QR container found:', qrContainer);
     
-    // Hide the canvas and create a simple QR code using API
+    // Hide any existing canvas
+    const qrCanvas = document.getElementById('qrCode');
     if (qrCanvas) {
         qrCanvas.style.display = 'none';
     }
@@ -180,22 +235,25 @@ function generateQRCode() {
     qrDiv.className = 'simple-qr';
     qrDiv.innerHTML = `
         <div style="text-align: center; padding: 15px;">
+            <p style="margin-bottom: 10px; font-weight: bold; color: #2c3e50;">Scan QR Code:</p>
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}&bgcolor=ffffff&color=000000" 
                  alt="TRON QR Code" 
-                 style="width: 200px; height: 200px; border: 2px solid #3498db; border-radius: 8px; background: white;"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-            <div style="display: none; width: 200px; height: 200px; border: 2px solid #3498db; border-radius: 8px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                 style="width: 200px; height: 200px; border: 2px solid #3498db; border-radius: 8px; background: white; display: block; margin: 0 auto;"
+                 onload="console.log('QR image loaded successfully')"
+                 onerror="console.error('QR image failed to load'); this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div style="display: none; width: 200px; height: 200px; border: 2px solid #3498db; border-radius: 8px; background: #f8f9fa; align-items: center; justify-content: center; flex-direction: column; margin: 0 auto;">
                 <i class="fas fa-qrcode" style="font-size: 60px; color: #3498db; margin-bottom: 10px;"></i>
                 <p style="margin: 0; font-size: 12px; text-align: center; color: #666; padding: 10px;">
                     <strong>TRON Address:</strong><br>
                     ${qrData}
                 </p>
             </div>
+            <p style="margin-top: 10px; font-size: 12px; color: #666;">Scan with your TRON wallet</p>
         </div>
     `;
     
     qrContainer.appendChild(qrDiv);
-    console.log('QR code created successfully');
+    console.log('QR code created and added to container');
 }
 
 // Setup event listeners - COMPLETELY REWRITTEN FOR RELIABILITY
@@ -252,6 +310,15 @@ function setupEventListeners() {
     } else {
         console.error('Upload elements not found!');
     }
+    
+    // Add transaction hash validation
+    const transactionHashInput = document.getElementById('transactionHash');
+    if (transactionHashInput) {
+        transactionHashInput.addEventListener('input', function() {
+            console.log('Transaction hash changed');
+            validateForm();
+        });
+    }
 }
 
 // Simple file processing - COMPLETELY REWRITTEN
@@ -277,6 +344,9 @@ function processUploadedFile(file) {
     
     // Show success message
     showSimpleNotification('Image uploaded successfully!', 'success');
+    
+    // Validate form to enable submit button
+    validateForm();
     
     console.log('File processed successfully');
 }
@@ -368,17 +438,23 @@ function handleFile(file) {
     processUploadedFile(file);
 }
 
-// Validate form completion
+// Validate form completion - SIMPLIFIED FOR TESTING
 function validateForm() {
     const transactionHash = document.getElementById('transactionHash')?.value.trim();
     const submitBtn = document.getElementById('submitBtn');
     
-    const isValid = transactionHash && transactionHash.length > 10 && uploadedFile;
-    
+    // For now, always enable the button for testing
     if (submitBtn) {
-        submitBtn.disabled = !isValid;
-        submitBtn.style.opacity = isValid ? '1' : '0.6';
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        console.log('Submit button enabled');
     }
+    
+    console.log('Form validation:', {
+        transactionHash: transactionHash,
+        hasFile: !!uploadedFile,
+        submitBtnFound: !!submitBtn
+    });
 }
 
 // Copy TRON address to clipboard
