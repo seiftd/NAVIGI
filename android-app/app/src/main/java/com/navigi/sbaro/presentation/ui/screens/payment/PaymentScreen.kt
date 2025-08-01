@@ -4,8 +4,10 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Color
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -230,7 +232,7 @@ fun PaymentScreen(
             Icon(
                 Icons.Default.Diamond,
                 contentDescription = null,
-                tint = Color(0xFFFFD700),
+                tint = androidx.compose.ui.graphics.Color(0xFFFFD700),
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -238,7 +240,7 @@ fun PaymentScreen(
                 text = "BINANCE",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFFFD700)
+                color = androidx.compose.ui.graphics.Color(0xFFFFD700)
             )
         }
     }

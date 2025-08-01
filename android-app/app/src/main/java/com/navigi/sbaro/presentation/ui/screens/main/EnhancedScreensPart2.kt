@@ -633,6 +633,7 @@ fun EnhancedProfileScreen(
 ) {
     val userStats by userRepository.userStats.collectAsState()
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
     var showReferralDialog by remember { mutableStateOf(false) }
     var showPaymentDialog by remember { mutableStateOf(false) }
     var selectedVipTier by remember { mutableStateOf("") }
