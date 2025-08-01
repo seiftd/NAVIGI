@@ -29,6 +29,9 @@ class TelegramSbaroApp {
             // Load user data
             await this.loadUserData();
             
+            // Initialize daily progress
+            this.updateDailyProgress();
+            
             // Initialize Monetag
             this.initMonetag();
             
@@ -309,6 +312,17 @@ class TelegramSbaroApp {
     }
 
         async watchAd() {
+        // Check daily ad limit
+        const dailyAdLimit = this.getDailyAdLimit();
+        const todayAdsWatched = this.getTodayAdsWatched();
+        
+        if (todayAdsWatched >= dailyAdLimit) {
+            const resetTime = this.getNextDayReset();
+            const hoursUntilReset = Math.ceil((resetTime - Date.now()) / (60 * 60 * 1000));
+            this.showToast(`📺 Daily ad limit reached (${dailyAdLimit} ads). Reset in ${hoursUntilReset}h`, 'info');
+            return;
+        }
+        
         // Check cooldown - 3 minutes for free users, 1 minute for VIP
         const isVIP = this.userStats.vipStatus !== 'FREE';
         const cooldownTime = isVIP ? 1 * 60 * 1000 : 3 * 60 * 1000; // 1 or 3 minutes
@@ -344,8 +358,8 @@ class TelegramSbaroApp {
                         }
                     }, 1000);
                     
-                    // Show the actual ad
-                    await show_9656288();
+                    // Show the actual Monetag Rewarded Popup ad (30s guaranteed)
+                    await show_9656288('pop');
                     
                     // Ensure user watched for full 30 seconds
                     if (adWatchTime < adDuration) {
@@ -375,8 +389,9 @@ class TelegramSbaroApp {
                     // Send data to backend
                     await this.sendAdWatchToBackend();
                     
-                    // Set cooldown
+                    // Set cooldown and increment daily counter
                     localStorage.setItem('lastAdTime', Date.now().toString());
+                    this.incrementTodayAdsWatched();
                     
                 } catch (adError) {
                     console.error('Ad watch error:', adError);
@@ -521,8 +536,8 @@ class TelegramSbaroApp {
                     }
                 }, 1000);
                 
-                // Show the actual ad
-                await show_9656288();
+                // Show the actual Monetag Rewarded Popup ad (30s guaranteed)
+                await show_9656288('pop');
                 
                 // Ensure user watched for full 30 seconds
                 if (contestAdTime < contestAdDuration) {
@@ -791,6 +806,69 @@ class TelegramSbaroApp {
         } catch (error) {
             console.error('Stars backend error:', error);
         }
+    }
+    
+    // Daily Ad Limit System
+    getDailyAdLimit() {
+        const vipLimits = {
+            'FREE': 12,
+            'KING': 20,
+            'EMPEROR': 30,
+            'LORD': 50
+        };
+        return vipLimits[this.userStats.vipStatus] || 12;
+    }
+    
+    getTodayAdsWatched() {
+        const today = new Date().toDateString();
+        const storedData = localStorage.getItem('dailyAdsWatched');
+        
+        if (storedData) {
+            const data = JSON.parse(storedData);
+            if (data.date === today) {
+                return data.count;
+            }
+        }
+        
+        // Reset if new day
+        return 0;
+    }
+    
+    incrementTodayAdsWatched() {
+        const today = new Date().toDateString();
+        const currentCount = this.getTodayAdsWatched();
+        
+        localStorage.setItem('dailyAdsWatched', JSON.stringify({
+            date: today,
+            count: currentCount + 1
+        }));
+        
+        // Update display
+        this.updateDailyProgress();
+    }
+    
+    updateDailyProgress() {
+        const limit = this.getDailyAdLimit();
+        const watched = this.getTodayAdsWatched();
+        const progressElement = document.getElementById('dailyProgress');
+        
+        if (progressElement) {
+            progressElement.textContent = `${watched}/${limit} ads today`;
+        }
+        
+        // Update watch ad button
+        const watchBtn = document.getElementById('watchAdBtn');
+        if (watchBtn && watched >= limit) {
+            watchBtn.innerHTML = `<i class="fas fa-ban"></i> Daily Limit Reached`;
+            watchBtn.disabled = true;
+        }
+    }
+    
+    getNextDayReset() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        return tomorrow.getTime();
     }
     
     initContestTimers() {
