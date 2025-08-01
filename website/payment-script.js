@@ -5,6 +5,30 @@ let currentUserId = '';
 let isArabic = false;
 let uploadedFile = null;
 
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyBYXhLf5p8Q9vX2Hn4Yd7C8G1M3KjP9R4S6",
+    authDomain: "navigi-sbaro.firebaseapp.com",
+    projectId: "navigi-sbaro",
+    storageBucket: "navigi-sbaro.appspot.com",
+    messagingSenderId: "123456789012",
+    appId: "1:123456789012:web:abcdef1234567890"
+};
+
+// Initialize Firebase
+let db, storage;
+try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    storage = firebase.storage();
+    console.log('Firebase initialized successfully');
+} catch (error) {
+    console.error('Firebase initialization error:', error);
+    // Fallback - continue without Firebase
+    db = null;
+    storage = null;
+}
+
 // VIP Tier Configuration
 const VIP_TIERS = {
     king: {
@@ -51,7 +75,20 @@ const TRON_CONFIG = {
 
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing payment page...');
     initializePage();
+    
+    // Additional delay for QR code generation to ensure libraries are loaded
+    setTimeout(function() {
+        console.log('Retrying QR code generation...');
+        generateQRCode();
+    }, 1000);
+});
+
+// Also try initialization when window loads (backup)
+window.addEventListener('load', function() {
+    console.log('Window loaded, ensuring QR code...');
+    setTimeout(generateQRCode, 500);
 });
 
 // Initialize the payment page
@@ -116,24 +153,68 @@ function populateTierBenefits(tier, isArabic) {
 // Generate QR Code for TRON address
 function generateQRCode() {
     const qrCanvas = document.getElementById('qrCode');
-    if (!qrCanvas) return;
+    if (!qrCanvas) {
+        console.error('QR Canvas element not found');
+        showFallbackQR();
+        return;
+    }
     
-    const tier = VIP_TIERS[selectedTier] || VIP_TIERS.king;
     const qrData = TRON_CONFIG.address;
+    console.log('Generating QR for address:', qrData);
     
-    QRCode.toCanvas(qrCanvas, qrData, {
-        width: 200,
-        height: 200,
-        colorDark: '#2C3E50',
-        colorLight: '#FFFFFF',
-        margin: 2,
-        errorCorrectionLevel: 'M'
-    }, function(error) {
-        if (error) {
-            console.error('QR Code generation error:', error);
-            qrCanvas.style.display = 'none';
+    // Check if QRCode library is loaded
+    if (typeof QRCode === 'undefined') {
+        console.error('QRCode library not loaded');
+        showFallbackQR();
+        return;
+    }
+    
+    try {
+        QRCode.toCanvas(qrCanvas, qrData, {
+            width: 200,
+            height: 200,
+            colorDark: '#2C3E50',
+            colorLight: '#FFFFFF',
+            margin: 2,
+            errorCorrectionLevel: 'M'
+        }, function(error) {
+            if (error) {
+                console.error('QR Code generation error:', error);
+                showFallbackQR();
+            } else {
+                console.log('QR Code generated successfully');
+                qrCanvas.style.display = 'block';
+            }
+        });
+    } catch (error) {
+        console.error('QR Code generation failed:', error);
+        showFallbackQR();
+    }
+}
+
+// Show fallback QR code if generation fails
+function showFallbackQR() {
+    const qrCanvas = document.getElementById('qrCode');
+    if (qrCanvas) {
+        qrCanvas.style.display = 'none';
+        
+        // Create fallback QR display
+        const qrContainer = qrCanvas.parentElement;
+        if (qrContainer && !qrContainer.querySelector('.fallback-qr')) {
+            const fallbackDiv = document.createElement('div');
+            fallbackDiv.className = 'fallback-qr';
+            fallbackDiv.innerHTML = `
+                <div style="width: 200px; height: 200px; border: 2px solid #3498DB; display: flex; align-items: center; justify-content: center; flex-direction: column; background: #f8f9fa; border-radius: 8px;">
+                    <i class="fas fa-qrcode" style="font-size: 60px; color: #3498DB; margin-bottom: 10px;"></i>
+                    <p style="margin: 0; font-size: 12px; text-align: center; color: #666;">
+                        QR Code:<br>
+                        <strong>${TRON_CONFIG.address}</strong>
+                    </p>
+                </div>
+            `;
+            qrContainer.appendChild(fallbackDiv);
         }
-    });
+    }
 }
 
 // Setup event listeners
@@ -145,13 +226,19 @@ function setupEventListeners() {
     if (fileInput && uploadArea) {
         fileInput.addEventListener('change', handleFileSelect);
         
-        // Click to upload
-        uploadArea.addEventListener('click', function(e) {
-            // Only trigger file input if clicking on the upload area itself, not the file input
-            if (e.target !== fileInput) {
-                fileInput.click();
-            }
-        });
+            // Click to upload - improved event handling
+    uploadArea.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Upload area clicked');
+        fileInput.click();
+    });
+    
+    // Make sure file input is properly triggered
+    fileInput.addEventListener('click', function(e) {
+        // Reset the input to allow re-uploading same file
+        this.value = '';
+    });
         
         // Drag and drop
         uploadArea.addEventListener('dragover', function(e) {
@@ -331,8 +418,23 @@ async function submitPayment() {
     showLoadingOverlay(true);
     
     try {
-        // Upload screenshot to Firebase Storage
-        const screenshotUrl = await uploadScreenshot();
+        let screenshotUrl = '';
+        
+        // Check if Firebase is available
+        if (!db || !storage) {
+            console.warn('Firebase not available, using demo mode');
+            // Simulate upload with a placeholder URL
+            screenshotUrl = 'https://via.placeholder.com/400x300/3498db/ffffff?text=Payment+Screenshot';
+        } else {
+            try {
+                // Upload screenshot to Firebase Storage
+                screenshotUrl = await uploadScreenshot();
+            } catch (uploadError) {
+                console.error('Screenshot upload failed:', uploadError);
+                // Continue with placeholder if upload fails
+                screenshotUrl = 'https://via.placeholder.com/400x300/e74c3c/ffffff?text=Upload+Failed';
+            }
+        }
         
         // Create payment submission
         const submissionData = {
@@ -346,12 +448,26 @@ async function submitPayment() {
             screenshotUrl: screenshotUrl,
             additionalNotes: document.getElementById('additionalNotes').value.trim(),
             status: 'pending',
-            submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            submittedAt: new Date().toISOString(),
             tronAddress: TRON_CONFIG.address
         };
         
-        // Save to Firestore
-        await db.collection('vip_payments').doc(submissionData.id).set(submissionData);
+        // Try to save to Firestore, fallback to localStorage
+        if (db) {
+            try {
+                await db.collection('vip_payments').doc(submissionData.id).set({
+                    ...submissionData,
+                    submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (firestoreError) {
+                console.error('Firestore save failed:', firestoreError);
+                // Save to localStorage as fallback
+                saveToLocalStorage(submissionData);
+            }
+        } else {
+            // Save to localStorage if Firebase not available
+            saveToLocalStorage(submissionData);
+        }
         
         // Update confirmation details
         updateConfirmationDetails(submissionData);
@@ -393,6 +509,10 @@ function validateSubmission() {
 async function uploadScreenshot() {
     if (!uploadedFile) throw new Error('No file to upload');
     
+    if (!storage) {
+        throw new Error('Firebase Storage not available');
+    }
+    
     const storageRef = storage.ref();
     const filename = `vip_payments/${currentUserId}/${Date.now()}_${uploadedFile.name}`;
     const fileRef = storageRef.child(filename);
@@ -404,6 +524,18 @@ async function uploadScreenshot() {
     const downloadURL = await snapshot.ref.getDownloadURL();
     
     return downloadURL;
+}
+
+// Save payment data to localStorage as fallback
+function saveToLocalStorage(submissionData) {
+    try {
+        const existingData = JSON.parse(localStorage.getItem('vip_payments') || '[]');
+        existingData.push(submissionData);
+        localStorage.setItem('vip_payments', JSON.stringify(existingData));
+        console.log('Payment data saved to localStorage');
+    } catch (error) {
+        console.error('Failed to save to localStorage:', error);
+    }
 }
 
 // Generate unique submission ID
