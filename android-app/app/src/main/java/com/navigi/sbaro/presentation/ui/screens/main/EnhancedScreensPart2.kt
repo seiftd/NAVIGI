@@ -25,6 +25,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.foundation.BorderStroke
 import com.navigi.sbaro.R
 import com.navigi.sbaro.data.notification.NotificationManager
@@ -33,6 +34,10 @@ import com.navigi.sbaro.data.repository.VipTier
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 
 @Composable
 fun EnhancedContestsScreen(
@@ -629,6 +634,9 @@ fun EnhancedProfileScreen(
     val userStats by userRepository.userStats.collectAsState()
     val clipboardManager = LocalClipboardManager.current
     var showReferralDialog by remember { mutableStateOf(false) }
+    var showPaymentDialog by remember { mutableStateOf(false) }
+    var selectedVipTier by remember { mutableStateOf("") }
+    var selectedVipPrice by remember { mutableStateOf("") }
     
     LazyColumn(
         modifier = Modifier
@@ -841,13 +849,97 @@ fun EnhancedProfileScreen(
                             }
                             
                             IconButton(onClick = { showReferralDialog = true }) {
-                                Icon(Icons.Default.Share, contentDescription = "Share")
-                            }
-                        }
+                                Icon(Icons.Default.Share, contentDescription = "Share"                        )
                     }
                 }
             }
         }
+    }
+    
+    // Payment Dialog
+    if (showPaymentDialog) {
+        AlertDialog(
+            onDismissRequest = { showPaymentDialog = false },
+            title = {
+                Text(
+                    text = "Payment for $selectedVipTier",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Please complete your payment to upgrade to $selectedVipTier for $selectedVipPrice",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    // TRC20 Address
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = "TRC20 USDT Address:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TextButton(
+                                onClick = {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    val clip = ClipData.newPlainText("TRC20 Address", "TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX")
+                                    clipboard.setPrimaryClip(clip)
+                                    Toast.makeText(context, "Address copied to clipboard", Toast.LENGTH_SHORT).show()
+                                }
+                            ) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Copy Address")
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "After making the payment, please provide your transaction hash for verification.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPaymentDialog = false
+                        // Here you would navigate to the full payment screen
+                        // For now, we'll just close the dialog
+                    }
+                ) {
+                    Text("Proceed to Payment")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPaymentDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
         
         // Referral Earnings
         item {
@@ -1124,6 +1216,90 @@ fun VipUpgradeCard(
             }
         }
     }
+    
+    // Payment Dialog
+    if (showPaymentDialog) {
+        AlertDialog(
+            onDismissRequest = { showPaymentDialog = false },
+            title = {
+                Text(
+                    text = "Payment for $selectedVipTier",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Please complete your payment to upgrade to $selectedVipTier for $selectedVipPrice",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    // TRC20 Address
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = "TRC20 USDT Address:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TextButton(
+                                onClick = {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    val clip = ClipData.newPlainText("TRC20 Address", "TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX")
+                                    clipboard.setPrimaryClip(clip)
+                                    Toast.makeText(context, "Address copied to clipboard", Toast.LENGTH_SHORT).show()
+                                }
+                            ) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Copy Address")
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "After making the payment, please provide your transaction hash for verification.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPaymentDialog = false
+                        // Here you would navigate to the full payment screen
+                        // For now, we'll just close the dialog
+                    }
+                ) {
+                    Text("Proceed to Payment")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPaymentDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -1155,6 +1331,10 @@ private fun VipTierCard(
     isArabic: Boolean
 ) {
     val context = LocalContext.current
+    var showPaymentDialog by remember { mutableStateOf(false) }
+    var selectedVipTier by remember { mutableStateOf("") }
+    var selectedVipPrice by remember { mutableStateOf("") }
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -1201,9 +1381,12 @@ private fun VipTierCard(
             
                                 Button(
                         onClick = {
-                            // Redirect to website for VIP purchase
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://navigiu.netlify.app/payment.html?tier=${title.lowercase()}&userId=USR${(100000..999999).random()}"))
-                            context.startActivity(intent)
+                            // Navigate to payment screen
+                            // This would be handled by navigation
+                            // For now, we'll show a dialog with payment info
+                            showPaymentDialog = true
+                            selectedVipTier = title
+                            selectedVipPrice = price
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = color)
