@@ -258,12 +258,19 @@ document.addEventListener('DOMContentLoaded', function() {
 function handleLogin(e) {
     e.preventDefault();
     
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const twofa = document.getElementById('twofa').value;
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value.trim();
+    const twofa = document.getElementById('twofa').value.trim();
+    
+    // Debug logging
+    console.log('Login attempt:', { email, password, twofa });
+    console.log('Expected:', { 
+        email: ADMIN_CREDENTIALS.email.toLowerCase(), 
+        password: ADMIN_CREDENTIALS.password 
+    });
 
-    // Validate credentials
-    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+    // Validate credentials (case-insensitive email)
+    if (email === ADMIN_CREDENTIALS.email.toLowerCase() && password === ADMIN_CREDENTIALS.password) {
         // Hide login screen and show dashboard
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('dashboardMain').style.display = 'flex';
@@ -273,8 +280,24 @@ function handleLogin(e) {
         
         showNotification('Login successful! Welcome to NAVIGI Admin Dashboard.', 'success');
     } else {
+        console.error('Login failed - credentials mismatch');
         showNotification('Invalid credentials. Please try again.', 'error');
+        
+        // Show expected credentials in console for debugging
+        console.log('Use these credentials:');
+        console.log('Email: seiftouatllol@gmail.com');
+        console.log('Password: seif0662');
     }
+}
+
+// Quick Login Function for Demo
+function quickLogin() {
+    document.getElementById('email').value = 'seiftouatllol@gmail.com';
+    document.getElementById('password').value = 'seif0662';
+    
+    // Trigger login
+    const loginEvent = new Event('submit');
+    document.getElementById('loginForm').dispatchEvent(loginEvent);
 }
 
 // Initialize Dashboard
@@ -1318,3 +1341,4 @@ window.viewVipPaymentDetails = viewVipPaymentDetails;
 window.viewScreenshot = viewScreenshot;
 window.refreshVipPayments = refreshVipPayments;
 window.approveAllVipPayments = approveAllVipPayments;
+window.quickLogin = quickLogin;
