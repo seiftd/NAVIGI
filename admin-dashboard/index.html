@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAVIGI SBARO - Admin Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3>Loading Admin Dashboard...</h3>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🚀 NAVIGI SBARO</h1>
+                <h2>Admin Dashboard</h2>
+                <p>Manage your Telegram Bot & Mobile App</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Admin Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login to Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="dashboard" style="display: none;">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>🚀 NAVIGI SBARO Admin</h1>
+                <div class="platform-switcher">
+                    <button class="platform-btn active" data-platform="telegram_bot">
+                        <i class="fab fa-telegram"></i>
+                        Telegram Bot
+                    </button>
+                    <button class="platform-btn" data-platform="mobile_app">
+                        <i class="fas fa-mobile-alt"></i>
+                        Mobile App
+                    </button>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="admin-info">
+                    <span id="adminName">Admin</span>
+                    <button id="logoutBtn" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav class="sidebar-nav">
+                    <a href="#overview" class="nav-link active" data-section="overview">
+                        <i class="fas fa-chart-line"></i>
+                        Overview
+                    </a>
+                    <a href="#users" class="nav-link" data-section="users">
+                        <i class="fas fa-users"></i>
+                        Users
+                    </a>
+                    <a href="#transactions" class="nav-link" data-section="transactions">
+                        <i class="fas fa-credit-card"></i>
+                        Transactions
+                    </a>
+                    <a href="#contests" class="nav-link" data-section="contests">
+                        <i class="fas fa-trophy"></i>
+                        Contests
+                    </a>
+                    <a href="#referrals" class="nav-link" data-section="referrals">
+                        <i class="fas fa-share-alt"></i>
+                        Referrals
+                    </a>
+                    <a href="#notifications" class="nav-link" data-section="notifications">
+                        <i class="fas fa-bell"></i>
+                        Notifications
+                    </a>
+                    <a href="#settings" class="nav-link" data-section="settings">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Overview Section -->
+                <section id="overviewSection" class="dashboard-section active">
+                    <div class="section-header">
+                        <h2>Dashboard Overview</h2>
+                        <div class="platform-indicator">
+                            <span id="currentPlatform">Telegram Bot</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card users">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalUsers">0</h3>
+                                <p>Total Users</p>
+                                <span class="stat-change positive" id="usersChange">+0%</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card revenue">
+                            <div class="stat-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalRevenue">$0</h3>
+                                <p>Total Revenue</p>
+                                <span class="stat-change positive" id="revenueChange">+0%</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card transactions">
+                            <div class="stat-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalTransactions">0</h3>
+                                <p>Transactions</p>
+                                <span class="stat-change positive" id="transactionsChange">+0%</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card active-users">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="activeUsers">0</h3>
+                                <p>Active Today</p>
+                                <span class="stat-change positive" id="activeChange">+0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Revenue Over Time</h3>
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>User Growth</h3>
+                            <canvas id="userChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="recent-activity">
+                        <h3>Recent Activity</h3>
+                        <div class="activity-list" id="activityList">
+                            <!-- Activity items will be loaded here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users Section -->
+                <section id="usersSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>User Management</h2>
+                        <div class="section-actions">
+                            <input type="search" id="userSearch" placeholder="Search users...">
+                            <button class="btn-primary" onclick="refreshUsers()">
+                                <i class="fas fa-sync"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="users-table-container">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Platform</th>
+                                    <th>Points</th>
+                                    <th>Balance</th>
+                                    <th>VIP Status</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- Users will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Transactions Section -->
+                <section id="transactionsSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Transaction Management</h2>
+                        <div class="section-filters">
+                            <select id="transactionType">
+                                <option value="all">All Types</option>
+                                <option value="vip_payment">VIP Payments</option>
+                                <option value="withdrawal">Withdrawals</option>
+                                <option value="ton_stars">TON Stars</option>
+                            </select>
+                            <select id="transactionStatus">
+                                <option value="all">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="transactions-grid" id="transactionsGrid">
+                        <!-- Transaction cards will be loaded here -->
+                    </div>
+                </section>
+
+                <!-- Contests Section -->
+                <section id="contestsSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Contest Management</h2>
+                        <button class="btn-primary" onclick="createContest()">
+                            <i class="fas fa-plus"></i>
+                            Create Contest
+                        </button>
+                    </div>
+
+                    <div class="contests-grid" id="contestsGrid">
+                        <!-- Contest cards will be loaded here -->
+                    </div>
+                </section>
+
+                <!-- Referrals Section -->
+                <section id="referralsSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Referral Management</h2>
+                        <div class="section-actions">
+                            <button class="btn-primary" onclick="processReferralRewards()">
+                                <i class="fas fa-gift"></i>
+                                Process Weekly Rewards
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="referral-leaderboard">
+                        <h3>Weekly Referral Leaderboard</h3>
+                        <div class="leaderboard-list" id="referralLeaderboard">
+                            <!-- Leaderboard will be loaded here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Notifications Section -->
+                <section id="notificationsSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Send Notifications</h2>
+                    </div>
+
+                    <div class="notification-form">
+                        <div class="form-group">
+                            <label>Target Audience</label>
+                            <select id="notificationTarget">
+                                <option value="all">All Users</option>
+                                <option value="vip">VIP Users Only</option>
+                                <option value="free">Free Users Only</option>
+                                <option value="specific">Specific Users</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="specificUsersGroup" style="display: none;">
+                            <label>User IDs (comma separated)</label>
+                            <input type="text" id="specificUsers" placeholder="123456789, 987654321">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea id="notificationMessage" rows="4" placeholder="Enter your message..."></textarea>
+                        </div>
+
+                        <button class="btn-primary" onclick="sendNotification()">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Notification
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settingsSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>System Settings</h2>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <h3>Ad Configuration</h3>
+                            <div class="form-group">
+                                <label>Points per Ad</label>
+                                <input type="number" id="pointsPerAd" value="1.1" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Max Ads per Day (Free)</label>
+                                <input type="number" id="maxAdsFree" value="12">
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <h3>VIP Pricing</h3>
+                            <div class="form-group">
+                                <label>King Tier Price (USD)</label>
+                                <input type="number" id="kingPrice" value="2.50" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Emperor Tier Price (USD)</label>
+                                <input type="number" id="emperorPrice" value="9.00" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Lord Tier Price (USD)</label>
+                                <input type="number" id="lordPrice" value="25.00" step="0.01">
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <h3>Contest Settings</h3>
+                            <div class="form-group">
+                                <label>Daily Contest Prize (USD)</label>
+                                <input type="number" id="dailyPrize" value="50" step="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Weekly Contest Prize (USD)</label>
+                                <input type="number" id="weeklyPrize" value="200" step="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Monthly Contest Prize (USD)</label>
+                                <input type="number" id="monthlyPrize" value="1000" step="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" onclick="saveSettings()">
+                        <i class="fas fa-save"></i>
+                        Save Settings
+                    </button>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Title</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Modal content -->
+            </div>
+            <div class="modal-actions" id="modalActions">
+                <!-- Modal actions -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../telegram-app/admin-dashboard-integration.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

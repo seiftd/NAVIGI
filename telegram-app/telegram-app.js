@@ -4,15 +4,16 @@ class TelegramSbaroApp {
         this.tg = window.Telegram.WebApp;
         this.user = null;
         this.userStats = {
-            totalPoints: 1250,
-            totalBalance: 12.50,
+            totalPoints: 0,
+            totalBalance: 0,
             vipStatus: 'FREE',
-            adsWatched: 156,
-            contestsJoined: 8,
-            referrals: 3
+            adsWatched: 0,
+            contestAdsWatched: 0, // Separate counter for contest ads
+            contestsJoined: 0,
+            referrals: 0
         };
         this.currentTab = 'home';
-        this.isArabic = false;
+        this.isArabic = localStorage.getItem('isArabic') === 'true';
         
         this.init();
     }
@@ -164,9 +165,7 @@ class TelegramSbaroApp {
 
     async loadUserData() {
         try {
-            // In a real app, this would fetch from your backend
-            // For now, we'll use the Telegram user data and mock stats
-            
+            // Load real user data from backend
             if (this.user) {
                 // Update profile information
                 document.getElementById('profileName').textContent = 
@@ -179,6 +178,9 @@ class TelegramSbaroApp {
                     const avatar = document.getElementById('profileAvatar');
                     avatar.innerHTML = `<img src="${this.user.photo_url}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
                 }
+                
+                // Load real user stats from backend
+                await this.fetchRealUserStats();
             }
             
             // Update stats display
@@ -190,8 +192,35 @@ class TelegramSbaroApp {
                 document.getElementById('referralCode').textContent = referralCode;
             }
             
+            // Initialize contest timers and eligibility
+            this.initContestTimers();
+            this.updateContestEligibility();
+            
         } catch (error) {
             console.error('Failed to load user data:', error);
+        }
+    }
+    
+    async fetchRealUserStats() {
+        try {
+            const response = await fetch(`https://navigiu.netlify.app/.netlify/functions/user-stats?user_id=${this.user.id}`, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.userStats = {
+                    totalPoints: data.total_points || 0,
+                    totalBalance: data.total_balance || 0,
+                    vipStatus: data.vip_status || 'FREE',
+                    adsWatched: data.ads_watched || 0,
+                    contestAdsWatched: data.contest_ads_watched || 0,
+                    contestsJoined: data.contests_joined || 0,
+                    referrals: data.referrals || 0
+                };
+            }
+        } catch (error) {
+            console.error('Failed to fetch real user stats:', error);
         }
     }
 
@@ -338,7 +367,7 @@ class TelegramSbaroApp {
 
     async sendAdWatchToBackend() {
         try {
-            const response = await fetch('https://navigi-bot.netlify.app/.netlify/functions/ad-watch', {
+            const response = await fetch('https://navigiu.netlify.app/.netlify/functions/ad-watch', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -387,28 +416,118 @@ class TelegramSbaroApp {
     }
 
     joinContest(contestType) {
-        const contestCosts = {
-            daily: 5,
-            weekly: 10,
-            monthly: 25
+        const contestRequirements = {
+            daily: 10,
+            weekly: 30,
+            monthly: 200
         };
         
-        const cost = contestCosts[contestType];
-        if (!cost) return;
+        const required = contestRequirements[contestType];
+        const watched = this.getContestAdsWatched(contestType);
         
-        if (this.userStats.totalPoints >= cost) {
-            this.userStats.totalPoints -= cost;
+        if (watched >= required) {
+            // User can join the contest
             this.userStats.contestsJoined += 1;
             this.updateStatsDisplay();
             this.showToast(`🏆 Successfully joined the ${contestType} contest!`, 'success');
-            this.addActivity(`${contestType.charAt(0).toUpperCase() + contestType.slice(1)} Contest`, `-${cost} points`, 'contest');
+            this.addActivity(`${contestType.charAt(0).toUpperCase() + contestType.slice(1)} Contest`, 'Joined', 'contest');
             this.tg.HapticFeedback.notificationOccurred('success');
             
+            // Update button state
+            const btn = document.getElementById(`${contestType}JoinBtn`);
+            btn.textContent = 'Joined ✓';
+            btn.disabled = true;
+            btn.style.backgroundColor = '#27ae60';
+            
             // Send to backend
-            this.sendContestJoinToBackend(contestType, cost);
+            this.sendContestJoinToBackend(contestType, 0);
         } else {
-            this.showToast(`❌ Need ${cost} points to join ${contestType} contest`, 'error');
-            this.tg.HapticFeedback.notificationOccurred('error');
+            // User needs to watch more contest ads
+            this.watchContestAd(contestType);
+        }
+    }
+    
+    async watchContestAd(contestType) {
+        try {
+            // Show Monetag ad for contest participation (no points earned)
+            if (typeof show_9656288 === 'function') {
+                await show_9656288();
+                
+                // Increment contest ads counter (no points earned)
+                this.incrementContestAds(contestType);
+                
+                // Update contest eligibility
+                this.updateContestEligibility();
+                
+                this.showToast('📺 Contest ad watched! No points earned.', 'info');
+                this.tg.HapticFeedback.impactOccurred('light');
+                
+                // Send to backend
+                await this.sendContestAdToBackend(contestType);
+            }
+        } catch (error) {
+            console.error('Contest ad error:', error);
+            this.showToast('❌ Contest ad not available right now', 'error');
+        }
+    }
+    
+    getContestAdsWatched(contestType) {
+        const key = `contestAds_${contestType}`;
+        return parseInt(localStorage.getItem(key) || '0');
+    }
+    
+    incrementContestAds(contestType) {
+        const key = `contestAds_${contestType}`;
+        const current = this.getContestAdsWatched(contestType);
+        localStorage.setItem(key, (current + 1).toString());
+    }
+    
+    updateContestEligibility() {
+        const contests = ['daily', 'weekly', 'monthly'];
+        const requirements = { daily: 10, weekly: 30, monthly: 200 };
+        
+        contests.forEach(contest => {
+            const watched = this.getContestAdsWatched(contest);
+            const required = requirements[contest];
+            const card = document.getElementById(`${contest}Contest`);
+            const progress = document.getElementById(`${contest}Progress`);
+            const btn = document.getElementById(`${contest}JoinBtn`);
+            
+            // Update progress display
+            progress.textContent = `${watched}/${required}`;
+            
+            if (watched >= required) {
+                // Eligible - Green
+                card.style.borderColor = '#27ae60';
+                card.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+                btn.textContent = `Join ${contest.charAt(0).toUpperCase() + contest.slice(1)} Contest`;
+                btn.disabled = false;
+                btn.style.backgroundColor = '#27ae60';
+            } else {
+                // Need more ads - Blue
+                card.style.borderColor = '#3498db';
+                card.style.backgroundColor = 'rgba(52, 152, 219, 0.05)';
+                btn.textContent = `Watch Contest Ads (${watched}/${required})`;
+                btn.disabled = false;
+                btn.style.backgroundColor = '#3498db';
+            }
+        });
+    }
+    
+    async sendContestAdToBackend(contestType) {
+        try {
+            await fetch('https://navigiu.netlify.app/.netlify/functions/contest-ad-watch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: this.user?.id,
+                    telegram_user: this.user,
+                    contest_type: contestType,
+                    timestamp: Date.now()
+                })
+            });
+        } catch (error) {
+            console.error('Contest ad backend error:', error);
         }
     }
     
@@ -503,6 +622,7 @@ class TelegramSbaroApp {
     }
     
     sendStars(amount) {
+        // Send TON Stars to your wallet: UQBVeJflae5yTTgS6wczgpDkDcyEAnmA88bZyaiB3lYGqWw9
         if (this.tg.openInvoice) {
             const invoice = {
                 title: 'NAVIGI SBARO - TON Stars',
@@ -510,18 +630,152 @@ class TelegramSbaroApp {
                 payload: `stars_${amount}_${Date.now()}`,
                 provider_token: '',
                 currency: 'XTR',
-                prices: [{ label: `${amount} TON Stars`, amount: amount }]
+                prices: [{ label: `${amount} TON Stars`, amount: amount }],
+                recipient_wallet: 'UQBVeJflae5yTTgS6wczgpDkDcyEAnmA88bZyaiB3lYGqWw9'
             };
             
             this.tg.openInvoice(invoice, (status) => {
                 if (status === 'paid') {
                     this.showToast(`⭐ ${amount} Stars sent! Leaderboard boosted!`, 'success');
                     this.closeModal();
+                    
+                    // Send to backend for leaderboard tracking
+                    this.sendStarsToBackend(amount);
                 }
             });
         } else {
             this.showToast('❌ Stars payment not available', 'error');
         }
+    }
+    
+    async sendStarsToBackend(amount) {
+        try {
+            await fetch('https://navigiu.netlify.app/.netlify/functions/ton-stars', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: this.user?.id,
+                    telegram_user: this.user,
+                    stars_amount: amount,
+                    wallet_address: 'UQBVeJflae5yTTgS6wczgpDkDcyEAnmA88bZyaiB3lYGqWw9',
+                    timestamp: Date.now()
+                })
+            });
+        } catch (error) {
+            console.error('Stars backend error:', error);
+        }
+    }
+    
+    initContestTimers() {
+        // Get contest end times from backend or set defaults
+        this.contestEndTimes = {
+            daily: this.getNextDailyReset(),
+            weekly: this.getNextWeeklyReset(),
+            monthly: this.getNextMonthlyReset()
+        };
+        
+        // Start countdown timers
+        this.startCountdownTimers();
+    }
+    
+    getNextDailyReset() {
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        return tomorrow.getTime();
+    }
+    
+    getNextWeeklyReset() {
+        const now = new Date();
+        const nextWeek = new Date(now);
+        const daysUntilSunday = 7 - now.getDay();
+        nextWeek.setDate(nextWeek.getDate() + daysUntilSunday);
+        nextWeek.setHours(0, 0, 0, 0);
+        return nextWeek.getTime();
+    }
+    
+    getNextMonthlyReset() {
+        const now = new Date();
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        return nextMonth.getTime();
+    }
+    
+    startCountdownTimers() {
+        setInterval(() => {
+            this.updateCountdowns();
+        }, 1000); // Update every second
+        
+        // Initial update
+        this.updateCountdowns();
+    }
+    
+    updateCountdowns() {
+        const now = Date.now();
+        
+        Object.keys(this.contestEndTimes).forEach(contest => {
+            const endTime = this.contestEndTimes[contest];
+            const remaining = endTime - now;
+            
+            const countdownElement = document.getElementById(`${contest}Countdown`);
+            if (countdownElement) {
+                if (remaining > 0) {
+                    countdownElement.textContent = this.formatCountdown(remaining);
+                } else {
+                    countdownElement.textContent = this.isArabic ? 'انتهت المسابقة' : 'Contest ended';
+                    // Reset contest for next period
+                    this.resetContest(contest);
+                }
+            }
+        });
+    }
+    
+    formatCountdown(milliseconds) {
+        const seconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        
+        if (days > 0) {
+            const remainingHours = hours % 24;
+            const remainingMinutes = minutes % 60;
+            return this.isArabic ? 
+                `${days}ي ${remainingHours}س ${remainingMinutes}د` :
+                `${days}d ${remainingHours}h ${remainingMinutes}m`;
+        } else if (hours > 0) {
+            const remainingMinutes = minutes % 60;
+            const remainingSeconds = seconds % 60;
+            return this.isArabic ?
+                `${hours}س ${remainingMinutes}د ${remainingSeconds}ث` :
+                `${hours}h ${remainingMinutes}m ${remainingSeconds}s`;
+        } else {
+            const remainingMinutes = minutes % 60;
+            const remainingSeconds = seconds % 60;
+            return this.isArabic ?
+                `${remainingMinutes}د ${remainingSeconds}ث` :
+                `${remainingMinutes}m ${remainingSeconds}s`;
+        }
+    }
+    
+    resetContest(contestType) {
+        // Reset contest ads counter
+        localStorage.removeItem(`contestAds_${contestType}`);
+        
+        // Update end time for next period
+        switch(contestType) {
+            case 'daily':
+                this.contestEndTimes.daily = this.getNextDailyReset();
+                break;
+            case 'weekly':
+                this.contestEndTimes.weekly = this.getNextWeeklyReset();
+                break;
+            case 'monthly':
+                this.contestEndTimes.monthly = this.getNextMonthlyReset();
+                break;
+        }
+        
+        // Update eligibility display
+        this.updateContestEligibility();
     }
 
     showVipRequired() {
@@ -672,7 +926,7 @@ class TelegramSbaroApp {
         }
 
         try {
-            const response = await fetch('https://navigi-bot.netlify.app/.netlify/functions/vip-payment', {
+            const response = await fetch('https://navigiu.netlify.app/.netlify/functions/vip-payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -708,7 +962,7 @@ class TelegramSbaroApp {
         }
 
         try {
-            const response = await fetch('https://navigi-bot.netlify.app/.netlify/functions/vip-payment', {
+            const response = await fetch('https://navigiu.netlify.app/.netlify/functions/vip-payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -913,11 +1167,68 @@ class TelegramSbaroApp {
 
     toggleLanguage() {
         this.isArabic = !this.isArabic;
+        localStorage.setItem('isArabic', this.isArabic.toString());
+        
         const langBtn = document.getElementById('languageBtn');
         langBtn.innerHTML = this.isArabic ? '🇸🇦' : '🇺🇸';
         
-        // In a real app, you would translate the interface
+        // Apply language changes
+        this.applyLanguage();
         this.showToast(this.isArabic ? 'تم تغيير اللغة إلى العربية' : 'Language changed to English', 'success');
+    }
+    
+    applyLanguage() {
+        // Apply RTL/LTR direction
+        document.body.dir = this.isArabic ? 'rtl' : 'ltr';
+        document.body.classList.toggle('arabic', this.isArabic);
+        
+        // Update key UI elements
+        const welcomeText = document.getElementById('welcomeText');
+        if (welcomeText) {
+            welcomeText.textContent = this.isArabic ? 'مرحباً بعودتك!' : 'Welcome back!';
+        }
+        
+        // Update navigation labels
+        const navItems = document.querySelectorAll('.nav-item span');
+        const navLabels = this.isArabic ? 
+            ['الرئيسية', 'اربح', 'المسابقات', 'في آي بي', 'الملف الشخصي'] :
+            ['Home', 'Earn', 'Contests', 'VIP', 'Profile'];
+        
+        navItems.forEach((item, index) => {
+            if (navLabels[index]) {
+                item.textContent = navLabels[index];
+            }
+        });
+        
+        // Update stat labels
+        const statLabels = document.querySelectorAll('.stat-label');
+        const statTexts = this.isArabic ? 
+            ['إجمالي النقاط', 'الرصيد', 'حالة في آي بي'] :
+            ['Total Points', 'Balance', 'VIP Status'];
+        
+        statLabels.forEach((label, index) => {
+            if (statTexts[index]) {
+                label.textContent = statTexts[index];
+            }
+        });
+        
+        // Update contest eligibility text
+        const adsRequirements = document.querySelectorAll('.ads-requirement');
+        adsRequirements.forEach(req => {
+            const currentText = req.textContent;
+            if (currentText.includes('Need') || currentText.includes('تحتاج')) {
+                const number = currentText.match(/\d+/)[0];
+                req.textContent = this.isArabic ? 
+                    `تحتاج ${number} إعلان مسابقة` : 
+                    `Need ${number} contest ads`;
+            }
+        });
+        
+        // Update language setting display
+        const langSetting = document.querySelector('.setting-item .setting-value');
+        if (langSetting) {
+            langSetting.textContent = this.isArabic ? 'العربية' : 'English';
+        }
     }
 
     toggleNotifications() {

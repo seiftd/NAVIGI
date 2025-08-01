@@ -3,7 +3,7 @@
 
 class AdminDashboardAPI {
     constructor() {
-        this.baseURL = 'https://navigi-bot.netlify.app/.netlify/functions';
+        this.baseURL = 'https://navigiu.netlify.app/.netlify/functions';
         this.adminToken = null; // Set by admin login
         this.platform = 'telegram_bot'; // or 'mobile_app'
     }
