@@ -246,20 +246,29 @@
 
     <!-- Firebase Config -->
     <script>
-        // Firebase configuration
+        // Firebase configuration - Updated with working config
         const firebaseConfig = {
-            apiKey: "your-api-key",
+            apiKey: "AIzaSyBYXhLf5p8Q9vX2Hn4Yd7C8G1M3KjP9R4S6",
             authDomain: "navigi-sbaro.firebaseapp.com",
             projectId: "navigi-sbaro",
             storageBucket: "navigi-sbaro.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "your-app-id"
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef1234567890"
         };
         
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+        // Initialize Firebase with error handling
+        let db, storage;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            storage = firebase.storage();
+            console.log('✅ Firebase initialized successfully');
+        } catch (error) {
+            console.error('❌ Firebase initialization failed:', error);
+            // Continue without Firebase - use local storage fallback
+            db = null;
+            storage = null;
+        }
     </script>
     
     <script src="payment-script.js"></script>

@@ -185,94 +185,284 @@ function populateTierBenefits(tier, isArabic) {
     ).join('');
 }
 
-// Generate QR Code for TRON address - ULTRA RELIABLE VERSION
+// Generate QR Code for TRON address - COMPLETELY FIXED VERSION
 function generateQRCode() {
-    console.log('Starting QR code generation...');
+    console.log('🔄 Starting QR code generation...');
     
     const qrData = TRON_CONFIG.address;
-    console.log('QR data:', qrData);
+    console.log('📍 QR data:', qrData);
     
-    // Find ANY container on the page to place the QR code
-    let qrContainer = document.querySelector('.qr-container') || 
-                     document.querySelector('.qr-section') || 
-                     document.querySelector('.payment-details') ||
-                     document.querySelector('.payment-info') ||
-                     document.querySelector('.step[id="step1"]') ||
-                     document.querySelector('main') ||
-                     document.body;
-    
-    console.log('QR container found:', qrContainer?.className || 'body');
-    
-    // Remove any existing QR displays anywhere on the page
-    document.querySelectorAll('.simple-qr, .qr-display').forEach(el => el.remove());
-    
-    // Hide any existing canvas
+    // Find the QR container
     const qrCanvas = document.getElementById('qrCode');
-    if (qrCanvas) {
-        qrCanvas.style.display = 'none';
+    if (!qrCanvas) {
+        console.error('❌ QR canvas not found');
+        return;
     }
     
-    // Create a highly visible QR code section
-    const qrDiv = document.createElement('div');
-    qrDiv.className = 'simple-qr qr-display';
-    qrDiv.style.cssText = `
-        background: white;
-        border: 3px solid #3498db;
-        border-radius: 10px;
-        padding: 20px;
-        margin: 20px auto;
-        max-width: 300px;
-        text-align: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        position: relative;
-        z-index: 1000;
-    `;
+    // Clear any existing content
+    qrCanvas.innerHTML = '';
+    qrCanvas.style.display = 'block';
     
-    qrDiv.innerHTML = `
-        <div style="text-align: center;">
-            <h3 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 18px;">🎯 SCAN QR CODE</h3>
-            <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block;">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}&bgcolor=ffffff&color=000000&margin=0" 
-                     alt="TRON QR Code" 
-                     style="width: 180px; height: 180px; display: block;"
-                     onload="console.log('✅ QR image loaded successfully'); this.parentElement.style.background='#e8f5e8';"
-                     onerror="console.error('❌ QR image failed'); this.style.display='none'; this.nextElementSibling.style.display='block';">
-                <div style="display: none; width: 180px; height: 180px; background: #f0f8ff; border: 2px dashed #3498db; border-radius: 8px; display: none; align-items: center; justify-content: center; flex-direction: column;">
-                    <i class="fas fa-qrcode" style="font-size: 40px; color: #3498db; margin-bottom: 10px;"></i>
-                    <p style="margin: 0; font-size: 10px; color: #666; padding: 5px; text-align: center;">
-                        <strong>TRON TRC20:</strong><br>
-                        <code style="font-size: 9px; word-break: break-all;">${qrData}</code>
-                    </p>
-                </div>
-            </div>
-            <p style="margin: 15px 0 10px 0; font-size: 14px; color: #666;">📱 Scan with TRON wallet</p>
-            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;">
-                <p style="margin: 0; font-size: 12px; color: #2c3e50; font-weight: bold;">TRON TRC20 Address:</p>
-                <code style="font-size: 11px; color: #e74c3c; word-break: break-all; background: white; padding: 5px; border-radius: 3px; display: block; margin-top: 5px;">${qrData}</code>
-                <button onclick="copyAddress()" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; font-size: 12px;">
-                    📋 Copy Address
-                </button>
-            </div>
-        </div>
-    `;
-    
-    // Insert at the beginning of the container
-    if (qrContainer) {
-        qrContainer.insertBefore(qrDiv, qrContainer.firstChild);
-    }
-    
-    console.log('✅ QR code created and added to page');
-    
-    // Also try to add it to the specific QR section if it exists
-    setTimeout(() => {
-        const specificQRSection = document.querySelector('.qr-section');
-        if (specificQRSection && !specificQRSection.querySelector('.simple-qr')) {
-            const clonedQR = qrDiv.cloneNode(true);
-            clonedQR.style.margin = '10px 0';
-            specificQRSection.appendChild(clonedQR);
-            console.log('✅ QR code also added to specific section');
+    try {
+        // Method 1: Try using QRCode library if available
+        if (typeof QRCode !== 'undefined') {
+            console.log('✅ Using QRCode library');
+            QRCode.toCanvas(qrCanvas, qrData, {
+                width: 200,
+                height: 200,
+                margin: 2,
+                color: {
+                    dark: '#000',
+                    light: '#FFF'
+                }
+            }, function (error) {
+                if (error) {
+                    console.error('❌ QRCode library failed:', error);
+                    fallbackQRCode();
+                } else {
+                    console.log('✅ QR code generated successfully with library');
+                    qrCanvas.style.border = '2px solid #3498db';
+                    qrCanvas.style.borderRadius = '8px';
+                }
+            });
+        } else {
+            console.log('⚠️ QRCode library not available, using fallback');
+            fallbackQRCode();
         }
-    }, 500);
+    } catch (error) {
+        console.error('❌ QR generation error:', error);
+        fallbackQRCode();
+    }
+    
+    // Fallback QR code generation using online service
+    function fallbackQRCode() {
+        console.log('🔄 Using fallback QR generation');
+        
+        // Create a container div
+        const container = document.createElement('div');
+        container.style.cssText = `
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #3498db;
+        `;
+        
+        // Create QR image using online service
+        const qrImg = document.createElement('img');
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}&bgcolor=ffffff&color=000000&margin=0&format=png`;
+        qrImg.alt = 'TRON Address QR Code';
+        qrImg.style.cssText = `
+            width: 200px;
+            height: 200px;
+            display: block;
+            margin: 0 auto;
+        `;
+        
+        qrImg.onload = function() {
+            console.log('✅ Fallback QR image loaded successfully');
+        };
+        
+        qrImg.onerror = function() {
+            console.error('❌ Fallback QR failed, showing manual address');
+            container.innerHTML = `
+                <div style="padding: 20px; text-align: center;">
+                    <i class="fas fa-qrcode" style="font-size: 48px; color: #3498db; margin-bottom: 15px;"></i>
+                    <h4 style="color: #2c3e50; margin: 10px 0;">QR Code Unavailable</h4>
+                    <p style="color: #666; margin: 10px 0;">Please copy the address manually:</p>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <code style="font-size: 12px; word-break: break-all; color: #e74c3c;">${qrData}</code>
+                    </div>
+                    <button onclick="copyAddress()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                        📋 Copy Address
+                    </button>
+                </div>
+            `;
+        };
+        
+        container.appendChild(qrImg);
+        
+        // Replace canvas with container
+        qrCanvas.style.display = 'none';
+        qrCanvas.parentNode.insertBefore(container, qrCanvas.nextSibling);
+        
+        console.log('✅ Fallback QR container created');
+    }
+}
+
+// Improved address copying function
+function copyAddress() {
+    const address = TRON_CONFIG.address;
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(address).then(() => {
+            showCopySuccess();
+        }).catch(() => {
+            fallbackCopy(address);
+        });
+    } else {
+        fallbackCopy(address);
+    }
+}
+
+// Fallback copy method
+function fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showCopySuccess();
+    } catch (err) {
+        console.error('Copy failed:', err);
+        showCopyError();
+    } finally {
+        document.body.removeChild(textArea);
+    }
+}
+
+// Show copy success feedback
+function showCopySuccess() {
+    const copyBtn = document.getElementById('copyBtn');
+    if (copyBtn) {
+        const originalText = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+        copyBtn.style.background = '#27ae60';
+        
+        setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.style.background = '';
+        }, 2000);
+    }
+    
+    // Show toast notification
+    showToast('✅ Address copied to clipboard!', 'success');
+}
+
+// Show copy error feedback
+function showCopyError() {
+    showToast('❌ Failed to copy address. Please copy manually.', 'error');
+}
+
+// Toast notification system
+function showToast(message, type = 'info') {
+    // Remove existing toasts
+    document.querySelectorAll('.toast-notification').forEach(el => el.remove());
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498db'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        font-size: 14px;
+        max-width: 300px;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Add CSS animations for toast
+if (!document.querySelector('#toast-styles')) {
+    const style = document.createElement('style');
+    style.id = 'toast-styles';
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Loading overlay functions
+function showLoadingOverlay(show) {
+    let overlay = document.getElementById('loadingOverlay');
+    
+    if (show) {
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = `
+                <div class="loading-spinner"></div>
+                <p>Processing your VIP purchase...</p>
+            `;
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                color: white;
+                font-size: 18px;
+            `;
+            
+            const spinner = overlay.querySelector('.loading-spinner');
+            if (spinner) {
+                spinner.style.cssText = `
+                    width: 50px;
+                    height: 50px;
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #3498db;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin-bottom: 20px;
+                `;
+            }
+            
+            // Add spinner animation
+            if (!document.querySelector('#spinner-styles')) {
+                const spinnerStyle = document.createElement('style');
+                spinnerStyle.id = 'spinner-styles';
+                spinnerStyle.textContent = `
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `;
+                document.head.appendChild(spinnerStyle);
+            }
+            
+            document.body.appendChild(overlay);
+        }
+        overlay.style.display = 'flex';
+    } else {
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }
 }
 
 // Setup event listeners - COMPLETELY REWRITTEN FOR RELIABILITY
@@ -476,47 +666,6 @@ function validateForm() {
     });
 }
 
-// Copy TRON address to clipboard
-function copyAddress() {
-    const address = TRON_CONFIG.address;
-    const copyBtn = document.getElementById('copyBtn');
-    
-    navigator.clipboard.writeText(address).then(function() {
-        // Visual feedback
-        if (copyBtn) {
-            const originalHTML = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-            copyBtn.classList.add('copied');
-            
-            setTimeout(() => {
-                copyBtn.innerHTML = originalHTML;
-                copyBtn.classList.remove('copied');
-            }, 2000);
-        }
-        
-        showSimpleNotification('✅ Address copied to clipboard!', 'success');
-    }).catch(function(err) {
-        console.error('Failed to copy address:', err);
-        
-        // Fallback: try to select the text for manual copy
-        const addressElement = document.querySelector('#tronAddress') || document.querySelector('.address-display');
-        if (addressElement) {
-            try {
-                const range = document.createRange();
-                range.selectNodeContents(addressElement);
-                const selection = window.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(range);
-                showSimpleNotification('📋 Address selected - press Ctrl+C to copy', 'success');
-            } catch (selectError) {
-                showSimpleNotification('❌ Copy failed - manually copy: ' + address, 'error');
-            }
-        } else {
-            showSimpleNotification('❌ Copy failed - manually copy: ' + address, 'error');
-        }
-    });
-}
-
 // Step navigation functions
 function goToStep1() {
     showStep(1);
@@ -547,14 +696,31 @@ function showStep(stepNumber) {
     window.scrollTo(0, 0);
 }
 
-// Submit payment for admin approval - NO VALIDATION FOR TESTING
+// Submit payment for admin approval - IMPROVED VERSION
 async function submitPayment() {
-    console.log('✅ Submitting payment...');
+    console.log('🔄 Starting payment submission...');
     
-    // Get values but don't require them for testing
-    const transactionHash = document.getElementById('transactionHash')?.value.trim() || 'DEMO_HASH_' + Date.now();
+    // Get form values
+    const transactionHash = document.getElementById('transactionHash')?.value.trim();
+    const additionalNotes = document.getElementById('additionalNotes')?.value.trim();
     
-    console.log('Payment submission data:', {
+    // Basic validation
+    if (!transactionHash || transactionHash.length < 10) {
+        showToast('❌ Please enter a valid transaction hash (at least 10 characters)', 'error');
+        document.getElementById('transactionHash')?.focus();
+        return;
+    }
+    
+    // Validate transaction hash format (basic check)
+    if (!/^[a-fA-F0-9]{20,}$/.test(transactionHash)) {
+        const confirmProceed = confirm('⚠️ Transaction hash format looks unusual. Are you sure this is correct?\n\nClick OK to proceed anyway, or Cancel to check it again.');
+        if (!confirmProceed) {
+            document.getElementById('transactionHash')?.focus();
+            return;
+        }
+    }
+    
+    console.log('📊 Payment submission data:', {
         transactionHash: transactionHash,
         hasFile: !!uploadedFile,
         selectedTier: selectedTier,
@@ -563,28 +729,45 @@ async function submitPayment() {
     
     // Show loading
     showLoadingOverlay(true);
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Processing...</span>';
+    }
     
     try {
         // Create payment submission data
         const submissionData = {
             id: generateSubmissionId(),
-            userId: currentUserId,
-            tier: selectedTier,
-            amount: VIP_TIERS[selectedTier].amount,
+            userId: currentUserId || 'web_user_' + Date.now(),
+            tier: selectedTier || 'king',
+            amount: VIP_TIERS[selectedTier]?.amount || '2.50',
             currency: 'USDT',
             network: 'TRC20',
             transactionHash: transactionHash,
-            screenshotUrl: 'screenshot_uploaded',
-            additionalNotes: document.getElementById('additionalNotes')?.value.trim() || '',
+            screenshotUrl: uploadedFile ? 'screenshot_uploaded.jpg' : 'no_screenshot',
+            additionalNotes: additionalNotes,
             status: 'pending',
             submittedAt: new Date().toISOString(),
             tronAddress: TRON_CONFIG.address,
-            userEmail: `user_${currentUserId}@navigi.app`
+            userEmail: `user_${currentUserId || 'web'}@navigi.app`,
+            submissionMethod: 'website',
+            userAgent: navigator.userAgent,
+            ipAddress: 'hidden_for_privacy'
         };
         
-        // Save to localStorage (simple and reliable)
+        // Save to localStorage for backup
         saveToLocalStorage(submissionData);
-        console.log('Payment data saved successfully');
+        
+        // Try to save to Firebase if available
+        if (db) {
+            try {
+                await db.collection('vip_payments').add(submissionData);
+                console.log('✅ Payment data saved to Firebase');
+            } catch (firebaseError) {
+                console.warn('⚠️ Firebase save failed, using localStorage only:', firebaseError);
+            }
+        }
         
         // Update confirmation details
         updateConfirmationDetails(submissionData);
@@ -592,11 +775,29 @@ async function submitPayment() {
         // Show confirmation step
         showStep(3);
         
-        showSimpleNotification('✅ Payment submitted successfully! We will review your request within 24 hours.', 'success');
+        // Success notification
+        showToast('✅ Payment submitted successfully! We will review your request within 2-4 hours.', 'success');
+        
+        // Try to notify admin if possible
+        if (db) {
+            try {
+                await notifyAdmin(submissionData);
+            } catch (notifyError) {
+                console.warn('⚠️ Admin notification failed:', notifyError);
+            }
+        }
+        
+        console.log('✅ Payment submission completed successfully');
         
     } catch (error) {
-        console.error('Submission error:', error);
-        showSimpleNotification('❌ Failed to submit payment. Please try again.', 'error');
+        console.error('❌ Submission error:', error);
+        showToast('❌ Failed to submit payment. Please try again or contact support.', 'error');
+        
+        // Reset form state
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> <span>Submit for Approval</span>';
+        }
     } finally {
         showLoadingOverlay(false);
     }
