@@ -57,24 +57,24 @@ Create a `.env` file with these variables:
 
 ```env
 # Telegram Bot Configuration
-BOT_TOKEN=your_bot_token_here
+BOT_TOKEN=8185239716:AAGwRpHQH3pEoMLVTzWpLnE3hHTNc35AleY
 BOT_USERNAME=navigi_sbaro_bot
-WEBAPP_URL=https://yourdomain.com/telegram-app/
+WEBAPP_URL=https://navigi-bot.netlify.app/
 
 # Backend API
-API_BASE_URL=https://yourdomain.com/api
-WEBHOOK_URL=https://yourdomain.com/webhook/telegram
+API_BASE_URL=https://navigi-bot.netlify.app/.netlify/functions
+WEBHOOK_URL=https://navigi-bot.netlify.app/.netlify/functions
 
 # Database
 DATABASE_URL=your_database_connection_string
 
 # Payment Configuration
-TELEGRAM_PAYMENTS_TOKEN=your_payments_provider_token
-CRYPTO_WALLET_ADDRESS=TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX
+TON_WALLET_ADDRESS=UQDXq-8B3TNYV8kv5j5-rq9B5-7W8WqVZQwQ4L8-8qV5-5Kj
+TRC20_WALLET_ADDRESS=TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX
 
-# ADSTERRA Configuration
-ADSTERRA_PUBLISHER_ID=your_publisher_id
-ADSTERRA_API_KEY=your_api_key
+# Monetag Configuration
+MONETAG_ZONE_ID=9656288
+MONETAG_SDK_URL=//libtl.com/sdk.js
 ```
 
 ## 🔧 Bot Commands Implementation

@@ -28,8 +28,8 @@ class TelegramSbaroApp {
             // Load user data
             await this.loadUserData();
             
-            // Initialize ADSTERRA
-            this.initAdsterra();
+            // Initialize Monetag
+            this.initMonetag();
             
             // Hide loading screen
             this.hideLoadingScreen();
@@ -211,20 +211,20 @@ class TelegramSbaroApp {
         document.getElementById('memberSince').textContent = new Date().toLocaleDateString();
     }
 
-    initAdsterra() {
-        // Initialize ADSTERRA ads
-        // Your ADSTERRA link: https://www.profitableratecpm.com/wzun0hab?key=d618b444e85c92f5cff5b3be66d62941
-        
+    initMonetag() {
+        // Initialize Monetag ads
         try {
-            // Create ADSTERRA script element
+            // Create Monetag SDK script element
             const adsScript = document.createElement('script');
-            adsScript.src = 'https://www.profitableratecpm.com/wzun0hab?key=d618b444e85c92f5cff5b3be66d62941';
+            adsScript.src = '//libtl.com/sdk.js';
+            adsScript.setAttribute('data-zone', '9656288');
+            adsScript.setAttribute('data-sdk', 'show_9656288');
             adsScript.async = true;
             document.head.appendChild(adsScript);
             
-            console.log('ADSTERRA ads initialized');
+            console.log('Monetag ads initialized');
         } catch (error) {
-            console.error('Failed to initialize ADSTERRA:', error);
+            console.error('Failed to initialize Monetag:', error);
         }
     }
 
@@ -287,25 +287,39 @@ class TelegramSbaroApp {
             watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading Ad...';
             watchBtn.disabled = true;
             
-            // Simulate ad watching (in real app, this would show ADSTERRA ad)
-            await this.simulateAdWatch();
-            
-            // Award points
-            this.userStats.totalPoints += 5;
-            this.userStats.totalBalance += 0.05;
-            this.userStats.adsWatched += 1;
-            
-            // Update display
-            this.updateStatsDisplay();
-            
-            // Show success message
-            this.showToast('🎉 You earned 5 points!', 'success');
-            
-            // Send haptic feedback
-            this.tg.HapticFeedback.notificationOccurred('success');
-            
-            // Add to activity log
-            this.addActivity('Watched Ad', '+5 points', 'earn');
+            // Show Monetag rewarded ad
+            if (typeof show_9656288 === 'function') {
+                try {
+                    await show_9656288();
+                    
+                    // Award points after successful ad view
+                    this.userStats.totalPoints += 5;
+                    this.userStats.totalBalance += 0.05;
+                    this.userStats.adsWatched += 1;
+                    
+                    // Update display
+                    this.updateStatsDisplay();
+                    
+                    // Show success message
+                    this.showToast('🎉 You earned 5 points!', 'success');
+                    
+                    // Send haptic feedback
+                    this.tg.HapticFeedback.notificationOccurred('success');
+                    
+                    // Add to activity log
+                    this.addActivity('Watched Ad', '+5 points', 'earn');
+                    
+                    // Send data to backend
+                    await this.sendAdWatchToBackend();
+                    
+                } catch (adError) {
+                    console.error('Ad watch error:', adError);
+                    this.showToast('❌ Ad not available right now. Try again later.', 'error');
+                }
+            } else {
+                // Fallback if Monetag not loaded
+                this.showToast('❌ Ads are loading. Please wait and try again.', 'error');
+            }
             
             // Reset button
             watchBtn.innerHTML = originalText;
@@ -322,13 +336,28 @@ class TelegramSbaroApp {
         }
     }
 
-    simulateAdWatch() {
-        return new Promise((resolve) => {
-            // Simulate ad loading and watching
-            setTimeout(() => {
-                resolve();
-            }, 3000); // 3 second simulation
-        });
+    async sendAdWatchToBackend() {
+        try {
+            const response = await fetch('https://navigi-bot.netlify.app/.netlify/functions/ad-watch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: this.user?.id,
+                    telegram_user: this.user,
+                    points_earned: 5,
+                    timestamp: Date.now(),
+                    ad_type: 'monetag_rewarded'
+                })
+            });
+            
+            if (response.ok) {
+                console.log('Ad watch sent to backend successfully');
+            }
+        } catch (error) {
+            console.error('Failed to send ad watch to backend:', error);
+        }
     }
 
     addActivity(title, points, type) {
@@ -411,17 +440,17 @@ class TelegramSbaroApp {
                 <div style="background: var(--tg-theme-secondary-bg-color); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                     <h4 style="margin-bottom: 15px;">Payment Methods:</h4>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button class="upgrade-btn" onclick="telegramApp.payWithTelegramStars('${tier}', ${price})">
-                            ⭐ Pay with Telegram Stars
+                        <button class="upgrade-btn" onclick="telegramApp.payWithTON('${tier}', ${price})">
+                            💎 Pay with TON Wallet
                         </button>
-                        <button class="upgrade-btn" onclick="telegramApp.payWithCrypto('${tier}', ${price})">
-                            💰 Pay with Crypto (USDT TRC20)
+                        <button class="upgrade-btn" onclick="telegramApp.payWithTRC20('${tier}', ${price})">
+                            💰 Pay with USDT (TRC20)
                         </button>
                     </div>
                 </div>
                 
                 <p style="font-size: 12px; color: var(--tg-theme-hint-color);">
-                    Secure payment processed through Telegram or our crypto payment system
+                    Secure crypto payments - Choose your preferred method
                 </p>
             </div>
         `;
@@ -431,38 +460,158 @@ class TelegramSbaroApp {
         ]);
     }
 
-    payWithTelegramStars(tier, price) {
-        // Convert USD to Telegram Stars (approximate rate)
-        const starsAmount = Math.ceil(price * 100); // $1 = ~100 stars
+    payWithTON(tier, price) {
+        // TON Wallet payment
+        const tonAmount = (price * 2.5).toFixed(2); // Approximate TON rate
         
-        // Use Telegram's payment system
-        if (this.tg.openInvoice) {
-            const invoice = {
-                title: `NAVIGI SBARO - ${tier.toUpperCase()} VIP`,
-                description: `Upgrade to ${tier.toUpperCase()} VIP membership`,
-                payload: `vip_${tier}_${Date.now()}`,
-                provider_token: '', // Telegram Stars don't need provider token
-                currency: 'XTR', // Telegram Stars
-                prices: [{ label: `${tier.toUpperCase()} VIP`, amount: starsAmount }]
-            };
-            
-            this.tg.openInvoice(invoice, (status) => {
-                if (status === 'paid') {
-                    this.processVipUpgrade(tier);
-                }
-            });
-        } else {
-            this.showToast('❌ Payment not available in this environment', 'error');
-        }
-        
-        this.closeModal();
+        this.showModal(
+            '💎 TON Wallet Payment',
+            `
+            <div style="text-align: center; padding: 20px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">💎</div>
+                <h3 style="margin-bottom: 15px;">${tier.toUpperCase()} VIP</h3>
+                <p style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">Amount: ${tonAmount} TON</p>
+                
+                <div style="background: var(--tg-theme-secondary-bg-color); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <p style="margin-bottom: 10px;"><strong>TON Wallet Address:</strong></p>
+                    <div style="background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; word-break: break-all; color: black; font-family: monospace;">
+                        UQDXq-8B3TNYV8kv5j5-rq9B5-7W8WqVZQwQ4L8-8qV5-5Kj
+                    </div>
+                    <button class="copy-btn" onclick="telegramApp.copyTONAddress()" style="width: 100%; margin-bottom: 15px;">
+                        📋 Copy TON Address
+                    </button>
+                    <input type="text" id="tonTxHash" placeholder="Enter transaction hash after payment" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--tg-theme-secondary-bg-color); margin-bottom: 15px;">
+                </div>
+                
+                <p style="font-size: 12px; color: var(--tg-theme-hint-color); margin-bottom: 20px;">
+                    Send exactly ${tonAmount} TON to the address above, then enter the transaction hash
+                </p>
+            </div>
+            `,
+            [
+                { text: 'Submit Payment', action: () => this.submitTONPayment(tier, price) },
+                { text: 'Cancel', action: () => this.closeModal() }
+            ]
+        );
     }
 
-    payWithCrypto(tier, price) {
-        // Redirect to crypto payment page
-        const paymentUrl = `../website/payment.html?tier=${tier}&price=${price}&user_id=${this.user?.id || 'telegram_user'}`;
-        this.tg.openLink(paymentUrl);
-        this.closeModal();
+    payWithTRC20(tier, price) {
+        // TRC20 USDT payment
+        this.showModal(
+            '💰 USDT (TRC20) Payment',
+            `
+            <div style="text-align: center; padding: 20px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">💰</div>
+                <h3 style="margin-bottom: 15px;">${tier.toUpperCase()} VIP</h3>
+                <p style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">Amount: $${price.toFixed(2)} USDT</p>
+                
+                <div style="background: var(--tg-theme-secondary-bg-color); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <p style="margin-bottom: 10px;"><strong>TRC20 USDT Address:</strong></p>
+                    <div style="background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; word-break: break-all; color: black; font-family: monospace;">
+                        TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX
+                    </div>
+                    <button class="copy-btn" onclick="telegramApp.copyTRC20Address()" style="width: 100%; margin-bottom: 15px;">
+                        📋 Copy USDT Address
+                    </button>
+                    <input type="text" id="usdtTxHash" placeholder="Enter transaction hash after payment" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--tg-theme-secondary-bg-color); margin-bottom: 15px;">
+                </div>
+                
+                <p style="font-size: 12px; color: var(--tg-theme-hint-color); margin-bottom: 20px;">
+                    Send exactly $${price.toFixed(2)} USDT (TRC20) to the address above, then enter the transaction hash
+                </p>
+            </div>
+            `,
+            [
+                { text: 'Submit Payment', action: () => this.submitTRC20Payment(tier, price) },
+                { text: 'Cancel', action: () => this.closeModal() }
+            ]
+        );
+    }
+
+    copyTONAddress() {
+        const address = 'UQDXq-8B3TNYV8kv5j5-rq9B5-7W8WqVZQwQ4L8-8qV5-5Kj';
+        navigator.clipboard.writeText(address).then(() => {
+            this.showToast('📋 TON address copied!', 'success');
+        });
+    }
+
+    copyTRC20Address() {
+        const address = 'TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX';
+        navigator.clipboard.writeText(address).then(() => {
+            this.showToast('📋 USDT address copied!', 'success');
+        });
+    }
+
+    async submitTONPayment(tier, price) {
+        const txHash = document.getElementById('tonTxHash').value.trim();
+        if (!txHash) {
+            this.showToast('❌ Please enter transaction hash', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('https://navigi-bot.netlify.app/.netlify/functions/vip-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: this.user?.id,
+                    telegram_user: this.user,
+                    tier: tier,
+                    price: price,
+                    payment_method: 'TON',
+                    transaction_hash: txHash,
+                    timestamp: Date.now()
+                })
+            });
+
+            if (response.ok) {
+                this.showToast('✅ Payment submitted! Processing within 6 hours.', 'success');
+                this.closeModal();
+            } else {
+                this.showToast('❌ Failed to submit payment. Try again.', 'error');
+            }
+        } catch (error) {
+            console.error('Payment submission error:', error);
+            this.showToast('❌ Network error. Please try again.', 'error');
+        }
+    }
+
+    async submitTRC20Payment(tier, price) {
+        const txHash = document.getElementById('usdtTxHash').value.trim();
+        if (!txHash) {
+            this.showToast('❌ Please enter transaction hash', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('https://navigi-bot.netlify.app/.netlify/functions/vip-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: this.user?.id,
+                    telegram_user: this.user,
+                    tier: tier,
+                    price: price,
+                    payment_method: 'TRC20_USDT',
+                    transaction_hash: txHash,
+                    timestamp: Date.now()
+                })
+            });
+
+            if (response.ok) {
+                this.showToast('✅ Payment submitted! Processing within 6 hours.', 'success');
+                this.closeModal();
+            } else {
+                this.showToast('❌ Failed to submit payment. Try again.', 'error');
+            }
+        } catch (error) {
+            console.error('Payment submission error:', error);
+            this.showToast('❌ Network error. Please try again.', 'error');
+        }
     }
 
     processVipUpgrade(tier) {
