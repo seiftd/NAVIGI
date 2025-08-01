@@ -253,11 +253,15 @@
                 </div>
 
                 <!-- Daily Contest -->
-                <div class="contest-card active">
+                <div class="contest-card" id="dailyContest" data-contest="daily">
                     <div class="contest-badge">🔥 Daily</div>
+                    <div class="contest-eligibility" id="dailyEligibility">
+                        <span class="ads-requirement">Need 10 contest ads</span>
+                        <span class="ads-progress" id="dailyProgress">0/10</span>
+                    </div>
                     <div class="contest-info">
-                        <h3>Daily Points Contest</h3>
-                        <p>Collect the most points today to win!</p>
+                        <h3>Daily Contest</h3>
+                        <p>Watch 10 contest ads to participate!</p>
                         <div class="contest-stats">
                             <div class="stat">
                                 <span class="label">Prize Pool</span>
@@ -265,25 +269,29 @@
                             </div>
                             <div class="stat">
                                 <span class="label">Participants</span>
-                                <span class="value">1,234</span>
+                                <span class="value" id="dailyParticipants">0</span>
                             </div>
                             <div class="stat">
                                 <span class="label">Time Left</span>
-                                <span class="value">8h 45m</span>
+                                <span class="value countdown" id="dailyCountdown">Loading...</span>
                             </div>
                         </div>
                     </div>
-                    <button class="join-contest-btn" onclick="joinContest('daily')">
-                        Join Contest (5 points)
+                    <button class="join-contest-btn" id="dailyJoinBtn" onclick="joinContest('daily')" disabled>
+                        Watch Contest Ads (0/10)
                     </button>
                 </div>
 
                 <!-- Weekly Contest -->
-                <div class="contest-card">
+                <div class="contest-card" id="weeklyContest" data-contest="weekly">
                     <div class="contest-badge">📅 Weekly</div>
+                    <div class="contest-eligibility" id="weeklyEligibility">
+                        <span class="ads-requirement">Need 30 contest ads</span>
+                        <span class="ads-progress" id="weeklyProgress">0/30</span>
+                    </div>
                     <div class="contest-info">
-                        <h3>Weekly Challenge</h3>
-                        <p>Weekly competition for all users</p>
+                        <h3>Weekly Contest</h3>
+                        <p>Watch 30 contest ads to participate!</p>
                         <div class="contest-stats">
                             <div class="stat">
                                 <span class="label">Prize Pool</span>
@@ -291,25 +299,29 @@
                             </div>
                             <div class="stat">
                                 <span class="label">Participants</span>
-                                <span class="value">3,456</span>
+                                <span class="value" id="weeklyParticipants">0</span>
                             </div>
                             <div class="stat">
                                 <span class="label">Time Left</span>
-                                <span class="value">3d 12h</span>
+                                <span class="value countdown" id="weeklyCountdown">Loading...</span>
                             </div>
                         </div>
                     </div>
-                    <button class="join-contest-btn" onclick="joinContest('weekly')">
-                        Join Contest (10 points)
+                    <button class="join-contest-btn" id="weeklyJoinBtn" onclick="joinContest('weekly')" disabled>
+                        Watch Contest Ads (0/30)
                     </button>
                 </div>
 
                 <!-- Monthly Contest -->
-                <div class="contest-card">
+                <div class="contest-card" id="monthlyContest" data-contest="monthly">
                     <div class="contest-badge">🏆 Monthly</div>
+                    <div class="contest-eligibility" id="monthlyEligibility">
+                        <span class="ads-requirement">Need 200 contest ads</span>
+                        <span class="ads-progress" id="monthlyProgress">0/200</span>
+                    </div>
                     <div class="contest-info">
-                        <h3>Monthly Championship</h3>
-                        <p>The biggest contest of the month!</p>
+                        <h3>Monthly Contest</h3>
+                        <p>Watch 200 contest ads to participate!</p>
                         <div class="contest-stats">
                             <div class="stat">
                                 <span class="label">Prize Pool</span>
@@ -317,16 +329,16 @@
                             </div>
                             <div class="stat">
                                 <span class="label">Participants</span>
-                                <span class="value">12,345</span>
+                                <span class="value" id="monthlyParticipants">0</span>
                             </div>
                             <div class="stat">
                                 <span class="label">Time Left</span>
-                                <span class="value">15d 8h</span>
+                                <span class="value countdown" id="monthlyCountdown">Loading...</span>
                             </div>
                         </div>
                     </div>
-                    <button class="join-contest-btn" onclick="joinContest('monthly')">
-                        Join Contest (25 points)
+                    <button class="join-contest-btn" id="monthlyJoinBtn" onclick="joinContest('monthly')" disabled>
+                        Watch Contest Ads (0/200)
                     </button>
                 </div>
 
