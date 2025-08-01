@@ -22,6 +22,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.BorderStroke
 import com.navigi.sbaro.R
 import com.navigi.sbaro.data.notification.NotificationManager
 import com.navigi.sbaro.data.repository.UserRepository
@@ -686,10 +687,87 @@ fun EnhancedProfileScreen(
             }
         }
         
+        // VIP Subscription Section
+        item {
+            Text(
+                text = if (isArabic) "👑 عضوية VIP" else "👑 VIP Membership",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        
+        if (userStats.vipTier != VipTier.NONE) {
+            // Current VIP Status
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF4CAF50)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "👑",
+                            style = MaterialTheme.typography.headlineLarge
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (isArabic) "أنت عضو VIP!" else "You are VIP!",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "${userStats.vipTier.name} Tier - ${userRepository.getRemainingVipDays()} ${if (isArabic) "أيام متبقية" else "days left"}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        } else {
+            // VIP Upgrade Options
+            item {
+                VipTierCard(
+                    title = "KING TIER",
+                    price = "$2.50/month",
+                    benefits = listOf("16 ads/day", "1 min cooldown", "10 mining points"),
+                    color = Color(0xFF3498DB),
+                    onUpgrade = { userRepository.activateVip() },
+                    isArabic = isArabic
+                )
+            }
+            
+            item {
+                VipTierCard(
+                    title = "EMPEROR TIER", 
+                    price = "$9.00/month",
+                    benefits = listOf("20 ads/day", "VIP competitions", "15 mining points"),
+                    color = Color(0xFF9B59B6),
+                    onUpgrade = { userRepository.activateVip() },
+                    isArabic = isArabic
+                )
+            }
+            
+            item {
+                VipTierCard(
+                    title = "LORD TIER",
+                    price = "$25.00/month", 
+                    benefits = listOf("25 ads/day", "Priority withdrawals", "20 mining points"),
+                    color = Color(0xFFE74C3C),
+                    onUpgrade = { userRepository.activateVip() },
+                    isArabic = isArabic
+                )
+            }
+        }
+        
         // Statistics
         item {
             Text(
-                text = if (isArabic) "إحصائياتي" else "My Statistics",
+                text = if (isArabic) "📊 إحصائياتي" else "📊 My Statistics",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -1061,5 +1139,73 @@ private fun BenefitRow(icon: String, text: String, isArabic: Boolean) {
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Black
         )
+    }
+}
+
+@Composable
+private fun VipTierCard(
+    title: String,
+    price: String,
+    benefits: List<String>,
+    color: Color,
+    onUpgrade: () -> Unit,
+    isArabic: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = color.copy(alpha = 0.1f)
+        ),
+        border = BorderStroke(2.dp, color)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
+                Text(
+                    text = price,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2ECC71)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            benefits.forEach { benefit ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                ) {
+                    Text(text = "✅", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = benefit,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Button(
+                onClick = onUpgrade,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = color)
+            ) {
+                Text(
+                    text = if (isArabic) "ترقية الآن (تجريبي)" else "Upgrade Now (Demo)",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }

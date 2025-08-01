@@ -185,12 +185,34 @@ private fun EnhancedHomeScreen(
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    Text(
-                        text = "${userStats.totalPoints} SBARO ${if (userStats.vipTier != VipTier.NONE) "👑" else ""}",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${userStats.totalPoints}",
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(Color(0xFF3498DB), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "SB",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        if (userStats.vipTier != VipTier.NONE) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "👑", style = MaterialTheme.typography.titleLarge)
+                        }
+                    }
                     
                     // VIP Status
                     if (userStats.vipTier != VipTier.NONE) {
