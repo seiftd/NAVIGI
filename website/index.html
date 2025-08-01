@@ -21,7 +21,6 @@
                 <li><a href="#home" data-en="Home" data-ar="الرئيسية">Home</a></li>
                 <li><a href="#features" data-en="Features" data-ar="المميزات">Features</a></li>
                 <li><a href="#vip" data-en="VIP Upgrade" data-ar="ترقية VIP">VIP Upgrade</a></li>
-                <li><a href="payment.html" data-en="VIP Payment" data-ar="دفع VIP">VIP Payment</a></li>
                 <li><a href="#admin" data-en="Admin Dashboard" data-ar="لوحة الإدارة">Admin Dashboard</a></li>
                 <li><a href="#download" data-en="Download" data-ar="تحميل">Download</a></li>
                 <li class="language-toggle">
@@ -136,7 +135,7 @@
                         <li>✅ 10 daily mining points</li>
                         <li>✅ Priority support</li>
                     </ul>
-                    <button class="btn btn-king" onclick="goToPayment('king')">
+                    <button class="btn btn-king" onclick="selectVipTier('king')">
                         <span data-en="Choose King" data-ar="اختر الملك">Choose King</span>
                     </button>
                 </div>
@@ -153,7 +152,7 @@
                         <li>✅ 15 daily mining points</li>
                         <li>✅ Advanced statistics</li>
                     </ul>
-                    <button class="btn btn-emperor" onclick="goToPayment('emperor')">
+                    <button class="btn btn-emperor" onclick="selectVipTier('emperor')">
                         <span data-en="Choose Emperor" data-ar="اختر الإمبراطور">Choose Emperor</span>
                     </button>
                 </div>
@@ -170,7 +169,7 @@
                         <li>✅ Exclusive contests</li>
                         <li>✅ Personal support manager</li>
                     </ul>
-                    <button class="btn btn-lord" onclick="goToPayment('lord')">
+                    <button class="btn btn-lord" onclick="selectVipTier('lord')">
                         <span data-en="Choose Lord" data-ar="اختر اللورد">Choose Lord</span>
                     </button>
                 </div>
@@ -279,13 +278,6 @@
                     <div>
                         <span class="download-text" data-en="Download for" data-ar="تحميل لـ">Download for</span>
                         <span class="download-platform">Android</span>
-                    </div>
-                </a>
-                <a href="#" class="download-btn github">
-                    <i class="fab fa-github"></i>
-                    <div>
-                        <span class="download-text" data-en="Source Code" data-ar="الكود المصدري">Source Code</span>
-                        <span class="download-platform">GitHub</span>
                     </div>
                 </a>
             </div>

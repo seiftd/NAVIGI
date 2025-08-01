@@ -127,57 +127,70 @@ function copyAddress() {
 
 // Generate QR Code for TRON address
 function generateQRCode() {
+    console.log('Generating QR code...');
     const qrContainer = document.getElementById('qrCode');
     const tronAddress = 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX';
     
-    if (qrContainer && typeof QRCode !== 'undefined') {
-        // Clear existing content
-        qrContainer.innerHTML = '';
-        
-        // Create canvas for QR code
-        const canvas = document.createElement('canvas');
-        qrContainer.appendChild(canvas);
-        
-        QRCode.toCanvas(canvas, tronAddress, {
-            width: 200,
-            height: 200,
-            colorDark: '#2C3E50',
-            colorLight: '#FFFFFF',
-            margin: 2,
-            errorCorrectionLevel: 'M'
-        }, function(error) {
-            if (error) {
-                console.error('QR Code generation error:', error);
-                // Fallback to placeholder
-                qrContainer.innerHTML = `
-                    <div class="qr-placeholder" style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 2px solid #ddd; margin: 0 auto; border-radius: 8px;">
-                        <div style="text-align: center;">
-                            <i class="fas fa-qrcode" style="font-size: 3rem; color: #3498DB; margin-bottom: 10px; display: block;"></i>
-                            <p style="margin: 0; color: #2C3E50; font-size: 0.9rem; font-weight: bold;">TRON QR Code</p>
-                            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.8rem;">Scan to pay USDT</p>
-                        </div>
-                    </div>
-                `;
-            } else {
-                // Add a label below the QR code
-                const label = document.createElement('p');
-                label.textContent = 'Scan with TRON wallet';
-                label.style.cssText = 'text-align: center; margin-top: 10px; font-size: 0.9rem; color: #666; font-weight: 500;';
-                qrContainer.appendChild(label);
-            }
-        });
-    } else if (qrContainer) {
-        // Fallback if QR library not available
-        qrContainer.innerHTML = `
-            <div class="qr-placeholder" style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 2px solid #ddd; margin: 0 auto; border-radius: 8px;">
-                <div style="text-align: center;">
-                    <i class="fas fa-qrcode" style="font-size: 3rem; color: #3498DB; margin-bottom: 10px; display: block;"></i>
-                    <p style="margin: 0; color: #2C3E50; font-size: 0.9rem; font-weight: bold;">TRON QR Code</p>
-                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.8rem;">Scan to pay USDT</p>
-                </div>
-            </div>
-        `;
+    if (!qrContainer) {
+        console.log('QR container not found');
+        return;
     }
+    
+    console.log('QR container found, checking QRCode library...');
+    console.log('QRCode available:', typeof QRCode !== 'undefined');
+    
+    if (typeof QRCode !== 'undefined') {
+        try {
+            // Clear existing content
+            qrContainer.innerHTML = '';
+            
+            // Create canvas for QR code
+            const canvas = document.createElement('canvas');
+            qrContainer.appendChild(canvas);
+            
+            console.log('Generating QR code for address:', tronAddress);
+            
+            QRCode.toCanvas(canvas, tronAddress, {
+                width: 200,
+                height: 200,
+                colorDark: '#2C3E50',
+                colorLight: '#FFFFFF',
+                margin: 2,
+                errorCorrectionLevel: 'M'
+            }, function(error) {
+                if (error) {
+                    console.error('QR Code generation error:', error);
+                    showFallbackQR(qrContainer);
+                } else {
+                    console.log('QR code generated successfully');
+                    // Add a label below the QR code
+                    const label = document.createElement('p');
+                    label.textContent = 'Scan with TRON wallet';
+                    label.style.cssText = 'text-align: center; margin-top: 10px; font-size: 0.9rem; color: #666; font-weight: 500;';
+                    qrContainer.appendChild(label);
+                }
+            });
+        } catch (error) {
+            console.error('Error creating QR code:', error);
+            showFallbackQR(qrContainer);
+        }
+    } else {
+        console.log('QRCode library not available, showing fallback');
+        showFallbackQR(qrContainer);
+    }
+}
+
+function showFallbackQR(container) {
+    container.innerHTML = `
+        <div class="qr-placeholder" style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 2px solid #3498DB; margin: 0 auto; border-radius: 8px;">
+            <div style="text-align: center;">
+                <i class="fas fa-qrcode" style="font-size: 3rem; color: #3498DB; margin-bottom: 10px; display: block;"></i>
+                <p style="margin: 0; color: #2C3E50; font-size: 0.9rem; font-weight: bold;">TRON QR Code</p>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.8rem;">TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX</p>
+                <p style="margin: 5px 0 0 0; color: #999; font-size: 0.7rem;">Copy address manually</p>
+            </div>
+        </div>
+    `;
 }
 
 // Modal functionality
@@ -200,8 +213,8 @@ document.addEventListener('keydown', function(event) {
 
 // Smooth scrolling for navigation links
 document.addEventListener('DOMContentLoaded', function() {
-    // Generate QR code
-    generateQRCode();
+    // Generate QR code with delay to ensure DOM is ready
+    setTimeout(generateQRCode, 500);
     
     // Smooth scrolling
     const navLinks = document.querySelectorAll('a[href^="#"]');
@@ -440,4 +453,5 @@ window.selectVipTier = selectVipTier;
 window.goToPayment = goToPayment;
 window.copyAddress = copyAddress;
 window.generateQRCode = generateQRCode;
+window.showFallbackQR = showFallbackQR;
 window.showNotification = showNotification;
