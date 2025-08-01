@@ -72,6 +72,10 @@
                     <i class="fas fa-money-bill"></i>
                     <span data-en="Withdrawals" data-ar="السحوبات">Withdrawals</span>
                 </a>
+                <a href="#" data-tab="vip-payments" class="nav-item">
+                    <i class="fas fa-crown"></i>
+                    <span data-en="VIP Payments" data-ar="مدفوعات VIP">VIP Payments</span>
+                </a>
                 <a href="#" data-tab="ads" class="nav-item">
                     <i class="fas fa-ad"></i>
                     <span data-en="Ad Revenue" data-ar="أرباح الإعلانات">Ad Revenue</span>
@@ -407,6 +411,81 @@
                         </thead>
                         <tbody id="withdrawalsBody">
                             <!-- Withdrawals will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIP Payments Tab -->
+            <div id="vip-payments-tab" class="tab-content">
+                <div class="section-header">
+                    <h2 data-en="💰 VIP Payment Approvals" data-ar="💰 موافقات مدفوعات VIP">💰 VIP Payment Approvals</h2>
+                    <p data-en="Review and approve VIP payment submissions" data-ar="مراجعة والموافقة على مبادرات دفع VIP">Review and approve VIP payment submissions</p>
+                </div>
+                
+                <!-- VIP Payment Stats -->
+                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #F39C12;">⏳</div>
+                        <div class="stat-info">
+                            <h3 id="pendingPaymentsCount">8</h3>
+                            <p data-en="Pending Reviews" data-ar="المراجعات المعلقة">Pending Reviews</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #27AE60;">✅</div>
+                        <div class="stat-info">
+                            <h3 id="approvedPaymentsCount">47</h3>
+                            <p data-en="Approved Today" data-ar="تمت الموافقة اليوم">Approved Today</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #E74C3C;">❌</div>
+                        <div class="stat-info">
+                            <h3 id="rejectedPaymentsCount">2</h3>
+                            <p data-en="Rejected Today" data-ar="مرفوض اليوم">Rejected Today</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #3498DB;">💵</div>
+                        <div class="stat-info">
+                            <h3 id="totalPaymentValue">$1,247</h3>
+                            <p data-en="Total Value Today" data-ar="القيمة الإجمالية اليوم">Total Value Today</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Submissions Table -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 data-en="📋 Payment Submissions" data-ar="📋 مبادرات الدفع">📋 Payment Submissions</h3>
+                        <div class="section-actions">
+                            <button onclick="refreshVipPayments()" class="btn btn-secondary">
+                                <i class="fas fa-sync-alt"></i>
+                                <span data-en="Refresh" data-ar="تحديث">Refresh</span>
+                            </button>
+                            <button onclick="approveAllVipPayments()" class="btn btn-success">
+                                <i class="fas fa-check-double"></i>
+                                <span data-en="Approve All Pending" data-ar="موافقة على جميع المعلقة">Approve All Pending</span>
+                            </button>
+                        </div>
+                    </div>
+                    <table class="data-table" id="vipPaymentsTable">
+                        <thead>
+                            <tr>
+                                <th data-en="Submission ID" data-ar="معرف الإرسال">Submission ID</th>
+                                <th data-en="User ID" data-ar="معرف المستخدم">User ID</th>
+                                <th data-en="VIP Tier" data-ar="مستوى VIP">VIP Tier</th>
+                                <th data-en="Amount" data-ar="المبلغ">Amount</th>
+                                <th data-en="Transaction Hash" data-ar="هاش المعاملة">Transaction Hash</th>
+                                <th data-en="Screenshot" data-ar="لقطة الشاشة">Screenshot</th>
+                                <th data-en="Submitted" data-ar="تم الإرسال">Submitted</th>
+                                <th data-en="Status" data-ar="الحالة">Status</th>
+                                <th data-en="Actions" data-ar="الإجراءات">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vipPaymentsBody">
+                            <!-- VIP payments will be populated by JavaScript -->
                         </tbody>
                     </table>
                 </div>

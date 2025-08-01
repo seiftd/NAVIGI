@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP Payment - NAVIGI (SBARO)</title>
+    <link rel="stylesheet" href="payment-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Processing your VIP purchase...</p>
+    </div>
+
+    <!-- Header -->
+    <header class="payment-header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="sbaro-icon">SB</div>
+                <span>NAVIGI VIP</span>
+            </div>
+            <div class="language-toggle">
+                <button onclick="toggleLanguage()">
+                    <i class="fas fa-globe"></i>
+                    <span id="langText">العربية</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="payment-container">
+        <div class="payment-content">
+            <!-- VIP Tier Info -->
+            <div class="tier-info" id="tierInfo">
+                <div class="tier-badge">
+                    <span id="tierIcon">👑</span>
+                    <span id="tierName">KING TIER</span>
+                </div>
+                <div class="tier-price" id="tierPrice">$2.50/month</div>
+                <div class="tier-benefits" id="tierBenefits">
+                    <!-- Benefits will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Payment Steps -->
+            <div class="payment-steps">
+                <h2 data-en="Complete Your VIP Purchase" data-ar="أكمل شراء VIP الخاص بك">Complete Your VIP Purchase</h2>
+                
+                <!-- Step 1: Payment -->
+                <div class="step active" id="step1">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <h3 data-en="Send USDT Payment" data-ar="أرسل دفعة USDT">Send USDT Payment</h3>
+                    </div>
+                    
+                    <div class="payment-details">
+                        <div class="payment-info">
+                            <div class="payment-amount">
+                                <label data-en="Amount to Send:" data-ar="المبلغ المطلوب إرساله:">Amount to Send:</label>
+                                <div class="amount-display">
+                                    <span id="paymentAmount">$2.50</span>
+                                    <span class="currency">USDT (TRC20)</span>
+                                </div>
+                            </div>
+                            
+                            <div class="wallet-address">
+                                <label data-en="TRON TRC20 Address:" data-ar="عنوان ترون TRC20:">TRON TRC20 Address:</label>
+                                <div class="address-container">
+                                    <div class="address-box">
+                                        <code id="tronAddress">TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX</code>
+                                        <button onclick="copyAddress()" class="copy-btn" id="copyBtn">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="qr-section">
+                                <label data-en="Scan QR Code:" data-ar="امسح رمز QR:">Scan QR Code:</label>
+                                <div class="qr-container">
+                                    <canvas id="qrCode"></canvas>
+                                    <p class="qr-note" data-en="Scan with your TRON wallet" data-ar="امسح باستخدام محفظة ترون الخاصة بك">Scan with your TRON wallet</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-warnings">
+                            <div class="warning-box">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div>
+                                    <h4 data-en="Important:" data-ar="مهم:">Important:</h4>
+                                    <ul>
+                                        <li data-en="Send exact amount only" data-ar="أرسل المبلغ المحدد فقط">Send exact amount only</li>
+                                        <li data-en="Use TRON TRC20 network only" data-ar="استخدم شبكة ترون TRC20 فقط">Use TRON TRC20 network only</li>
+                                        <li data-en="Double-check the address" data-ar="تحقق من العنوان مرتين">Double-check the address</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="next-btn" onclick="goToStep2()" data-en="I've Sent the Payment" data-ar="لقد أرسلت الدفعة">I've Sent the Payment</button>
+                </div>
+
+                <!-- Step 2: Upload Proof -->
+                <div class="step" id="step2">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <h3 data-en="Upload Payment Proof" data-ar="ارفع إثبات الدفع">Upload Payment Proof</h3>
+                    </div>
+                    
+                    <div class="upload-section">
+                        <div class="user-info">
+                            <label data-en="Your User ID:" data-ar="معرف المستخدم الخاص بك:">Your User ID:</label>
+                            <div class="user-id-display" id="userIdDisplay">Loading...</div>
+                        </div>
+                        
+                        <div class="transaction-info">
+                            <div class="form-group">
+                                <label data-en="Transaction Hash (Required):" data-ar="هاش المعاملة (مطلوب):">Transaction Hash (Required):</label>
+                                <input type="text" id="transactionHash" placeholder="Enter transaction hash..." required>
+                                <small data-en="Copy from your wallet after sending" data-ar="انسخ من محفظتك بعد الإرسال">Copy from your wallet after sending</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label data-en="Upload Screenshot:" data-ar="ارفع لقطة الشاشة:">Upload Screenshot:</label>
+                                <div class="upload-area" id="uploadArea">
+                                    <input type="file" id="screenshotInput" accept="image/*" required>
+                                    <div class="upload-content">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <p data-en="Click to upload or drag & drop" data-ar="اضغط للرفع أو اسحب وأفلت">Click to upload or drag & drop</p>
+                                        <small data-en="PNG, JPG up to 10MB" data-ar="PNG، JPG حتى 10 ميجابايت">PNG, JPG up to 10MB</small>
+                                    </div>
+                                </div>
+                                <div class="preview-container" id="previewContainer" style="display: none;">
+                                    <img id="imagePreview" alt="Screenshot preview">
+                                    <button class="remove-btn" onclick="removeImage()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label data-en="Additional Notes (Optional):" data-ar="ملاحظات إضافية (اختيارية):">Additional Notes (Optional):</label>
+                                <textarea id="additionalNotes" placeholder="Any additional information..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-info">
+                            <h4 data-en="Need Help?" data-ar="تحتاج مساعدة؟">Need Help?</h4>
+                            <div class="contact-methods">
+                                <a href="mailto:seiftouatllol@gmail.com" class="contact-method">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>seiftouatllol@gmail.com</span>
+                                </a>
+                                <a href="https://t.me/NAVIGISupport" class="contact-method">
+                                    <i class="fab fa-telegram"></i>
+                                    <span>@NAVIGISupport</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-buttons">
+                        <button class="back-btn" onclick="goToStep1()" data-en="Back" data-ar="رجوع">Back</button>
+                        <button class="submit-btn" onclick="submitPayment()" id="submitBtn">
+                            <i class="fas fa-paper-plane"></i>
+                            <span data-en="Submit for Approval" data-ar="إرسال للموافقة">Submit for Approval</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Confirmation -->
+                <div class="step" id="step3">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <h3 data-en="Payment Submitted" data-ar="تم إرسال الدفعة">Payment Submitted</h3>
+                    </div>
+                    
+                    <div class="confirmation-content">
+                        <div class="success-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        
+                        <h2 data-en="Payment Successfully Submitted!" data-ar="تم إرسال الدفعة بنجاح!">Payment Successfully Submitted!</h2>
+                        
+                        <div class="submission-details">
+                            <div class="detail-item">
+                                <label data-en="Submission ID:" data-ar="معرف الإرسال:">Submission ID:</label>
+                                <span id="submissionId">Loading...</span>
+                            </div>
+                            <div class="detail-item">
+                                <label data-en="VIP Tier:" data-ar="مستوى VIP:">VIP Tier:</label>
+                                <span id="confirmedTier">KING TIER</span>
+                            </div>
+                            <div class="detail-item">
+                                <label data-en="Amount:" data-ar="المبلغ:">Amount:</label>
+                                <span id="confirmedAmount">$2.50</span>
+                            </div>
+                            <div class="detail-item">
+                                <label data-en="Status:" data-ar="الحالة:">Status:</label>
+                                <span class="status pending">Pending Review</span>
+                            </div>
+                        </div>
+                        
+                        <div class="next-steps">
+                            <h4 data-en="What happens next?" data-ar="ماذا يحدث بعد ذلك؟">What happens next?</h4>
+                            <ol>
+                                <li data-en="Our team will review your payment within 2-4 hours" data-ar="سيراجع فريقنا دفعتك خلال 2-4 ساعات">Our team will review your payment within 2-4 hours</li>
+                                <li data-en="You'll receive a notification when approved" data-ar="ستتلقى إشعاراً عند الموافقة">You'll receive a notification when approved</li>
+                                <li data-en="Your VIP status will be activated automatically" data-ar="سيتم تفعيل حالة VIP الخاصة بك تلقائياً">Your VIP status will be activated automatically</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="return-btn" onclick="returnToApp()">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span data-en="Return to App" data-ar="العودة للتطبيق">Return to App</span>
+                            </button>
+                            <button class="track-btn" onclick="trackPayment()">
+                                <i class="fas fa-search"></i>
+                                <span data-en="Track Status" data-ar="تتبع الحالة">Track Status</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="payment-footer">
+        <div class="footer-content">
+            <p data-en="© 2024 NAVIGI (SBARO). Secure VIP Payment System." data-ar="© 2024 نافيجي (سبارو). نظام دفع VIP آمن.">© 2024 NAVIGI (SBARO). Secure VIP Payment System.</p>
+        </div>
+    </footer>
+
+    <!-- Firebase Config -->
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "navigi-sbaro.firebaseapp.com",
+            projectId: "navigi-sbaro",
+            storageBucket: "navigi-sbaro.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+    </script>
+    
+    <script src="payment-script.js"></script>
+</body>
+</html>

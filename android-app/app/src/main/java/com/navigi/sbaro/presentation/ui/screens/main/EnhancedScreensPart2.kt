@@ -1,5 +1,7 @@
 package com.navigi.sbaro.presentation.ui.screens.main
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -1151,6 +1154,7 @@ private fun VipTierCard(
     onUpgrade: () -> Unit,
     isArabic: Boolean
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -1195,17 +1199,21 @@ private fun VipTierCard(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            Button(
-                onClick = onUpgrade,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = color)
-            ) {
-                Text(
-                    text = if (isArabic) "ترقية الآن (تجريبي)" else "Upgrade Now (Demo)",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                                Button(
+                        onClick = {
+                            // Redirect to website for VIP purchase
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://navigiu.netlify.app/payment.html?tier=${title.lowercase()}&userId=USR${(100000..999999).random()}"))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = color)
+                    ) {
+                        Text(
+                            text = if (isArabic) "شراء VIP" else "Purchase VIP",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
         }
     }
 }

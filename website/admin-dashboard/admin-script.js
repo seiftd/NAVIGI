@@ -1,6 +1,88 @@
 // Admin Dashboard JavaScript
 let isAdminArabic = false;
 let currentTab = 'overview';
+
+// Sample VIP Payment Data
+const sampleVipPayments = [
+    {
+        id: 'PAY_1704123456_ABC123',
+        userId: 'USR001',
+        userEmail: 'user1@example.com',
+        tier: 'king',
+        amount: '2.50',
+        currency: 'USDT',
+        network: 'TRC20',
+        transactionHash: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t...123456',
+        screenshotUrl: 'https://example.com/screenshots/payment1.jpg',
+        additionalNotes: 'Payment completed via TronLink wallet',
+        status: 'pending',
+        submittedAt: new Date('2024-01-15T10:30:00'),
+        tronAddress: 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX'
+    },
+    {
+        id: 'PAY_1704123789_DEF456',
+        userId: 'USR045',
+        userEmail: 'vipuser@example.com',
+        tier: 'emperor',
+        amount: '9.00',
+        currency: 'USDT',
+        network: 'TRC20',
+        transactionHash: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t...789012',
+        screenshotUrl: 'https://example.com/screenshots/payment2.jpg',
+        additionalNotes: '',
+        status: 'pending',
+        submittedAt: new Date('2024-01-15T14:20:00'),
+        tronAddress: 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX'
+    },
+    {
+        id: 'PAY_1704124012_GHI789',
+        userId: 'USR078',
+        userEmail: 'lorduser@example.com',
+        tier: 'lord',
+        amount: '25.00',
+        currency: 'USDT',
+        network: 'TRC20',
+        transactionHash: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t...345678',
+        screenshotUrl: 'https://example.com/screenshots/payment3.jpg',
+        additionalNotes: 'Upgrading from Emperor to Lord tier',
+        status: 'pending',
+        submittedAt: new Date('2024-01-15T16:45:00'),
+        tronAddress: 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX'
+    },
+    {
+        id: 'PAY_1704120000_JKL012',
+        userId: 'USR123',
+        userEmail: 'approved@example.com',
+        tier: 'king',
+        amount: '2.50',
+        currency: 'USDT',
+        network: 'TRC20',
+        transactionHash: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t...901234',
+        screenshotUrl: 'https://example.com/screenshots/payment4.jpg',
+        additionalNotes: '',
+        status: 'approved',
+        submittedAt: new Date('2024-01-15T08:15:00'),
+        approvedAt: new Date('2024-01-15T09:30:00'),
+        tronAddress: 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX'
+    },
+    {
+        id: 'PAY_1704118800_MNO345',
+        userId: 'USR156',
+        userEmail: 'rejected@example.com',
+        tier: 'emperor',
+        amount: '9.00',
+        currency: 'USDT',
+        network: 'TRC20',
+        transactionHash: 'INVALID_HASH_123',
+        screenshotUrl: 'https://example.com/screenshots/payment5.jpg',
+        additionalNotes: 'Suspicious transaction',
+        status: 'rejected',
+        submittedAt: new Date('2024-01-15T06:00:00'),
+        rejectedAt: new Date('2024-01-15T07:15:00'),
+        rejectionReason: 'Invalid transaction hash provided',
+        tronAddress: 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX'
+    }
+];
 let charts = {};
 
 // Demo Credentials
@@ -201,6 +283,7 @@ function initializeDashboard() {
     populateVipUsersTable();
     populateUsersTable();
     populateWithdrawalsTable();
+    populateVipPaymentsTable();
     populateRecentActivity();
     startCountdownTimers();
 }
@@ -237,6 +320,7 @@ function updatePageTitle(tabName) {
         'users': isAdminArabic ? 'إدارة المستخدمين' : 'User Management',
         'contests': isAdminArabic ? 'إدارة المسابقات' : 'Contest Management',
         'withdrawals': isAdminArabic ? 'طلبات السحب' : 'Withdrawal Requests',
+        'vip-payments': isAdminArabic ? 'موافقات مدفوعات VIP' : 'VIP Payment Approvals',
         'ads': isAdminArabic ? 'إدارة أرباح الإعلانات' : 'Ad Revenue Management',
         'notifications': isAdminArabic ? 'إرسال الإشعارات' : 'Send Notifications'
     };
@@ -993,3 +1077,244 @@ window.approveAll = approveAll;
 window.createContest = createContest;
 window.viewContestDetails = viewContestDetails;
 window.endContest = endContest;
+window.sendNotification = sendNotification;
+window.logout = logout;
+
+// VIP Payment Management Functions
+function populateVipPaymentsTable() {
+    const tbody = document.getElementById('vipPaymentsBody');
+    if (!tbody) return;
+    
+    const rows = sampleVipPayments.map(payment => {
+        const tierColors = {
+            'king': '#3498DB',
+            'emperor': '#9B59B6', 
+            'lord': '#E74C3C'
+        };
+        
+        const statusColors = {
+            'pending': '#F39C12',
+            'approved': '#27AE60',
+            'rejected': '#E74C3C'
+        };
+        
+        return `
+            <tr>
+                <td>
+                    <span class="payment-id" title="${payment.id}">${payment.id.substring(0, 12)}...</span>
+                </td>
+                <td>
+                    <div class="user-info">
+                        <strong>${payment.userId}</strong>
+                        <small>${payment.userEmail}</small>
+                    </div>
+                </td>
+                <td>
+                    <span class="tier-badge" style="background: ${tierColors[payment.tier]}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem;">
+                        👑 ${payment.tier.toUpperCase()}
+                    </span>
+                </td>
+                <td>
+                    <strong>$${payment.amount}</strong>
+                    <small>USDT (${payment.network})</small>
+                </td>
+                <td>
+                    <span class="transaction-hash" title="${payment.transactionHash}">
+                        ${payment.transactionHash.substring(0, 20)}...
+                    </span>
+                </td>
+                <td>
+                    <button onclick="viewScreenshot('${payment.screenshotUrl}')" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-image"></i>
+                        View
+                    </button>
+                </td>
+                <td>${formatDate(payment.submittedAt)}</td>
+                <td>
+                    <span class="status-badge" style="background: ${statusColors[payment.status]}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem;">
+                        ${payment.status.toUpperCase()}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        ${payment.status === 'pending' ? `
+                            <button onclick="approveVipPayment('${payment.id}')" class="btn btn-sm btn-success" title="Approve">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button onclick="rejectVipPayment('${payment.id}')" class="btn btn-sm btn-danger" title="Reject">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        ` : `
+                            <button onclick="viewVipPaymentDetails('${payment.id}')" class="btn btn-sm btn-info" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        `}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tbody.innerHTML = rows;
+    updateVipPaymentStats();
+}
+
+function updateVipPaymentStats() {
+    const pending = sampleVipPayments.filter(p => p.status === 'pending').length;
+    const approved = sampleVipPayments.filter(p => p.status === 'approved' && isToday(p.approvedAt)).length;
+    const rejected = sampleVipPayments.filter(p => p.status === 'rejected' && isToday(p.rejectedAt)).length;
+    const totalValue = sampleVipPayments
+        .filter(p => p.status === 'approved' && isToday(p.approvedAt))
+        .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+    
+    document.getElementById('pendingPaymentsCount').textContent = pending;
+    document.getElementById('approvedPaymentsCount').textContent = approved;
+    document.getElementById('rejectedPaymentsCount').textContent = rejected;
+    document.getElementById('totalPaymentValue').textContent = `$${totalValue.toFixed(2)}`;
+}
+
+function isToday(date) {
+    if (!date) return false;
+    const today = new Date();
+    const checkDate = new Date(date);
+    return checkDate.toDateString() === today.toDateString();
+}
+
+async function approveVipPayment(paymentId) {
+    const payment = sampleVipPayments.find(p => p.id === paymentId);
+    if (!payment) return;
+    
+    if (confirm(`Approve VIP payment for ${payment.userEmail}?\n\nThis will:\n- Activate ${payment.tier.toUpperCase()} VIP status\n- Update user's app immediately\n- Send confirmation notification`)) {
+        try {
+            payment.status = 'approved';
+            payment.approvedAt = new Date();
+            
+            await updateUserVipStatus(payment.userId, payment.tier, 30);
+            await sendVipActivationNotification(payment);
+            
+            populateVipPaymentsTable();
+            showNotification(`VIP payment approved! ${payment.userEmail} is now ${payment.tier.toUpperCase()} VIP`, 'success');
+            
+        } catch (error) {
+            console.error('Approval error:', error);
+            showNotification('Failed to approve payment. Please try again.', 'error');
+        }
+    }
+}
+
+async function rejectVipPayment(paymentId) {
+    const reason = prompt('Please enter rejection reason:');
+    if (!reason) return;
+    
+    const payment = sampleVipPayments.find(p => p.id === paymentId);
+    if (!payment) return;
+    
+    try {
+        payment.status = 'rejected';
+        payment.rejectedAt = new Date();
+        payment.rejectionReason = reason;
+        
+        await sendVipRejectionNotification(payment, reason);
+        populateVipPaymentsTable();
+        showNotification(`Payment rejected for ${payment.userEmail}`, 'warning');
+        
+    } catch (error) {
+        console.error('Rejection error:', error);
+        showNotification('Failed to reject payment. Please try again.', 'error');
+    }
+}
+
+async function updateUserVipStatus(userId, tier, days) {
+    console.log(`Updating user ${userId} to ${tier} VIP for ${days} days`);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+}
+
+async function sendVipActivationNotification(payment) {
+    console.log(`Sending VIP activation notification to ${payment.userEmail}`);
+}
+
+async function sendVipRejectionNotification(payment, reason) {
+    console.log(`Sending VIP rejection notification to ${payment.userEmail}: ${reason}`);
+}
+
+function viewScreenshot(url) {
+    showModal('Payment Screenshot', `
+        <div class="screenshot-viewer">
+            <img src="${url}" alt="Payment Screenshot" style="max-width: 100%; height: auto; border-radius: 8px;" 
+                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjhGOUZBIi8+CjxwYXRoIGQ9Ik0yMDAgMTUwQzIwNSAxNTAgMjEwIDE0NSAyMTAgMTQwQzIxMCAxMzUgMjA1IDEzMCAyMDAgMTMwQzE5NSAxMzAgMTkwIDEzNSAxOTAgMTQwQzE5MCAxNDUgMTk1IDE1MCAyMDAgMTUwWiIgZmlsbD0iIzZCNzI4MCIvPgo8L3N2Zz4K'; this.onerror=null;"
+                 />
+            <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">
+                <i class="fas fa-info-circle"></i>
+                Screenshot submitted by user as payment proof
+            </p>
+        </div>
+    `);
+}
+
+function viewVipPaymentDetails(paymentId) {
+    const payment = sampleVipPayments.find(p => p.id === paymentId);
+    if (!payment) return;
+    
+    const statusColor = {
+        'pending': '#F39C12',
+        'approved': '#27AE60',
+        'rejected': '#E74C3C'
+    }[payment.status];
+    
+    showModal('VIP Payment Details', `
+        <div class="payment-details">
+            <div class="detail-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>${payment.id}</h3>
+                <span class="status-badge" style="background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 16px;">
+                    ${payment.status.toUpperCase()}
+                </span>
+            </div>
+            
+            <div class="detail-grid" style="display: grid; gap: 15px;">
+                <div><strong>User:</strong> ${payment.userEmail} (${payment.userId})</div>
+                <div><strong>VIP Tier:</strong> 👑 ${payment.tier.toUpperCase()}</div>
+                <div><strong>Amount:</strong> $${payment.amount} USDT (${payment.network})</div>
+                <div><strong>Transaction:</strong> <code style="font-size: 0.9rem; word-break: break-all;">${payment.transactionHash}</code></div>
+                <div><strong>Submitted:</strong> ${formatDate(payment.submittedAt)}</div>
+                ${payment.approvedAt ? `<div><strong>Approved:</strong> ${formatDate(payment.approvedAt)}</div>` : ''}
+                ${payment.rejectedAt ? `<div><strong>Rejected:</strong> ${formatDate(payment.rejectedAt)}<br><em style="color: #E74C3C;">${payment.rejectionReason}</em></div>` : ''}
+                ${payment.additionalNotes ? `<div><strong>Notes:</strong> ${payment.additionalNotes}</div>` : ''}
+            </div>
+        </div>
+    `);
+}
+
+function refreshVipPayments() {
+    populateVipPaymentsTable();
+    showNotification('VIP payments refreshed', 'success');
+}
+
+function approveAllVipPayments() {
+    const pendingPayments = sampleVipPayments.filter(p => p.status === 'pending');
+    
+    if (pendingPayments.length === 0) {
+        showNotification('No pending payments to approve', 'info');
+        return;
+    }
+    
+    if (confirm(`Approve all ${pendingPayments.length} pending VIP payments?`)) {
+        pendingPayments.forEach(async payment => {
+            payment.status = 'approved';
+            payment.approvedAt = new Date();
+            await updateUserVipStatus(payment.userId, payment.tier, 30);
+            await sendVipActivationNotification(payment);
+        });
+        
+        populateVipPaymentsTable();
+        showNotification(`${pendingPayments.length} VIP payments approved!`, 'success');
+    }
+}
+
+// Export VIP payment functions
+window.populateVipPaymentsTable = populateVipPaymentsTable;
+window.approveVipPayment = approveVipPayment;
+window.rejectVipPayment = rejectVipPayment;
+window.viewVipPaymentDetails = viewVipPaymentDetails;
+window.viewScreenshot = viewScreenshot;
+window.refreshVipPayments = refreshVipPayments;
+window.approveAllVipPayments = approveAllVipPayments;
