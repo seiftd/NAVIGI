@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>NAVIGI SBARO - Telegram Mini App</title>
+    <meta name="description" content="Earn points by watching ads directly in Telegram!">
+    
+    <!-- Telegram WebApp Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="app-logo">
+                <div class="sbaro-icon">SB</div>
+            </div>
+            <div class="loading-spinner"></div>
+            <p>Loading NAVIGI SBARO...</p>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="app-container" style="display: none;">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="app-info">
+                    <div class="app-logo-small">SB</div>
+                    <div class="app-title">
+                        <h1>NAVIGI SBARO</h1>
+                        <p id="welcomeText">Welcome back!</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="notification-btn" id="notificationBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notificationBadge">3</span>
+                    </button>
+                    <button class="language-btn" id="languageBtn">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-tab="home">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" data-tab="earn">
+                <i class="fas fa-play-circle"></i>
+                <span>Earn</span>
+            </button>
+            <button class="nav-item" data-tab="contests">
+                <i class="fas fa-trophy"></i>
+                <span>Contests</span>
+            </button>
+            <button class="nav-item" data-tab="vip">
+                <i class="fas fa-crown"></i>
+                <span>VIP</span>
+            </button>
+            <button class="nav-item" data-tab="profile">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </button>
+        </nav>
+
+        <!-- Tab Contents -->
+        <main class="main-content">
+            
+            <!-- Home Tab -->
+            <div class="tab-content active" id="homeTab">
+                <div class="stats-grid">
+                    <div class="stat-card points">
+                        <div class="stat-icon">💎</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalPoints">1,250</div>
+                            <div class="stat-label">Total Points</div>
+                        </div>
+                    </div>
+                    <div class="stat-card balance">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalBalance">$12.50</div>
+                            <div class="stat-label">Balance</div>
+                        </div>
+                    </div>
+                    <div class="stat-card vip">
+                        <div class="stat-icon">👑</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="vipStatus">FREE</div>
+                            <div class="stat-label">VIP Status</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="actions-grid">
+                        <button class="action-btn" onclick="switchTab('earn')">
+                            <i class="fas fa-play"></i>
+                            <span>Watch Ads</span>
+                        </button>
+                        <button class="action-btn" onclick="switchTab('contests')">
+                            <i class="fas fa-trophy"></i>
+                            <span>Join Contest</span>
+                        </button>
+                        <button class="action-btn" onclick="switchTab('vip')">
+                            <i class="fas fa-crown"></i>
+                            <span>Upgrade VIP</span>
+                        </button>
+                        <button class="action-btn" onclick="showWithdraw()">
+                            <i class="fas fa-wallet"></i>
+                            <span>Withdraw</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div class="activity-list" id="activityList">
+                        <div class="activity-item">
+                            <div class="activity-icon earn">+</div>
+                            <div class="activity-info">
+                                <div class="activity-title">Watched Ad</div>
+                                <div class="activity-time">2 minutes ago</div>
+                            </div>
+                            <div class="activity-points">+5 points</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon contest">🏆</div>
+                            <div class="activity-info">
+                                <div class="activity-title">Contest Entry</div>
+                                <div class="activity-time">1 hour ago</div>
+                            </div>
+                            <div class="activity-points">-10 points</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon earn">+</div>
+                            <div class="activity-info">
+                                <div class="activity-title">Daily Bonus</div>
+                                <div class="activity-time">Today</div>
+                            </div>
+                            <div class="activity-points">+20 points</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Earn Tab -->
+            <div class="tab-content" id="earnTab">
+                <div class="earn-header">
+                    <h2>Watch Ads & Earn</h2>
+                    <div class="daily-progress">
+                        <div class="progress-info">
+                            <span>Today's Progress</span>
+                            <span id="adsProgress">8/12 ads</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 67%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ad-card">
+                    <div class="ad-preview">
+                        <div class="ad-placeholder">
+                            <i class="fas fa-play-circle"></i>
+                            <p>Advertisement Ready</p>
+                        </div>
+                    </div>
+                    <div class="ad-info">
+                        <h3>Watch 30s Video Ad</h3>
+                        <p>Earn 5 points for watching this advertisement</p>
+                        <div class="ad-stats">
+                            <span><i class="fas fa-clock"></i> 30 seconds</span>
+                            <span><i class="fas fa-gem"></i> +5 points</span>
+                        </div>
+                    </div>
+                    <button class="watch-ad-btn" id="watchAdBtn" onclick="watchAd()">
+                        <i class="fas fa-play"></i>
+                        Watch Ad
+                    </button>
+                </div>
+
+                <div class="earning-tips">
+                    <h3>💡 Earning Tips</h3>
+                    <div class="tips-list">
+                        <div class="tip-item">
+                            <i class="fas fa-crown"></i>
+                            <span>Upgrade to VIP for more ads per day</span>
+                        </div>
+                        <div class="tip-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Check back every hour for new ads</span>
+                        </div>
+                        <div class="tip-item">
+                            <i class="fas fa-users"></i>
+                            <span>Invite friends for bonus points</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contests Tab -->
+            <div class="tab-content" id="contestsTab">
+                <div class="contests-header">
+                    <h2>Active Contests</h2>
+                    <p>Join contests to win amazing prizes!</p>
+                </div>
+
+                <div class="contest-card active">
+                    <div class="contest-badge">🔥 Hot</div>
+                    <div class="contest-info">
+                        <h3>Daily Points Contest</h3>
+                        <p>Collect the most points today to win!</p>
+                        <div class="contest-stats">
+                            <div class="stat">
+                                <span class="label">Prize Pool</span>
+                                <span class="value">$100</span>
+                            </div>
+                            <div class="stat">
+                                <span class="label">Participants</span>
+                                <span class="value">1,234</span>
+                            </div>
+                            <div class="stat">
+                                <span class="label">Time Left</span>
+                                <span class="value">8h 45m</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="join-contest-btn" onclick="joinContest('daily')">
+                        Join Contest (10 points)
+                    </button>
+                </div>
+
+                <div class="contest-card">
+                    <div class="contest-badge vip">👑 VIP Only</div>
+                    <div class="contest-info">
+                        <h3>VIP Weekly Challenge</h3>
+                        <p>Exclusive contest for VIP members</p>
+                        <div class="contest-stats">
+                            <div class="stat">
+                                <span class="label">Prize Pool</span>
+                                <span class="value">$500</span>
+                            </div>
+                            <div class="stat">
+                                <span class="label">Participants</span>
+                                <span class="value">156</span>
+                            </div>
+                            <div class="stat">
+                                <span class="label">Time Left</span>
+                                <span class="value">3d 12h</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="join-contest-btn vip-required" onclick="showVipRequired()">
+                        VIP Required
+                    </button>
+                </div>
+
+                <div class="leaderboard">
+                    <h3>🏆 Current Leaderboard</h3>
+                    <div class="leaderboard-list">
+                        <div class="leaderboard-item">
+                            <div class="rank">1</div>
+                            <div class="user-info">
+                                <span class="username">@cryptoking</span>
+                                <span class="points">2,450 pts</span>
+                            </div>
+                            <div class="prize">$50</div>
+                        </div>
+                        <div class="leaderboard-item">
+                            <div class="rank">2</div>
+                            <div class="user-info">
+                                <span class="username">@pointmaster</span>
+                                <span class="points">2,100 pts</span>
+                            </div>
+                            <div class="prize">$30</div>
+                        </div>
+                        <div class="leaderboard-item current-user">
+                            <div class="rank">15</div>
+                            <div class="user-info">
+                                <span class="username">You</span>
+                                <span class="points">1,250 pts</span>
+                            </div>
+                            <div class="prize">$5</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIP Tab -->
+            <div class="tab-content" id="vipTab">
+                <div class="vip-header">
+                    <h2>VIP Membership</h2>
+                    <p>Unlock exclusive benefits and higher earnings</p>
+                </div>
+
+                <div class="vip-tiers">
+                    <div class="vip-tier-card king">
+                        <div class="tier-header">
+                            <div class="tier-icon">👑</div>
+                            <h3>KING TIER</h3>
+                            <div class="tier-price">$2.50/month</div>
+                        </div>
+                        <ul class="tier-benefits">
+                            <li>✅ 16 ads per day</li>
+                            <li>✅ 1-minute cooldown</li>
+                            <li>✅ 10 daily mining points</li>
+                            <li>✅ Priority support</li>
+                        </ul>
+                        <button class="upgrade-btn" onclick="upgradeVip('king')">
+                            Choose King
+                        </button>
+                    </div>
+
+                    <div class="vip-tier-card emperor popular">
+                        <div class="popular-badge">Most Popular</div>
+                        <div class="tier-header">
+                            <div class="tier-icon">👑</div>
+                            <h3>EMPEROR TIER</h3>
+                            <div class="tier-price">$9.00/month</div>
+                        </div>
+                        <ul class="tier-benefits">
+                            <li>✅ 20 ads per day</li>
+                            <li>✅ VIP exclusive competitions</li>
+                            <li>✅ 15 daily mining points</li>
+                            <li>✅ Premium support</li>
+                        </ul>
+                        <button class="upgrade-btn popular" onclick="upgradeVip('emperor')">
+                            Choose Emperor
+                        </button>
+                    </div>
+
+                    <div class="vip-tier-card lord">
+                        <div class="tier-header">
+                            <div class="tier-icon">👑</div>
+                            <h3>LORD TIER</h3>
+                            <div class="tier-price">$25.00/month</div>
+                        </div>
+                        <ul class="tier-benefits">
+                            <li>✅ 25 ads per day</li>
+                            <li>✅ Priority withdrawals</li>
+                            <li>✅ 20 daily mining points</li>
+                            <li>✅ Exclusive contests</li>
+                            <li>✅ Personal support manager</li>
+                        </ul>
+                        <button class="upgrade-btn" onclick="upgradeVip('lord')">
+                            Choose Lord
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div class="tab-content" id="profileTab">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profileAvatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="profileName">Loading...</h2>
+                        <p id="profileUsername">@username</p>
+                        <div class="profile-stats">
+                            <span>Member since: <span id="memberSince">Today</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-sections">
+                    <div class="profile-section">
+                        <h3>📊 Statistics</h3>
+                        <div class="stats-list">
+                            <div class="stat-item">
+                                <span>Total Points Earned</span>
+                                <span id="totalEarned">1,250</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Ads Watched</span>
+                                <span id="adsWatched">156</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Contests Joined</span>
+                                <span id="contestsJoined">8</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Referrals</span>
+                                <span id="referrals">3</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>🎁 Referral Program</h3>
+                        <p>Invite friends and earn bonus points!</p>
+                        <div class="referral-code">
+                            <label>Your Referral Code:</label>
+                            <div class="code-container">
+                                <code id="referralCode">SBARO-ABC123</code>
+                                <button onclick="copyReferralCode()" class="copy-btn">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="share-btn" onclick="shareReferral()">
+                            <i class="fas fa-share"></i>
+                            Share with Friends
+                        </button>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>⚙️ Settings</h3>
+                        <div class="settings-list">
+                            <button class="setting-item" onclick="toggleNotifications()">
+                                <i class="fas fa-bell"></i>
+                                <span>Notifications</span>
+                                <i class="fas fa-toggle-on toggle-icon"></i>
+                            </button>
+                            <button class="setting-item" onclick="toggleLanguage()">
+                                <i class="fas fa-globe"></i>
+                                <span>Language</span>
+                                <span class="setting-value">English</span>
+                            </button>
+                            <button class="setting-item" onclick="showSupport()">
+                                <i class="fas fa-question-circle"></i>
+                                <span>Support</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Title</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                Content goes here
+            </div>
+            <div class="modal-actions" id="modalActions">
+                <!-- Actions will be added dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="telegram-app.js"></script>
+</body>
+</html>
