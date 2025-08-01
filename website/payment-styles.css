@@ -1025,69 +1025,470 @@ body {
     background: #5a6268;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .payment-container {
-        padding: 20px 10px;
-    }
-    
-    .payment-steps {
-        padding: 20px;
-    }
-    
-    .step-header {
-        flex-direction: column;
-        text-align: center;
-        gap: 10px;
-    }
-    
-    .amount-display {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .address-box {
-        flex-direction: column;
-    }
-    
-    .copy-btn {
-        border-radius: 0 0 var(--border-radius) var(--border-radius);
-    }
-    
-    .contact-methods {
-        flex-direction: column;
-    }
-    
-    .step-buttons {
-        flex-direction: column;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-    }
+/* Page Title Styles */
+.page-title {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 20px;
+}
 
-    .transaction-submission {
-        padding: 0 16px;
+.page-title h1 {
+    color: #2c3e50;
+    font-size: 32px;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.page-title p {
+    color: #7f8c8d;
+    font-size: 16px;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* VIP Tiers Payment Section */
+.vip-tiers-payment {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* VIP Tier Card Styles */
+.vip-tier-card {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.vip-tier-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: #3498db;
+}
+
+.vip-tier-card.selected {
+    border-color: #27ae60;
+    background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+    box-shadow: 0 8px 25px rgba(39, 174, 96, 0.2);
+}
+
+.vip-tier-card.popular {
+    border-color: #9b59b6;
+}
+
+.vip-tier-card.popular:hover {
+    border-color: #8e44ad;
+}
+
+.popular-badge {
+    position: absolute;
+    top: -1px;
+    right: 20px;
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 0 0 12px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Tier Header */
+.tier-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.tier-icon {
+    font-size: 32px;
+    margin-right: 12px;
+}
+
+.tier-info h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.king-header h3 { color: #3498db; }
+.emperor-header h3 { color: #9b59b6; }
+.lord-header h3 { color: #e74c3c; }
+
+.tier-price {
+    font-size: 24px;
+    font-weight: 800;
+    color: #2c3e50;
+}
+
+/* Select Button */
+.select-tier-btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.select-tier-btn:hover {
+    background: linear-gradient(135deg, #2980b9, #3498db);
+    transform: translateY(-2px);
+}
+
+/* Tier Benefits */
+.tier-benefits {
+    margin-bottom: 20px;
+}
+
+.benefit-item {
+    display: block;
+    padding: 8px 0;
+    color: #495057;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Payment Section */
+.payment-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.address-section label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.address-box {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.tron-address {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #e74c3c;
+    word-break: break-all;
+    background: none;
+    border: none;
+}
+
+.copy-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 8px;
+}
+
+.copy-btn:hover {
+    background: #2980b9;
+}
+
+.address-section small {
+    color: #6c757d;
+    font-size: 12px;
+}
+
+/* Payment Form Section */
+.payment-form-section {
+    max-width: 800px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h3 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 32px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+/* Payment Method Choice */
+.payment-method-choice {
+    margin: 32px 0;
+}
+
+.payment-method-choice h4 {
+    color: #2c3e50;
+    margin-bottom: 16px;
+    font-size: 18px;
+}
+
+.method-options {
+    display: grid;
+    gap: 16px;
+}
+
+.method-option {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.method-option:hover {
+    border-color: #3498db;
+    background: #f8f9fa;
+}
+
+.method-option input[type="radio"] {
+    display: none;
+}
+
+.method-option input[type="radio"]:checked + label {
+    color: #3498db;
+}
+
+.method-option input[type="radio"]:checked {
+    & ~ * {
+        border-color: #3498db;
+        background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+    }
+}
+
+.method-option label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.method-option i {
+    font-size: 20px;
+    color: #3498db;
+}
+
+/* Hash and Email Sections */
+.hash-section, .email-section {
+    margin: 24px 0;
+}
+
+.support-email-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+}
+
+.support-email-card h4 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+}
+
+.support-email-card p {
+    margin: 8px 0;
+    opacity: 0.9;
+}
+
+.email-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 16px 0;
+    backdrop-filter: blur(10px);
+}
+
+.email-display i {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.email-address {
+    font-weight: 600;
+    font-size: 16px;
+    margin-right: 8px;
+}
+
+.copy-email-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.copy-email-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.email-instructions {
+    text-align: left;
+    margin-top: 16px;
+}
+
+.email-instructions p {
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.email-instructions ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.email-instructions li {
+    margin-bottom: 4px;
+    opacity: 0.9;
+}
+
+/* Success Section */
+.success-section {
+    max-width: 600px;
+    margin: 40px auto;
+    text-align: center;
+}
+
+.success-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.success-icon {
+    font-size: 64px;
+    color: #27ae60;
+    margin-bottom: 20px;
+}
+
+.success-card h3 {
+    color: #2c3e50;
+    font-size: 24px;
+    margin-bottom: 16px;
+}
+
+.success-card p {
+    color: #7f8c8d;
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.submission-details {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: left;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.detail-value {
+    color: #495057;
+}
+
+.status-pending {
+    color: #f39c12;
+    font-weight: 600;
+}
+
+/* Submit Section */
+.submit-section {
+    text-align: center;
+    margin-top: 32px;
+}
+
+/* Responsive Design Updates */
+@media (max-width: 768px) {
+    .vip-tiers-payment {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
     
-    .step-buttons {
-        flex-direction: column-reverse;
+    .tier-header {
+        flex-direction: column;
+        align-items: flex-start;
         gap: 12px;
     }
     
-    .step-buttons .back-btn,
-    .step-buttons .done-btn {
-        width: 100%;
+    .select-tier-btn {
+        align-self: stretch;
         justify-content: center;
     }
     
-    .email-container {
+    .payment-form-section {
+        margin: 20px 16px;
+        padding: 24px 20px;
+    }
+    
+    .method-options {
+        gap: 12px;
+    }
+    
+    .method-option {
+        padding: 16px;
+    }
+    
+    .email-display {
         flex-direction: column;
         gap: 8px;
     }
     
-    .copy-email-btn {
-        margin-top: 8px;
+    .page-title h1 {
+        font-size: 24px;
+    }
+    
+    .page-title p {
+        font-size: 14px;
     }
 }
 
