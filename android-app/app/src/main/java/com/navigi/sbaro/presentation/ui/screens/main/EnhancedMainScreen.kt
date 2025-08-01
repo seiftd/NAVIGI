@@ -90,7 +90,6 @@ fun EnhancedMainScreen(
             composable(SbaroDestinations.HOME) {
                 EnhancedHomeScreen(
                     userRepository = userRepository,
-                    adsterraManager = adsterraManager,
                     isArabic = isArabic,
                     onLanguageToggle = { isArabic = !isArabic }
                 )

@@ -321,14 +321,7 @@ class UserRepository @Inject constructor(
         return Pair(isActive, expiryDate)
     }
     
-    fun getRemainingVipDays(): Int {
-        val (isActive, expiryDate) = checkVipStatus()
-        if (!isActive) return 0
-        
-        val currentTime = System.currentTimeMillis()
-        val remainingTime = expiryDate - currentTime
-        return (remainingTime / (24 * 60 * 60 * 1000)).toInt()
-    }
+    // Duplicate function removed - using the one at line 510
     
     // Legacy method for other point sources
     fun addPoints(points: Int, source: String = "other") {
