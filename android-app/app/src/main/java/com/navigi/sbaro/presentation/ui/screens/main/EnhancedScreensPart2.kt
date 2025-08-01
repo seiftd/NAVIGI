@@ -747,7 +747,7 @@ fun EnhancedProfileScreen(
                     price = "$2.50/month",
                     benefits = listOf("16 ads/day", "1 min cooldown", "10 mining points"),
                     color = Color(0xFF3498DB),
-                    onUpgrade = { userRepository.activateVip() },
+                    onUpgrade = { userRepository.activateVipTier(VipTier.KING) },
                     isArabic = isArabic
                 )
             }
@@ -758,7 +758,7 @@ fun EnhancedProfileScreen(
                     price = "$9.00/month",
                     benefits = listOf("20 ads/day", "VIP competitions", "15 mining points"),
                     color = Color(0xFF9B59B6),
-                    onUpgrade = { userRepository.activateVip() },
+                    onUpgrade = { userRepository.activateVipTier(VipTier.EMPEROR) },
                     isArabic = isArabic
                 )
             }
@@ -769,7 +769,7 @@ fun EnhancedProfileScreen(
                     price = "$25.00/month", 
                     benefits = listOf("25 ads/day", "Priority withdrawals", "20 mining points"),
                     color = Color(0xFFE74C3C),
-                    onUpgrade = { userRepository.activateVip() },
+                    onUpgrade = { userRepository.activateVipTier(VipTier.LORD) },
                     isArabic = isArabic
                 )
             }
@@ -1381,7 +1381,7 @@ private fun VipTierCard(
             
                                 Button(
                         onClick = {
-                            // Navigate to payment screen
+                            // Navigate to payment approval screen
                             // This would be handled by navigation
                             // For now, we'll show a dialog with payment info
                             showPaymentDialog = true

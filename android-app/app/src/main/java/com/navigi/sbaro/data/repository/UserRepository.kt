@@ -220,6 +220,42 @@ class UserRepository @Inject constructor(
         return "SBARO-${userId.take(4).uppercase()}$randomSuffix"
     }
     
+    // Activate specific VIP tier
+    fun activateVipTier(tier: VipTier) {
+        val currentStats = _userStats.value
+        val expiryDate = System.currentTimeMillis() + (30 * 24 * 60 * 60 * 1000) // 30 days
+        
+        val newDailyAdLimit = when (tier) {
+            VipTier.KING -> 16
+            VipTier.EMPEROR -> 20
+            VipTier.LORD -> 25
+            VipTier.NONE -> 12
+        }
+        
+        _userStats.value = currentStats.copy(
+            vipTier = tier,
+            vipExpiryDate = expiryDate,
+            dailyAdLimit = newDailyAdLimit
+        )
+        
+        // Save to preferences
+        prefs.edit()
+            .putString("vip_tier", tier.name)
+            .putLong("vip_expiry_date", expiryDate)
+            .putInt("daily_ad_limit", newDailyAdLimit)
+            .apply()
+        
+        // Sync to Firebase
+        syncToFirebase()
+        
+        android.util.Log.d("VIP", "Activated VIP tier: ${tier.name}")
+    }
+    
+    // Legacy function for backward compatibility
+    fun activateVip() {
+        activateVipTier(VipTier.KING)
+    }
+    
     // Real AdMob profit calculation (70% to user) with daily limits
     fun addPointsFromAd(adRevenue: Double = 0.02): Boolean { // Returns true if ad was counted, false if limit reached
         val currentStats = _userStats.value
