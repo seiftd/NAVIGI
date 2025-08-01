@@ -145,6 +145,14 @@ function setupEventListeners() {
     if (fileInput && uploadArea) {
         fileInput.addEventListener('change', handleFileSelect);
         
+        // Click to upload
+        uploadArea.addEventListener('click', function(e) {
+            // Only trigger file input if clicking on the upload area itself, not the file input
+            if (e.target !== fileInput) {
+                fileInput.click();
+            }
+        });
+        
         // Drag and drop
         uploadArea.addEventListener('dragover', function(e) {
             e.preventDefault();
@@ -480,9 +488,9 @@ function showTrackingModal(submissionId) {
                     <h4>Need Help?</h4>
                     <p>Contact us for status updates:</p>
                     <div class="contact-methods">
-                        <a href="mailto:seiftouatllol@gmail.com" class="contact-method">
+                        <a href="mailto:navigisup@gmail.com" class="contact-method">
                             <i class="fas fa-envelope"></i>
-                            <span>seiftouatllol@gmail.com</span>
+                            <span>navigisup@gmail.com</span>
                         </a>
                         <a href="https://t.me/NAVIGISupport" class="contact-method">
                             <i class="fab fa-telegram"></i>
