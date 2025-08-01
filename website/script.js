@@ -455,3 +455,145 @@ window.copyAddress = copyAddress;
 window.generateQRCode = generateQRCode;
 window.showFallbackQR = showFallbackQR;
 window.showNotification = showNotification;
+
+// QR Code generation - USING PROVIDED QR IMAGE
+function generateQRCode() {
+    console.log('🔄 Loading your provided QR code image...');
+    
+    const qrContainer = document.getElementById('qrCode');
+    if (!qrContainer) {
+        console.log('⚠️ QR container not found on this page');
+        return;
+    }
+    
+    const tronAddress = 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX';
+    console.log('📍 TRON address:', tronAddress);
+    
+    // Clear existing content
+    qrContainer.innerHTML = '';
+    
+    // Create the QR display container
+    const qrDisplay = document.createElement('div');
+    qrDisplay.style.cssText = `
+        text-align: center; 
+        padding: 20px; 
+        background: white; 
+        border-radius: 8px; 
+        border: 2px solid #3498db;
+        max-width: 300px;
+        margin: 0 auto;
+    `;
+    
+    qrDisplay.innerHTML = `
+        <h4 style="margin: 0 0 15px 0; color: #2c3e50;">💰 VIP Payment QR Code</h4>
+        <div style="margin-bottom: 15px;">
+            <img src="./qr-code.png" 
+                 alt="TRON Address QR Code" 
+                 style="width: 200px; height: 200px; display: block; margin: 0 auto; border-radius: 5px;"
+                 onload="console.log('✅ Your QR code image loaded successfully')"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div style="display: none; padding: 20px; text-align: center;">
+                <i class="fas fa-qrcode" style="font-size: 48px; color: #3498db; margin-bottom: 15px;"></i>
+                <p style="color: #666; margin: 10px 0;">Your QR Code</p>
+                <p style="color: #666; margin: 10px 0; font-size: 12px;">Scan to pay with TRON wallet</p>
+            </div>
+        </div>
+        <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+            <p style="margin: 5px 0; font-size: 14px; color: #2c3e50;"><strong>TRON TRC20 Address:</strong></p>
+            <code style="font-size: 12px; color: #e74c3c; word-break: break-all; background: white; padding: 8px; border-radius: 3px; display: block; margin: 5px 0;">${tronAddress}</code>
+            <button onclick="copyTronAddress()" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; font-size: 12px;">
+                📋 Copy Address
+            </button>
+        </div>
+        <p style="margin: 15px 0 5px 0; font-size: 13px; color: #666;">📱 Scan with your TRON wallet</p>
+    `;
+    
+    qrContainer.appendChild(qrDisplay);
+    console.log('✅ QR code display created with your provided image');
+}
+
+// Copy TRON address function
+function copyTronAddress() {
+    const address = 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX';
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(address).then(() => {
+            showCopyFeedback('✅ Address copied to clipboard!', 'success');
+        }).catch(() => {
+            fallbackCopyAddress(address);
+        });
+    } else {
+        fallbackCopyAddress(address);
+    }
+}
+
+// Fallback copy method
+function fallbackCopyAddress(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showCopyFeedback('✅ Address copied to clipboard!', 'success');
+    } catch (err) {
+        console.error('Copy failed:', err);
+        showCopyFeedback('❌ Copy failed. Please copy manually.', 'error');
+    } finally {
+        document.body.removeChild(textArea);
+    }
+}
+
+// Show copy feedback
+function showCopyFeedback(message, type) {
+    // Remove existing notifications
+    document.querySelectorAll('.copy-notification').forEach(el => el.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = 'copy-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#27ae60' : '#e74c3c'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        font-size: 14px;
+        animation: slideInRight 0.3s ease;
+    `;
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Add CSS animations for notifications
+if (!document.querySelector('#copy-notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'copy-notification-styles';
+    style.textContent = `
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+}
