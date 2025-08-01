@@ -292,22 +292,22 @@ class TelegramSbaroApp {
                 try {
                     await show_9656288();
                     
-                    // Award points after successful ad view
-                    this.userStats.totalPoints += 5;
-                    this.userStats.totalBalance += 0.05;
+                                         // Award points after successful ad view - 1.1 points per ad
+                    this.userStats.totalPoints += 1.1;
+                    this.userStats.totalBalance += 0.011;
                     this.userStats.adsWatched += 1;
                     
                     // Update display
                     this.updateStatsDisplay();
                     
                     // Show success message
-                    this.showToast('🎉 You earned 5 points!', 'success');
+                    this.showToast('🎉 You earned 1.1 points!', 'success');
                     
                     // Send haptic feedback
                     this.tg.HapticFeedback.notificationOccurred('success');
                     
                     // Add to activity log
-                    this.addActivity('Watched Ad', '+5 points', 'earn');
+                    this.addActivity('Watched Ad', '+1.1 points', 'earn');
                     
                     // Send data to backend
                     await this.sendAdWatchToBackend();
@@ -387,18 +387,140 @@ class TelegramSbaroApp {
     }
 
     joinContest(contestType) {
-        if (contestType === 'daily') {
-            if (this.userStats.totalPoints >= 10) {
-                this.userStats.totalPoints -= 10;
-                this.userStats.contestsJoined += 1;
-                this.updateStatsDisplay();
-                this.showToast('🏆 Successfully joined the contest!', 'success');
-                this.addActivity('Contest Entry', '-10 points', 'contest');
-                this.tg.HapticFeedback.notificationOccurred('success');
-            } else {
-                this.showToast('❌ Not enough points to join contest', 'error');
-                this.tg.HapticFeedback.notificationOccurred('error');
-            }
+        const contestCosts = {
+            daily: 5,
+            weekly: 10,
+            monthly: 25
+        };
+        
+        const cost = contestCosts[contestType];
+        if (!cost) return;
+        
+        if (this.userStats.totalPoints >= cost) {
+            this.userStats.totalPoints -= cost;
+            this.userStats.contestsJoined += 1;
+            this.updateStatsDisplay();
+            this.showToast(`🏆 Successfully joined the ${contestType} contest!`, 'success');
+            this.addActivity(`${contestType.charAt(0).toUpperCase() + contestType.slice(1)} Contest`, `-${cost} points`, 'contest');
+            this.tg.HapticFeedback.notificationOccurred('success');
+            
+            // Send to backend
+            this.sendContestJoinToBackend(contestType, cost);
+        } else {
+            this.showToast(`❌ Need ${cost} points to join ${contestType} contest`, 'error');
+            this.tg.HapticFeedback.notificationOccurred('error');
+        }
+    }
+    
+    async sendContestJoinToBackend(contestType, cost) {
+        try {
+            await fetch('https://navigi-bot.netlify.app/.netlify/functions/contest-join', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: this.user?.id,
+                    telegram_user: this.user,
+                    contest_type: contestType,
+                    entry_cost: cost,
+                    timestamp: Date.now()
+                })
+            });
+        } catch (error) {
+            console.error('Contest join error:', error);
+        }
+    }
+    
+    claimDailyLogin() {
+        const lastLogin = localStorage.getItem('lastDailyLogin');
+        const today = new Date().toDateString();
+        
+        if (lastLogin === today) {
+            this.showToast('✅ Daily login already claimed today!', 'info');
+            return;
+        }
+        
+        this.userStats.totalPoints += 1;
+        this.userStats.totalBalance += 0.01;
+        this.updateStatsDisplay();
+        
+        localStorage.setItem('lastDailyLogin', today);
+        
+        this.showToast('🎉 Daily login claimed! +1 point', 'success');
+        this.addActivity('Daily Login', '+1 point', 'earn');
+        
+        // Update task button
+        const taskBtn = document.querySelector('#dailyLoginTask .task-btn');
+        taskBtn.textContent = 'Claimed';
+        taskBtn.disabled = true;
+        taskBtn.style.opacity = '0.5';
+        
+        // Send to backend
+        this.sendDailyLoginToBackend();
+    }
+    
+    async sendDailyLoginToBackend() {
+        try {
+            await fetch('https://navigi-bot.netlify.app/.netlify/functions/daily-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: this.user?.id,
+                    telegram_user: this.user,
+                    points_earned: 1,
+                    timestamp: Date.now()
+                })
+            });
+        } catch (error) {
+            console.error('Daily login error:', error);
+        }
+    }
+    
+    sendTONStars() {
+        this.showModal(
+            '⭐ Send TON Stars',
+            `
+            <div style="text-align: center;">
+                <p style="margin-bottom: 20px;">Send TON Stars to boost your position in the leaderboard!</p>
+                <div style="background: var(--tg-theme-secondary-bg-color); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 15px;">Star Packages:</h4>
+                    <button class="upgrade-btn" onclick="telegramApp.sendStars(100)" style="margin-bottom: 10px;">
+                        ⭐ 100 Stars - Small boost
+                    </button>
+                    <button class="upgrade-btn" onclick="telegramApp.sendStars(500)" style="margin-bottom: 10px;">
+                        ⭐ 500 Stars - Medium boost
+                    </button>
+                    <button class="upgrade-btn" onclick="telegramApp.sendStars(1000)">
+                        ⭐ 1000 Stars - Large boost
+                    </button>
+                </div>
+                <p style="font-size: 12px; color: var(--tg-theme-hint-color);">
+                    Stars help you rank higher in the weekly leaderboard
+                </p>
+            </div>
+            `,
+            [{ text: 'Cancel', action: () => this.closeModal() }]
+        );
+    }
+    
+    sendStars(amount) {
+        if (this.tg.openInvoice) {
+            const invoice = {
+                title: 'NAVIGI SBARO - TON Stars',
+                description: `Send ${amount} TON Stars for leaderboard boost`,
+                payload: `stars_${amount}_${Date.now()}`,
+                provider_token: '',
+                currency: 'XTR',
+                prices: [{ label: `${amount} TON Stars`, amount: amount }]
+            };
+            
+            this.tg.openInvoice(invoice, (status) => {
+                if (status === 'paid') {
+                    this.showToast(`⭐ ${amount} Stars sent! Leaderboard boosted!`, 'success');
+                    this.closeModal();
+                }
+            });
+        } else {
+            this.showToast('❌ Stars payment not available', 'error');
         }
     }
 
@@ -461,8 +583,8 @@ class TelegramSbaroApp {
     }
 
     payWithTON(tier, price) {
-        // TON Wallet payment
-        const tonAmount = (price * 2.5).toFixed(2); // Approximate TON rate
+        // TON Wallet payment - 1 TON = 3.6 USDT
+        const tonAmount = (price / 3.6).toFixed(2);
         
         this.showModal(
             '💎 TON Wallet Payment',
@@ -474,9 +596,9 @@ class TelegramSbaroApp {
                 
                 <div style="background: var(--tg-theme-secondary-bg-color); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                     <p style="margin-bottom: 10px;"><strong>TON Wallet Address:</strong></p>
-                    <div style="background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; word-break: break-all; color: black; font-family: monospace;">
-                        UQDXq-8B3TNYV8kv5j5-rq9B5-7W8WqVZQwQ4L8-8qV5-5Kj
-                    </div>
+                                         <div style="background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; word-break: break-all; color: black; font-family: monospace;">
+                         UQBVeJflae5yTTgS6wczgpDkDcyEAnmA88bZyaiB3lYGqWw9
+                     </div>
                     <button class="copy-btn" onclick="telegramApp.copyTONAddress()" style="width: 100%; margin-bottom: 15px;">
                         📋 Copy TON Address
                     </button>
@@ -529,7 +651,7 @@ class TelegramSbaroApp {
     }
 
     copyTONAddress() {
-        const address = 'UQDXq-8B3TNYV8kv5j5-rq9B5-7W8WqVZQwQ4L8-8qV5-5Kj';
+        const address = 'UQBVeJflae5yTTgS6wczgpDkDcyEAnmA88bZyaiB3lYGqWw9';
         navigator.clipboard.writeText(address).then(() => {
             this.showToast('📋 TON address copied!', 'success');
         });
@@ -648,12 +770,6 @@ class TelegramSbaroApp {
     }
 
     showWithdraw() {
-        const minWithdraw = 10.00;
-        if (this.userStats.totalBalance < minWithdraw) {
-            this.showToast(`❌ Minimum withdrawal is $${minWithdraw.toFixed(2)}`, 'error');
-            return;
-        }
-        
         this.showModal(
             '💰 Withdraw Earnings',
             `
@@ -661,11 +777,17 @@ class TelegramSbaroApp {
                 <p style="margin-bottom: 20px;">Available Balance: <strong>$${this.userStats.totalBalance.toFixed(2)}</strong></p>
                 <div style="background: var(--tg-theme-secondary-bg-color); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                     <h4 style="margin-bottom: 15px;">Withdrawal Methods:</h4>
-                    <button class="upgrade-btn" onclick="telegramApp.withdrawTo('paypal')" style="margin-bottom: 10px;">
-                        PayPal
+                    
+                    <button class="upgrade-btn" onclick="telegramApp.withdrawTo('usdt')" style="margin-bottom: 10px;">
+                        💰 USDT (TRC20) - Min: $3.00
                     </button>
-                    <button class="upgrade-btn" onclick="telegramApp.withdrawTo('crypto')">
-                        Crypto (USDT TRC20)
+                    
+                    <button class="upgrade-btn" onclick="telegramApp.withdrawTo('binance')" style="margin-bottom: 10px;">
+                        🟡 Binance Pay - Min: $2.00
+                    </button>
+                    
+                    <button class="upgrade-btn" onclick="telegramApp.withdrawTo('ton')">
+                        💎 TON Wallet - Min: 1 TON ($3.60)
                     </button>
                 </div>
                 <p style="font-size: 12px; color: var(--tg-theme-hint-color);">
@@ -678,9 +800,86 @@ class TelegramSbaroApp {
     }
 
     withdrawTo(method) {
-        this.showToast('🔄 Withdrawal request submitted!', 'success');
-        this.closeModal();
-        // In real app, process withdrawal
+        const minAmounts = {
+            usdt: 3.00,
+            binance: 2.00,
+            ton: 3.60 // 1 TON = $3.60
+        };
+        
+        if (this.userStats.totalBalance < minAmounts[method]) {
+            this.showToast(`❌ Minimum withdrawal is $${minAmounts[method].toFixed(2)}`, 'error');
+            return;
+        }
+        
+        let methodName = '';
+        let inputPlaceholder = '';
+        
+        switch(method) {
+            case 'usdt':
+                methodName = 'USDT (TRC20)';
+                inputPlaceholder = 'Enter your TRC20 USDT wallet address';
+                break;
+            case 'binance':
+                methodName = 'Binance Pay';
+                inputPlaceholder = 'Enter your Binance Pay ID';
+                break;
+            case 'ton':
+                methodName = 'TON Wallet';
+                inputPlaceholder = 'Enter your TON wallet address';
+                break;
+        }
+        
+        this.showModal(
+            `💸 Withdraw via ${methodName}`,
+            `
+            <div style="text-align: center;">
+                <p style="margin-bottom: 15px;">Withdrawal Amount: <strong>$${this.userStats.totalBalance.toFixed(2)}</strong></p>
+                <input type="text" id="withdrawAddress" placeholder="${inputPlaceholder}" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--tg-theme-secondary-bg-color); margin-bottom: 15px;">
+                <p style="font-size: 12px; color: var(--tg-theme-hint-color);">
+                    Processing time: 24-48 hours
+                </p>
+            </div>
+            `,
+            [
+                { text: 'Submit Request', action: () => this.submitWithdrawal(method) },
+                { text: 'Cancel', action: () => this.closeModal() }
+            ]
+        );
+    }
+    
+    async submitWithdrawal(method) {
+        const address = document.getElementById('withdrawAddress').value.trim();
+        if (!address) {
+            this.showToast('❌ Please enter withdrawal address/ID', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch('https://navigi-bot.netlify.app/.netlify/functions/withdrawal-request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: this.user?.id,
+                    telegram_user: this.user,
+                    method: method,
+                    amount: this.userStats.totalBalance,
+                    address: address,
+                    timestamp: Date.now()
+                })
+            });
+            
+            if (response.ok) {
+                this.showToast('✅ Withdrawal request submitted!', 'success');
+                this.closeModal();
+            } else {
+                this.showToast('❌ Failed to submit request. Try again.', 'error');
+            }
+        } catch (error) {
+            console.error('Withdrawal error:', error);
+            this.showToast('❌ Network error. Please try again.', 'error');
+        }
     }
 
     copyReferralCode() {
@@ -914,6 +1113,14 @@ function showSupport() {
 
 function closeModal() {
     telegramApp.closeModal();
+}
+
+function claimDailyLogin() {
+    telegramApp.claimDailyLogin();
+}
+
+function sendTONStars() {
+    telegramApp.sendTONStars();
 }
 
 // Initialize app when DOM is loaded

@@ -127,6 +127,37 @@
                     </div>
                 </div>
 
+                <!-- Daily Tasks -->
+                <div class="daily-tasks">
+                    <h3>📋 Daily Tasks</h3>
+                    <div class="tasks-list">
+                        <div class="task-item" id="dailyLoginTask">
+                            <div class="task-icon">📅</div>
+                            <div class="task-info">
+                                <div class="task-title">Daily Login</div>
+                                <div class="task-reward">+1 point</div>
+                            </div>
+                            <button class="task-btn" onclick="claimDailyLogin()">Claim</button>
+                        </div>
+                        <div class="task-item">
+                            <div class="task-icon">⭐</div>
+                            <div class="task-info">
+                                <div class="task-title">Send TON Stars</div>
+                                <div class="task-reward">Leaderboard boost</div>
+                            </div>
+                            <button class="task-btn" onclick="sendTONStars()">Send</button>
+                        </div>
+                        <div class="task-item">
+                            <div class="task-icon">👥</div>
+                            <div class="task-info">
+                                <div class="task-title">Invite Friends</div>
+                                <div class="task-reward">+1 point per invite</div>
+                            </div>
+                            <button class="task-btn" onclick="shareReferral()">Share</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Recent Activity -->
                 <div class="recent-activity">
                     <h3>Recent Activity</h3>
@@ -221,15 +252,16 @@
                     <p>Join contests to win amazing prizes!</p>
                 </div>
 
+                <!-- Daily Contest -->
                 <div class="contest-card active">
-                    <div class="contest-badge">🔥 Hot</div>
+                    <div class="contest-badge">🔥 Daily</div>
                     <div class="contest-info">
                         <h3>Daily Points Contest</h3>
                         <p>Collect the most points today to win!</p>
                         <div class="contest-stats">
                             <div class="stat">
                                 <span class="label">Prize Pool</span>
-                                <span class="value">$100</span>
+                                <span class="value">$50</span>
                             </div>
                             <div class="stat">
                                 <span class="label">Participants</span>
@@ -242,14 +274,67 @@
                         </div>
                     </div>
                     <button class="join-contest-btn" onclick="joinContest('daily')">
+                        Join Contest (5 points)
+                    </button>
+                </div>
+
+                <!-- Weekly Contest -->
+                <div class="contest-card">
+                    <div class="contest-badge">📅 Weekly</div>
+                    <div class="contest-info">
+                        <h3>Weekly Challenge</h3>
+                        <p>Weekly competition for all users</p>
+                        <div class="contest-stats">
+                            <div class="stat">
+                                <span class="label">Prize Pool</span>
+                                <span class="value">$200</span>
+                            </div>
+                            <div class="stat">
+                                <span class="label">Participants</span>
+                                <span class="value">3,456</span>
+                            </div>
+                            <div class="stat">
+                                <span class="label">Time Left</span>
+                                <span class="value">3d 12h</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="join-contest-btn" onclick="joinContest('weekly')">
                         Join Contest (10 points)
                     </button>
                 </div>
 
+                <!-- Monthly Contest -->
+                <div class="contest-card">
+                    <div class="contest-badge">🏆 Monthly</div>
+                    <div class="contest-info">
+                        <h3>Monthly Championship</h3>
+                        <p>The biggest contest of the month!</p>
+                        <div class="contest-stats">
+                            <div class="stat">
+                                <span class="label">Prize Pool</span>
+                                <span class="value">$1000</span>
+                            </div>
+                            <div class="stat">
+                                <span class="label">Participants</span>
+                                <span class="value">12,345</span>
+                            </div>
+                            <div class="stat">
+                                <span class="label">Time Left</span>
+                                <span class="value">15d 8h</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="join-contest-btn" onclick="joinContest('monthly')">
+                        Join Contest (25 points)
+                    </button>
+                </div>
+
+                <!-- VIP Contest -->
                 <div class="contest-card">
                     <div class="contest-badge vip">👑 VIP Only</div>
                     <div class="contest-info">
-                        <h3>VIP Weekly Challenge</h3>
+                        <h3>VIP Exclusive Contest</h3>
                         <p>Exclusive contest for VIP members</p>
                         <div class="contest-stats">
                             <div class="stat">
@@ -262,7 +347,7 @@
                             </div>
                             <div class="stat">
                                 <span class="label">Time Left</span>
-                                <span class="value">3d 12h</span>
+                                <span class="value">6d 18h</span>
                             </div>
                         </div>
                     </div>
@@ -406,6 +491,20 @@
                     <div class="profile-section">
                         <h3>🎁 Referral Program</h3>
                         <p>Invite friends and earn bonus points!</p>
+                        <div class="referral-stats">
+                            <div class="referral-stat">
+                                <span class="stat-label">Total Referrals</span>
+                                <span class="stat-value" id="totalReferrals">3</span>
+                            </div>
+                            <div class="referral-stat">
+                                <span class="stat-label">This Week</span>
+                                <span class="stat-value" id="weeklyReferrals">1</span>
+                            </div>
+                            <div class="referral-stat">
+                                <span class="stat-label">Referral Rank</span>
+                                <span class="stat-value" id="referralRank">#45</span>
+                            </div>
+                        </div>
                         <div class="referral-code">
                             <label>Your Referral Code:</label>
                             <div class="code-container">
@@ -415,10 +514,49 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="referral-rewards">
+                            <p><strong>Referral Rewards:</strong></p>
+                            <ul>
+                                <li>+1 point for each invited user</li>
+                                <li>+5 points if they buy King VIP</li>
+                                <li>+10 points if they buy Emperor VIP</li>
+                                <li>+15 points if they buy Lord VIP</li>
+                            </ul>
+                        </div>
                         <button class="share-btn" onclick="shareReferral()">
                             <i class="fas fa-share"></i>
                             Share with Friends
                         </button>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>🏆 Referral Leaderboard</h3>
+                        <p>Top referrers this week get amazing rewards!</p>
+                        <div class="leaderboard-rewards">
+                            <div class="reward-item">
+                                <span>🥇 #1: 50 points (if 50+ referrals)</span>
+                            </div>
+                            <div class="reward-item">
+                                <span>🎁 800+ referrals: 1 TON reward!</span>
+                            </div>
+                        </div>
+                        <div class="mini-leaderboard">
+                            <div class="leaderboard-item">
+                                <span class="rank">1</span>
+                                <span class="username">@cryptoking</span>
+                                <span class="referrals">234 refs</span>
+                            </div>
+                            <div class="leaderboard-item">
+                                <span class="rank">2</span>
+                                <span class="username">@pointmaster</span>
+                                <span class="referrals">189 refs</span>
+                            </div>
+                            <div class="leaderboard-item current-user">
+                                <span class="rank">45</span>
+                                <span class="username">You</span>
+                                <span class="referrals">3 refs</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="profile-section">
