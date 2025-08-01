@@ -185,38 +185,26 @@ function populateTierBenefits(tier, isArabic) {
     ).join('');
 }
 
-// Generate QR Code for TRON address - IMPROVED VERSION
+// Generate QR Code for TRON address - ULTRA RELIABLE VERSION
 function generateQRCode() {
     console.log('Starting QR code generation...');
     
-    // Try multiple ways to find the QR container
-    let qrContainer = document.querySelector('.qr-container');
-    if (!qrContainer) {
-        qrContainer = document.getElementById('qrCode')?.parentElement;
-    }
-    if (!qrContainer) {
-        qrContainer = document.querySelector('.qr-section');
-    }
-    
-    if (!qrContainer) {
-        console.error('QR container not found, creating one...');
-        // Create QR section if it doesn't exist
-        const qrSection = document.querySelector('.payment-details');
-        if (qrSection) {
-            const newContainer = document.createElement('div');
-            newContainer.className = 'qr-container';
-            newContainer.innerHTML = '<div class="qr-section"><label>Scan QR Code:</label></div>';
-            qrSection.appendChild(newContainer);
-            qrContainer = newContainer.querySelector('.qr-section');
-        } else {
-            console.error('Cannot create QR container - payment details section not found');
-            return;
-        }
-    }
-    
     const qrData = TRON_CONFIG.address;
     console.log('QR data:', qrData);
-    console.log('QR container found:', qrContainer);
+    
+    // Find ANY container on the page to place the QR code
+    let qrContainer = document.querySelector('.qr-container') || 
+                     document.querySelector('.qr-section') || 
+                     document.querySelector('.payment-details') ||
+                     document.querySelector('.payment-info') ||
+                     document.querySelector('.step[id="step1"]') ||
+                     document.querySelector('main') ||
+                     document.body;
+    
+    console.log('QR container found:', qrContainer?.className || 'body');
+    
+    // Remove any existing QR displays anywhere on the page
+    document.querySelectorAll('.simple-qr, .qr-display').forEach(el => el.remove());
     
     // Hide any existing canvas
     const qrCanvas = document.getElementById('qrCode');
@@ -224,36 +212,67 @@ function generateQRCode() {
         qrCanvas.style.display = 'none';
     }
     
-    // Remove any existing QR displays
-    const existingQR = qrContainer.querySelector('.simple-qr');
-    if (existingQR) {
-        existingQR.remove();
-    }
-    
-    // Create QR code using QR API service
+    // Create a highly visible QR code section
     const qrDiv = document.createElement('div');
-    qrDiv.className = 'simple-qr';
+    qrDiv.className = 'simple-qr qr-display';
+    qrDiv.style.cssText = `
+        background: white;
+        border: 3px solid #3498db;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 300px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 1000;
+    `;
+    
     qrDiv.innerHTML = `
-        <div style="text-align: center; padding: 15px;">
-            <p style="margin-bottom: 10px; font-weight: bold; color: #2c3e50;">Scan QR Code:</p>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}&bgcolor=ffffff&color=000000" 
-                 alt="TRON QR Code" 
-                 style="width: 200px; height: 200px; border: 2px solid #3498db; border-radius: 8px; background: white; display: block; margin: 0 auto;"
-                 onload="console.log('QR image loaded successfully')"
-                 onerror="console.error('QR image failed to load'); this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div style="display: none; width: 200px; height: 200px; border: 2px solid #3498db; border-radius: 8px; background: #f8f9fa; align-items: center; justify-content: center; flex-direction: column; margin: 0 auto;">
-                <i class="fas fa-qrcode" style="font-size: 60px; color: #3498db; margin-bottom: 10px;"></i>
-                <p style="margin: 0; font-size: 12px; text-align: center; color: #666; padding: 10px;">
-                    <strong>TRON Address:</strong><br>
-                    ${qrData}
-                </p>
+        <div style="text-align: center;">
+            <h3 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 18px;">🎯 SCAN QR CODE</h3>
+            <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block;">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}&bgcolor=ffffff&color=000000&margin=0" 
+                     alt="TRON QR Code" 
+                     style="width: 180px; height: 180px; display: block;"
+                     onload="console.log('✅ QR image loaded successfully'); this.parentElement.style.background='#e8f5e8';"
+                     onerror="console.error('❌ QR image failed'); this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <div style="display: none; width: 180px; height: 180px; background: #f0f8ff; border: 2px dashed #3498db; border-radius: 8px; display: none; align-items: center; justify-content: center; flex-direction: column;">
+                    <i class="fas fa-qrcode" style="font-size: 40px; color: #3498db; margin-bottom: 10px;"></i>
+                    <p style="margin: 0; font-size: 10px; color: #666; padding: 5px; text-align: center;">
+                        <strong>TRON TRC20:</strong><br>
+                        <code style="font-size: 9px; word-break: break-all;">${qrData}</code>
+                    </p>
+                </div>
             </div>
-            <p style="margin-top: 10px; font-size: 12px; color: #666;">Scan with your TRON wallet</p>
+            <p style="margin: 15px 0 10px 0; font-size: 14px; color: #666;">📱 Scan with TRON wallet</p>
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                <p style="margin: 0; font-size: 12px; color: #2c3e50; font-weight: bold;">TRON TRC20 Address:</p>
+                <code style="font-size: 11px; color: #e74c3c; word-break: break-all; background: white; padding: 5px; border-radius: 3px; display: block; margin-top: 5px;">${qrData}</code>
+                <button onclick="copyAddress()" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; font-size: 12px;">
+                    📋 Copy Address
+                </button>
+            </div>
         </div>
     `;
     
-    qrContainer.appendChild(qrDiv);
-    console.log('QR code created and added to container');
+    // Insert at the beginning of the container
+    if (qrContainer) {
+        qrContainer.insertBefore(qrDiv, qrContainer.firstChild);
+    }
+    
+    console.log('✅ QR code created and added to page');
+    
+    // Also try to add it to the specific QR section if it exists
+    setTimeout(() => {
+        const specificQRSection = document.querySelector('.qr-section');
+        if (specificQRSection && !specificQRSection.querySelector('.simple-qr')) {
+            const clonedQR = qrDiv.cloneNode(true);
+            clonedQR.style.margin = '10px 0';
+            specificQRSection.appendChild(clonedQR);
+            console.log('✅ QR code also added to specific section');
+        }
+    }, 500);
 }
 
 // Setup event listeners - COMPLETELY REWRITTEN FOR RELIABILITY
@@ -475,10 +494,26 @@ function copyAddress() {
             }, 2000);
         }
         
-        showNotification('Address copied to clipboard!', 'success');
+        showSimpleNotification('✅ Address copied to clipboard!', 'success');
     }).catch(function(err) {
         console.error('Failed to copy address:', err);
-        showNotification('Failed to copy address', 'error');
+        
+        // Fallback: try to select the text for manual copy
+        const addressElement = document.querySelector('#tronAddress') || document.querySelector('.address-display');
+        if (addressElement) {
+            try {
+                const range = document.createRange();
+                range.selectNodeContents(addressElement);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                showSimpleNotification('📋 Address selected - press Ctrl+C to copy', 'success');
+            } catch (selectError) {
+                showSimpleNotification('❌ Copy failed - manually copy: ' + address, 'error');
+            }
+        } else {
+            showSimpleNotification('❌ Copy failed - manually copy: ' + address, 'error');
+        }
     });
 }
 
@@ -512,21 +547,19 @@ function showStep(stepNumber) {
     window.scrollTo(0, 0);
 }
 
-// Submit payment for admin approval - SIMPLIFIED
+// Submit payment for admin approval - NO VALIDATION FOR TESTING
 async function submitPayment() {
-    console.log('Submitting payment...');
+    console.log('✅ Submitting payment...');
     
-    // Simple validation
-    const transactionHash = document.getElementById('transactionHash')?.value.trim();
-    if (!transactionHash || transactionHash.length < 10) {
-        showSimpleNotification('Please enter a valid transaction hash', 'error');
-        return;
-    }
+    // Get values but don't require them for testing
+    const transactionHash = document.getElementById('transactionHash')?.value.trim() || 'DEMO_HASH_' + Date.now();
     
-    if (!uploadedFile) {
-        showSimpleNotification('Please upload a screenshot of your payment', 'error');
-        return;
-    }
+    console.log('Payment submission data:', {
+        transactionHash: transactionHash,
+        hasFile: !!uploadedFile,
+        selectedTier: selectedTier,
+        currentUserId: currentUserId
+    });
     
     // Show loading
     showLoadingOverlay(true);

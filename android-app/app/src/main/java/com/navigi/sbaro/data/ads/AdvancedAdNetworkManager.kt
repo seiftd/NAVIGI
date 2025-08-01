@@ -14,7 +14,8 @@ enum class AdProvider {
     ADPUMB,     // Backup global
     MONETISE,   // MENA region focus
     OFFERTORO,  // Daily competition
-    TAPJOY      // Weekly competition
+    TAPJOY,     // Weekly competition
+    ADSTERRA    // New earning provider
 }
 
 enum class AdType {
@@ -48,6 +49,16 @@ class AdvancedAdNetworkManager @Inject constructor() {
         private const val MIN_AD_VALUE = 0.018
         private const val BASE_POINTS_PER_AD = 1.1
         
+        // Ad Provider URLs
+        private val AD_PROVIDER_URLS = mapOf(
+            AdProvider.ADGEM to "https://www.adgem.com/earn",
+            AdProvider.ADPUMB to "https://adpumb.com/earn",
+            AdProvider.MONETISE to "https://monetise.com/ads",
+            AdProvider.OFFERTORO to "https://offertoro.com/earn",
+            AdProvider.TAPJOY to "https://tapjoy.com/ads",
+            AdProvider.ADSTERRA to "https://www.profitableratecpm.com/wzun0hab?key=d618b444e85c92f5cff5b3be66d62941"
+        )
+        
         // Cooldown times in milliseconds
         private const val REGULAR_COOLDOWN = 3 * 60 * 1000L // 3 minutes
         private const val VIP_COOLDOWN = 1 * 60 * 1000L // 1 minute
@@ -65,6 +76,21 @@ class AdvancedAdNetworkManager @Inject constructor() {
     fun initialize(context: Context) {
         Log.d(TAG, "Initializing Advanced Ad Network Manager")
         checkProviderRotation()
+    }
+    
+    fun getAdUrl(provider: AdProvider): String {
+        return AD_PROVIDER_URLS[provider] ?: "https://navigi.app/earn"
+    }
+    
+    fun getAdUrlForType(adType: AdType): String {
+        val provider = when (adType) {
+            AdType.EARNING -> AdProvider.ADSTERRA // Use new Adsterra for earning
+            AdType.DAILY_COMPETITION -> AdProvider.OFFERTORO
+            AdType.WEEKLY_COMPETITION -> AdProvider.TAPJOY
+            AdType.MONTHLY_COMPETITION -> AdProvider.ADGEM
+            AdType.VIP_EXCLUSIVE -> AdProvider.ADGEM
+        }
+        return getAdUrl(provider)
     }
     
     fun canShowAd(
@@ -151,11 +177,11 @@ class AdvancedAdNetworkManager @Inject constructor() {
     
     private fun getBackupProviders(adType: AdType): List<AdProvider> {
         return when (adType) {
-            AdType.EARNING -> listOf(AdProvider.ADPUMB, AdProvider.MONETISE)
+            AdType.EARNING -> listOf(AdProvider.ADSTERRA, AdProvider.ADPUMB, AdProvider.MONETISE)
             AdType.DAILY_COMPETITION -> listOf(AdProvider.ADPUMB)
             AdType.WEEKLY_COMPETITION -> listOf(AdProvider.MONETISE)
-            AdType.MONTHLY_COMPETITION -> listOf(AdProvider.ADPUMB, AdProvider.MONETISE)
-            AdType.VIP_EXCLUSIVE -> listOf(AdProvider.ADPUMB, AdProvider.MONETISE)
+            AdType.MONTHLY_COMPETITION -> listOf(AdProvider.ADSTERRA, AdProvider.ADPUMB, AdProvider.MONETISE)
+            AdType.VIP_EXCLUSIVE -> listOf(AdProvider.ADSTERRA, AdProvider.ADPUMB, AdProvider.MONETISE)
         }
     }
     
@@ -167,6 +193,7 @@ class AdvancedAdNetworkManager @Inject constructor() {
             AdProvider.MONETISE -> 0.80 // 80% availability (MENA focus)
             AdProvider.OFFERTORO -> 0.90 // 90% availability (daily competition)
             AdProvider.TAPJOY -> 0.88 // 88% availability (weekly competition)
+            AdProvider.ADSTERRA -> 0.92 // 92% availability (new earning provider)
         }
         
         // Random availability check
@@ -239,6 +266,10 @@ class AdvancedAdNetworkManager @Inject constructor() {
             AdProvider.TAPJOY -> {
                 // Competition provider: higher revenue for competitions
                 minValue + random.nextDouble() * (0.048 - minValue)
+            }
+            AdProvider.ADSTERRA -> {
+                // New earning provider: competitive revenue
+                minValue + random.nextDouble() * (0.042 - minValue)
             }
         }
     }
