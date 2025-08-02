@@ -1,11 +1,12 @@
 {
-  "name": "navigi-sbaro-bot",
+  "name": "navigi-sbaro-telegram-bot",
   "version": "1.0.0",
-  "description": "NAVIGI SBARO Telegram Bot with Firebase Real-time Integration",
+  "description": "NAVIGI SBARO Telegram Bot with Real-time Firebase Integration",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
-    "dev": "nodemon bot.js"
+    "dev": "nodemon bot.js",
+    "test": "node bot.js"
   },
   "dependencies": {
     "node-telegram-bot-api": "^0.66.0",
@@ -20,8 +21,13 @@
     "bot",
     "firebase",
     "navigi",
-    "sbaro"
+    "sbaro",
+    "realtime"
   ],
-  "author": "NAVIGI Team",
-  "license": "MIT"
+  "author": "NAVIGI SBARO Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seiftd/NAVIGI.git"
+  }
 }
