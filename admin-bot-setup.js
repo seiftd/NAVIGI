@@ -2,8 +2,9 @@ const TelegramBot = require('node-telegram-bot-api');
 
 // Admin Bot Configuration
 const ADMIN_BOT_TOKEN = '8095971099:AAFDLGO8oFBPgmI878cFeCuil3tf9Kh2tmM';
+
 const MAIN_BOT_TOKEN = '8185239716:AAGwRpHQH3pEoMLVTzWpLnE3hHTNc35AleY';
-const ADMIN_USER_ID = '123456789'; // Replace with actual admin user ID
+const ADMIN_USER_ID = '@Sbaroone'; // Replace with actual admin user ID
 const MAIN_BOT_API_URL = 'https://navigiu.netlify.app/.netlify/functions';
 
 // Create main bot instance for sending messages
@@ -492,6 +493,7 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
+
 // Broadcast message to all users
 async function sendBroadcastMessage(message, adminChatId) {
     try {
@@ -536,3 +538,4 @@ async function sendBroadcastMessage(message, adminChatId) {
 }
 
 console.log('🤖 Admin Bot is running and ready to manage NAVIGI!');
+
