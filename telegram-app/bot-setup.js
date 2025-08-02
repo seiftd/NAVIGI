@@ -66,33 +66,50 @@ const DAILY_LIMITS = {
 
 // Firebase helper functions
 async function createUser(userId, userData) {
-    if (!isFirebaseInitialized) return null;
+    if (!isFirebaseInitialized) {
+        console.log('⚠️ Firebase not initialized, cannot create user');
+        return null;
+    }
+    
     try {
         const userRef = database.ref(`users/${userId}`);
+        
+        // Use provided userData or create default structure
         const newUser = {
             id: userId,
             username: userData.username || null,
             first_name: userData.first_name || null,
-            points: 0,
-            balance: 0.00,
-            ads_watched: 0,
-            daily_ads_watched: 0,
-            last_ad_reset: new Date().toDateString(),
-            contest_ads: { daily: 0, weekly: 0, monthly: 0 },
-            contests_joined: 0,
-            referrals: 0,
-            vip_status: 'FREE',
-            vip_expires: null,
-            referred_by: null,
-            join_date: new Date().toISOString(),
+            points: userData.points || 0,
+            balance: userData.balance || 0.00,
+            ads_watched: userData.ads_watched || 0,
+            daily_ads_watched: userData.daily_ads_watched || 0,
+            last_ad_reset: userData.last_ad_reset || new Date().toDateString(),
+            contest_ads: userData.contest_ads || { daily: 0, weekly: 0, monthly: 0 },
+            contests_joined: userData.contests_joined || 0,
+            referrals: userData.referrals || 0,
+            vip_status: userData.vip_status || 'FREE',
+            vip_expires: userData.vip_expires || null,
+            referred_by: userData.referred_by || null,
+            join_date: userData.join_date || new Date().toISOString(),
             created_at: admin.database.ServerValue.TIMESTAMP,
             updated_at: admin.database.ServerValue.TIMESTAMP
         };
+        
         await userRef.set(newUser);
-        console.log(`✅ User ${userId} created in Firebase`);
+        console.log(`✅ User ${userId} created in Firebase with complete data structure`);
+        
+        // Log to console for debugging
+        console.log('📊 User data structure:', {
+            id: newUser.id,
+            points: newUser.points,
+            ads_watched: newUser.ads_watched,
+            contest_ads: newUser.contest_ads,
+            vip_status: newUser.vip_status
+        });
+        
         return newUser;
     } catch (error) {
-        console.error('❌ Error creating user:', error);
+        console.error('❌ Error creating user in Firebase:', error);
         return null;
     }
 }
@@ -175,47 +192,113 @@ async function sendVipNotification(userId, userData, requestType = 'request') {
     }
 }
 
-// Initialize user function
+// Initialize user function with proper Firebase data structure
 async function initUser(userId, userData = {}) {
+    console.log(`🔄 Initializing user ${userId}...`);
+    
     // Try to get user from Firebase first
     let user = await getUser(userId);
     
     if (!user) {
-        // Create new user in Firebase
-        user = await createUser(userId, userData);
+        console.log(`👤 Creating new user ${userId} in Firebase`);
+        // Create new user with complete data structure
+        const newUser = {
+            id: userId,
+            username: userData.username || null,
+            first_name: userData.first_name || null,
+            points: 0,
+            balance: 0.00,
+            ads_watched: 0,
+            daily_ads_watched: 0,
+            last_ad_reset: new Date().toDateString(),
+            contest_ads: { daily: 0, weekly: 0, monthly: 0 },
+            contests_joined: 0,
+            referrals: 0,
+            vip_status: 'FREE',
+            vip_expires: null,
+            referred_by: null,
+            join_date: new Date().toISOString(),
+            created_at: admin.database.ServerValue.TIMESTAMP,
+            updated_at: admin.database.ServerValue.TIMESTAMP
+        };
+        
+        // Create user in Firebase
+        user = await createUser(userId, newUser);
         
         // Fallback to local storage if Firebase fails
         if (!user) {
-            user = {
-                id: userId,
-                username: userData.username || null,
-                first_name: userData.first_name || null,
-                points: 0,
-                balance: 0.00,
-                ads_watched: 0,
-                daily_ads_watched: 0,
-                last_ad_reset: new Date().toDateString(),
-                contest_ads: { daily: 0, weekly: 0, monthly: 0 },
-                contests_joined: 0,
-                referrals: 0,
-                vip_status: 'FREE',
-                vip_expires: null,
-                referred_by: null,
-                join_date: new Date().toISOString()
-            };
+            user = newUser;
+            console.log('⚠️ Using local fallback for user data');
         }
         
         // Log new user activity
         await logActivity(userId, 'user_joined', {
             username: userData.username,
             first_name: userData.first_name,
-            platform: 'telegram_bot'
+            platform: 'telegram_bot',
+            timestamp: new Date().toISOString()
         });
+        
+        console.log(`✅ New user ${userId} created successfully`);
     } else {
-        // User exists, ensure contest_ads is properly structured
+        console.log(`👤 Existing user ${userId} loaded from Firebase`);
+        
+        // Ensure all required fields exist and are properly structured
+        let needsUpdate = false;
+        const updates = {};
+        
         if (!user.contest_ads || typeof user.contest_ads !== 'object') {
             user.contest_ads = { daily: 0, weekly: 0, monthly: 0 };
-            await updateUser(userId, { contest_ads: user.contest_ads });
+            updates.contest_ads = user.contest_ads;
+            needsUpdate = true;
+        }
+        
+        if (typeof user.contests_joined !== 'number') {
+            user.contests_joined = 0;
+            updates.contests_joined = 0;
+            needsUpdate = true;
+        }
+        
+        if (typeof user.ads_watched !== 'number') {
+            user.ads_watched = 0;
+            updates.ads_watched = 0;
+            needsUpdate = true;
+        }
+        
+        if (typeof user.daily_ads_watched !== 'number') {
+            user.daily_ads_watched = 0;
+            updates.daily_ads_watched = 0;
+            needsUpdate = true;
+        }
+        
+        if (typeof user.points !== 'number') {
+            user.points = 0;
+            updates.points = 0;
+            needsUpdate = true;
+        }
+        
+        if (typeof user.balance !== 'number') {
+            user.balance = 0.00;
+            updates.balance = 0.00;
+            needsUpdate = true;
+        }
+        
+        if (typeof user.referrals !== 'number') {
+            user.referrals = 0;
+            updates.referrals = 0;
+            needsUpdate = true;
+        }
+        
+        if (!user.vip_status) {
+            user.vip_status = 'FREE';
+            updates.vip_status = 'FREE';
+            needsUpdate = true;
+        }
+        
+        // Update user data if needed
+        if (needsUpdate) {
+            await updateUser(userId, updates);
+            console.log(`🔧 Updated user ${userId} data structure`);
         }
     }
     
@@ -226,12 +309,15 @@ async function initUser(userId, userData = {}) {
         user.last_ad_reset = today;
         await updateUser(userId, {
             daily_ads_watched: 0,
-            last_ad_reset: today
+            last_ad_reset: today,
+            updated_at: admin.database.ServerValue.TIMESTAMP
         });
+        console.log(`📅 Reset daily ads for user ${userId}`);
     }
     
-    // Store in local cache
+    // Store in local cache for quick access
     users.set(userId, user);
+    console.log(`✅ User ${userId} initialized successfully`);
     return user;
 }
 
@@ -247,28 +333,82 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
         first_name: msg.from.first_name
     });
     
-    // Handle referral
+    // Handle referral system
     if (referralCode && referralCode.startsWith('_ref_')) {
         const referrerId = referralCode.replace('_ref_', '');
+        console.log(`🔗 Processing referral: ${userId} referred by ${referrerId}`);
+        
         if (referrerId !== userId.toString() && !user.referred_by) {
             const referrer = await getUser(referrerId);
             if (referrer) {
-                user.referred_by = referrerId;
-                await updateUser(userId, { referred_by: referrerId });
+                console.log(`✅ Valid referrer found: ${referrerId}`);
                 
-                // Update referrer
-                await updateUser(referrerId, {
-                    referrals: (referrer.referrals || 0) + 1,
-                    points: (referrer.points || 0) + 1
+                // Update referred user
+                user.referred_by = referrerId;
+                await updateUser(userId, { 
+                    referred_by: referrerId,
+                    updated_at: admin.database.ServerValue.TIMESTAMP
                 });
                 
+                // Update referrer with bonus
+                const newReferralCount = (referrer.referrals || 0) + 1;
+                const bonusPoints = 5; // 5 points per referral
+                const newReferrerPoints = (referrer.points || 0) + bonusPoints;
+                
+                await updateUser(referrerId, {
+                    referrals: newReferralCount,
+                    points: newReferrerPoints,
+                    updated_at: admin.database.ServerValue.TIMESTAMP
+                });
+                
+                // Update local cache
+                const cachedReferrer = users.get(referrerId);
+                if (cachedReferrer) {
+                    cachedReferrer.referrals = newReferralCount;
+                    cachedReferrer.points = newReferrerPoints;
+                    users.set(referrerId, cachedReferrer);
+                }
+                
+                // Log referral activity
                 await logActivity(referrerId, 'referral_earned', {
                     referred_user: userId,
-                    username: msg.from.username
+                    referred_username: msg.from.username,
+                    referred_first_name: msg.from.first_name,
+                    bonus_points: bonusPoints,
+                    new_referral_count: newReferralCount,
+                    timestamp: new Date().toISOString()
                 });
                 
-                bot.sendMessage(referrerId, `🎉 New referral! You earned 1 point. Total referrals: ${(referrer.referrals || 0) + 1}`);
+                // Log for referred user
+                await logActivity(userId, 'user_referred', {
+                    referrer_id: referrerId,
+                    referrer_username: referrer.username,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Notify referrer
+                try {
+                    bot.sendMessage(referrerId, `🎉 *New Referral!*
+
+👤 **${msg.from.first_name || msg.from.username}** joined using your link!
+
+💰 **Reward:** +${bonusPoints} points
+👥 **Total Referrals:** ${newReferralCount}
+💎 **Your Points:** ${newReferrerPoints}
+
+Keep sharing your referral link to earn more! 🚀`, {
+                        parse_mode: 'Markdown'
+                    });
+                } catch (error) {
+                    console.error('❌ Error sending referral notification:', error);
+                }
+                
+                console.log(`✅ Referral processed: ${referrerId} earned ${bonusPoints} points`);
+            } else {
+                console.log(`❌ Invalid referrer ID: ${referrerId}`);
             }
+        } else {
+            console.log(`⚠️ Referral not processed - self-referral or already referred`);
         }
     }
     
@@ -350,6 +490,19 @@ bot.on('callback_query', async (query) => {
         case 'profile':
             await handleProfile(chatId, userId, user);
             break;
+        case 'referral_leaderboard':
+            await handleReferralLeaderboard(chatId, userId);
+            break;
+        case 'admin_reset_leaderboards':
+            if (userId === ADMIN_USER_ID) {
+                await resetAllLeaderboards(chatId);
+            }
+            break;
+        case 'admin_reset_contests':
+            if (userId === ADMIN_USER_ID) {
+                await resetAllContests(chatId);
+            }
+            break;
     }
     
     bot.answerCallbackQuery(query.id);
@@ -390,8 +543,10 @@ async function handleEarnAds(chatId, userId, user) {
     });
 }
 
-// Handle watch ad
+// Handle watch ad with proper Firebase updates
 async function handleWatchAd(chatId, userId, user) {
+    console.log(`📺 User ${userId} attempting to watch ad`);
+    
     const limit = DAILY_LIMITS[user.vip_status || 'FREE'];
     const lastAdTime = userCooldowns.get(userId) || 0;
     const timeRemaining = AD_COOLDOWN - (Date.now() - lastAdTime);
@@ -407,58 +562,82 @@ async function handleWatchAd(chatId, userId, user) {
         return;
     }
     
-    // Award points and update user
-    const newPoints = (user.points || 0) + 1.1;
-    const newBalance = (user.balance || 0) + 0.01;
+    // Calculate new values
+    const pointsEarned = 1.1;
+    const balanceEarned = 0.01;
+    const newPoints = parseFloat(((user.points || 0) + pointsEarned).toFixed(2));
+    const newBalance = parseFloat(((user.balance || 0) + balanceEarned).toFixed(2));
     const newAdsWatched = (user.ads_watched || 0) + 1;
     const newDailyAds = (user.daily_ads_watched || 0) + 1;
     
-    // Update Firebase
-    await updateUser(userId, {
+    console.log(`💰 Awarding: ${pointsEarned} points, $${balanceEarned} balance`);
+    
+    // Update Firebase with complete data
+    const updateData = {
         points: newPoints,
         balance: newBalance,
         ads_watched: newAdsWatched,
-        daily_ads_watched: newDailyAds
-    });
+        daily_ads_watched: newDailyAds,
+        updated_at: admin.database.ServerValue.TIMESTAMP
+    };
     
-    // Update local cache
-    user.points = newPoints;
-    user.balance = newBalance;
-    user.ads_watched = newAdsWatched;
-    user.daily_ads_watched = newDailyAds;
-    users.set(userId, user);
+    const firebaseSuccess = await updateUser(userId, updateData);
     
-    // Set cooldown
-    userCooldowns.set(userId, Date.now());
-    
-    // Log activity
-    await logActivity(userId, 'ad_watched', {
-        points_earned: 1.1,
-        balance_earned: 0.01,
-        daily_count: newDailyAds,
-        total_count: newAdsWatched,
-        vip_status: user.vip_status
-    });
-    
-    const message = `🎉 Ad watched successfully!
+    if (firebaseSuccess) {
+        console.log(`✅ Firebase updated for user ${userId}`);
+        
+        // Update local cache
+        user.points = newPoints;
+        user.balance = newBalance;
+        user.ads_watched = newAdsWatched;
+        user.daily_ads_watched = newDailyAds;
+        users.set(userId, user);
+        
+        // Set cooldown
+        userCooldowns.set(userId, Date.now());
+        
+        // Log activity with detailed information
+        await logActivity(userId, 'ad_watched', {
+            points_earned: pointsEarned,
+            balance_earned: balanceEarned,
+            new_points_total: newPoints,
+            new_balance_total: newBalance,
+            daily_count: newDailyAds,
+            total_count: newAdsWatched,
+            vip_status: user.vip_status,
+            daily_limit: limit,
+            timestamp: new Date().toISOString()
+        });
+        
+        const message = `🎉 *Ad Watched Successfully!*
 
-💰 Earned: +1.1 points
-💵 Balance: +$0.01
+💰 **Earned:** +${pointsEarned} points
+💵 **Balance:** +$${balanceEarned}
 
-📊 Your Stats:
-• Points: ${newPoints.toFixed(1)}
-• Balance: $${newBalance.toFixed(2)}
-• Daily Ads: ${newDailyAds}/${limit}
-• Total Ads: ${newAdsWatched}`;
-    
-    bot.sendMessage(chatId, message, {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: '📺 Watch More', callback_data: 'earn_ads' }],
-                [{ text: '🎮 Open Mini App', web_app: { url: WEBAPP_URL } }]
-            ]
-        }
-    });
+📊 **Your Updated Stats:**
+• 💎 Points: ${newPoints.toFixed(1)}
+• 💰 Balance: $${newBalance.toFixed(2)}
+• 📺 Daily Ads: ${newDailyAds}/${limit}
+• 🎯 Total Ads: ${newAdsWatched}
+• 👑 VIP Status: ${user.vip_status}
+
+${newDailyAds >= limit ? '⚠️ Daily limit reached!' : `⏰ Next ad available in ${Math.ceil(AD_COOLDOWN / 60000)} minutes`}`;
+        
+        bot.sendMessage(chatId, message, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '📺 Watch More', callback_data: 'earn_ads' }],
+                    [{ text: '🎮 Open Mini App', web_app: { url: WEBAPP_URL } }]
+                ]
+            }
+        });
+        
+        console.log(`✅ Ad watch completed for user ${userId} - Points: ${newPoints}, Ads: ${newAdsWatched}`);
+    } else {
+        console.error(`❌ Failed to update Firebase for user ${userId}`);
+        bot.sendMessage(chatId, '❌ Error processing ad reward. Please try again.');
+    }
 }
 
 // Handle contests
@@ -540,27 +719,47 @@ async function handleContestAd(chatId, userId, user, contestType) {
     // Increment contest ads - REAL TIME UPDATE
     const newContestAds = { ...user.contest_ads };
     newContestAds[contestType] = (newContestAds[contestType] || 0) + 1;
+    const newContestsJoined = (user.contests_joined || 0) + 1;
     
-    // Update Firebase immediately
-    await updateUser(userId, {
+    console.log(`🏆 Contest ad for ${contestType}: ${newContestAds[contestType] - 1} → ${newContestAds[contestType]}`);
+    
+    // Update Firebase immediately with complete data
+    const updateData = {
         contest_ads: newContestAds,
-        contests_joined: (user.contests_joined || 0) + 1
-    });
+        contests_joined: newContestsJoined,
+        updated_at: admin.database.ServerValue.TIMESTAMP
+    };
     
-    // Update local cache
-    user.contest_ads = newContestAds;
-    user.contests_joined = (user.contests_joined || 0) + 1;
-    users.set(userId, user);
+    const firebaseSuccess = await updateUser(userId, updateData);
     
-    // Set contest cooldown
-    userCooldowns.set(`contest_${userId}`, Date.now());
-    
-    // Log activity
-    await logActivity(userId, 'contest_ad', {
-        contest_type: contestType,
-        new_count: newContestAds[contestType],
-        total_required: required
-    });
+    if (firebaseSuccess) {
+        console.log(`✅ Contest progress updated in Firebase for user ${userId}`);
+        
+        // Update local cache
+        user.contest_ads = newContestAds;
+        user.contests_joined = newContestsJoined;
+        users.set(userId, user);
+        
+        // Set contest cooldown
+        userCooldowns.set(`contest_${userId}`, Date.now());
+        
+        // Log activity with detailed information
+        await logActivity(userId, 'contest_ad', {
+            contest_type: contestType,
+            previous_count: newContestAds[contestType] - 1,
+            new_count: newContestAds[contestType],
+            total_required: required,
+            progress_percentage: Math.round((newContestAds[contestType] / required) * 100),
+            contests_joined_total: newContestsJoined,
+            timestamp: new Date().toISOString()
+        });
+        
+        console.log(`✅ Contest ad completed: ${contestType} ${newContestAds[contestType]}/${required}`);
+    } else {
+        console.error(`❌ Failed to update contest progress for user ${userId}`);
+        bot.sendMessage(chatId, '❌ Error processing contest ad. Please try again.');
+        return;
+    }
     
     const newWatched = newContestAds[contestType];
     let message = `✅ *Contest Ad Completed!*\n\n`;
@@ -660,34 +859,74 @@ Unable to send VIP request. Please contact admin directly: @Sbaroone`, {
     }
 }
 
-// Handle referrals
+// Handle referrals with proper tracking
 async function handleReferrals(chatId, userId, user) {
     const referralLink = `https://t.me/navigi_sbaro_bot?start=_ref_${userId}`;
+    const totalReferrals = user.referrals || 0;
+    const pointsFromReferrals = totalReferrals * 5; // 5 points per referral
     
     const message = `👥 *Referral Program*
 
-🔗 Your referral link:
+🔗 **Your Referral Link:**
 \`${referralLink}\`
 
-📊 Stats:
-• Referrals: ${user.referrals || 0}
-• Points earned: ${user.referrals || 0} points
+📊 **Your Stats:**
+• 👥 Total Referrals: ${totalReferrals}
+• 💰 Points Earned: ${pointsFromReferrals} points
+• 🎯 Rank: ${getReferralRank(totalReferrals)}
 
-💰 Rewards:
-• +1 point per referral
-• +5 points if they buy King VIP
-• +10 points if they buy Emperor VIP
-• +15 points if they buy Lord VIP`;
+💰 **Rewards Per Referral:**
+• 🎁 Instant: +5 points
+• 👑 If they get King VIP: +5 bonus points
+• 💎 If they get Emperor VIP: +10 bonus points  
+• 🏆 If they get Lord VIP: +15 bonus points
+
+🎯 **Next Milestone:**
+${getNextMilestone(totalReferrals)}
+
+📤 **Share & Earn:**
+Share your link with friends and family to earn more points!`;
+    
+    const shareText = `🚀 Join me on NAVIGI SBARO and earn money by watching ads!
+
+💰 Earn points for every ad you watch
+🎁 Daily contests with amazing prizes
+👑 VIP memberships available
+📱 Easy to use Telegram bot
+
+Use my referral link to get started:`;
     
     bot.sendMessage(chatId, message, {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [
-                [{ text: '📤 Share Link', url: `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=Join NAVIGI SBARO and earn points!` }],
+                [{ text: '📤 Share Link', url: `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}` }],
+                [{ text: '📋 Copy Link', callback_data: `copy_referral_${userId}` }],
+                [{ text: '🏆 Leaderboard', callback_data: 'referral_leaderboard' }],
                 [{ text: '🔙 Back', callback_data: 'back_main' }]
             ]
         }
     });
+}
+
+// Get referral rank based on number of referrals
+function getReferralRank(referrals) {
+    if (referrals >= 100) return '🏆 Referral Master';
+    if (referrals >= 50) return '💎 Referral Expert';
+    if (referrals >= 25) return '👑 Referral Pro';
+    if (referrals >= 10) return '🌟 Referral Star';
+    if (referrals >= 5) return '🚀 Referral Rookie';
+    return '🔰 New Referrer';
+}
+
+// Get next milestone message
+function getNextMilestone(referrals) {
+    if (referrals < 5) return `Need ${5 - referrals} more referrals to become 🚀 Referral Rookie`;
+    if (referrals < 10) return `Need ${10 - referrals} more referrals to become 🌟 Referral Star`;
+    if (referrals < 25) return `Need ${25 - referrals} more referrals to become 👑 Referral Pro`;
+    if (referrals < 50) return `Need ${50 - referrals} more referrals to become 💎 Referral Expert`;
+    if (referrals < 100) return `Need ${100 - referrals} more referrals to become 🏆 Referral Master`;
+    return '🎉 You\'ve reached the highest rank!';
 }
 
 // Handle profile
@@ -930,6 +1169,201 @@ async function startBot() {
     console.log('👤 Admin ID:', ADMIN_USER_ID);
     console.log('🔥 Firebase Real-time Database: Connected');
     console.log('📊 System ready for production use!');
+}
+
+// Handle referral leaderboard
+async function handleReferralLeaderboard(chatId, userId) {
+    if (!isFirebaseInitialized) {
+        bot.sendMessage(chatId, '❌ Firebase not connected');
+        return;
+    }
+    
+    try {
+        const usersSnapshot = await database.ref('users').once('value');
+        const users = usersSnapshot.val() || {};
+        
+        // Get top referrers
+        const userList = Object.values(users)
+            .filter(user => (user.referrals || 0) > 0)
+            .sort((a, b) => (b.referrals || 0) - (a.referrals || 0))
+            .slice(0, 10);
+        
+        if (userList.length === 0) {
+            bot.sendMessage(chatId, `🏆 *Referral Leaderboard*
+
+📊 No referrals yet! Be the first to invite friends and climb the leaderboard!
+
+🎯 Start referring friends to see your name here!`, {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '👥 My Referrals', callback_data: 'referrals' }],
+                        [{ text: '🔙 Back', callback_data: 'back_main' }]
+                    ]
+                }
+            });
+            return;
+        }
+        
+        let message = `🏆 *Referral Leaderboard*\n\n`;
+        
+        userList.forEach((user, index) => {
+            const rank = index + 1;
+            const emoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+            const name = user.first_name || user.username || `User ${user.id}`;
+            const referrals = user.referrals || 0;
+            const points = referrals * 5;
+            
+            message += `${emoji} **${name}**\n`;
+            message += `   👥 ${referrals} referrals • 💎 ${points} points\n\n`;
+        });
+        
+        // Find current user's position
+        const currentUserReferrals = users[userId]?.referrals || 0;
+        const allUsers = Object.values(users)
+            .filter(user => (user.referrals || 0) > 0)
+            .sort((a, b) => (b.referrals || 0) - (a.referrals || 0));
+        
+        const userPosition = allUsers.findIndex(user => user.id === userId) + 1;
+        
+        if (userPosition > 0) {
+            message += `\n📍 **Your Position:** #${userPosition} with ${currentUserReferrals} referrals`;
+        } else {
+            message += `\n📍 **Your Position:** Not ranked yet (0 referrals)`;
+        }
+        
+        bot.sendMessage(chatId, message, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '👥 My Referrals', callback_data: 'referrals' }],
+                    [{ text: '🔄 Refresh', callback_data: 'referral_leaderboard' }],
+                    [{ text: '🔙 Back', callback_data: 'back_main' }]
+                ]
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error getting referral leaderboard:', error);
+        bot.sendMessage(chatId, '❌ Error loading leaderboard');
+    }
+}
+
+// Reset all leaderboards (admin only)
+async function resetAllLeaderboards(chatId) {
+    if (!isFirebaseInitialized) {
+        bot.sendMessage(chatId, '❌ Firebase not connected');
+        return;
+    }
+    
+    try {
+        console.log('🔄 Resetting all leaderboards and referrals...');
+        
+        const usersSnapshot = await database.ref('users').once('value');
+        const users = usersSnapshot.val() || {};
+        
+        let resetCount = 0;
+        
+        for (const userId in users) {
+            await updateUser(userId, {
+                referrals: 0,
+                referred_by: null,
+                updated_at: admin.database.ServerValue.TIMESTAMP
+            });
+            
+            // Update local cache
+            const cachedUser = users[userId];
+            if (cachedUser) {
+                cachedUser.referrals = 0;
+                cachedUser.referred_by = null;
+                users.set(userId, cachedUser);
+            }
+            
+            await logActivity(userId, 'leaderboards_reset', {
+                reset_by: 'admin',
+                admin_id: ADMIN_USER_ID,
+                timestamp: new Date().toISOString()
+            });
+            
+            resetCount++;
+        }
+        
+        console.log(`✅ Reset leaderboards for ${resetCount} users`);
+        bot.sendMessage(chatId, `✅ *Leaderboards Reset Complete!*
+
+📊 **Reset Data:**
+• 👥 Referrals: Reset to 0 for all users
+• 🔗 Referral links: Cleared for all users
+• 📈 Leaderboard: Completely reset
+• 👤 Users affected: ${resetCount}
+
+All users can now start fresh with referrals!`, {
+            parse_mode: 'Markdown'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error resetting leaderboards:', error);
+        bot.sendMessage(chatId, '❌ Error resetting leaderboards');
+    }
+}
+
+// Reset all contests (admin only)
+async function resetAllContests(chatId) {
+    if (!isFirebaseInitialized) {
+        bot.sendMessage(chatId, '❌ Firebase not connected');
+        return;
+    }
+    
+    try {
+        console.log('🔄 Resetting all contests...');
+        
+        const usersSnapshot = await database.ref('users').once('value');
+        const users = usersSnapshot.val() || {};
+        
+        let resetCount = 0;
+        
+        for (const userId in users) {
+            await updateUser(userId, {
+                contest_ads: { daily: 0, weekly: 0, monthly: 0 },
+                contests_joined: 0,
+                updated_at: admin.database.ServerValue.TIMESTAMP
+            });
+            
+            // Update local cache
+            const cachedUser = users[userId];
+            if (cachedUser) {
+                cachedUser.contest_ads = { daily: 0, weekly: 0, monthly: 0 };
+                cachedUser.contests_joined = 0;
+                users.set(userId, cachedUser);
+            }
+            
+            await logActivity(userId, 'contests_reset', {
+                reset_by: 'admin',
+                admin_id: ADMIN_USER_ID,
+                timestamp: new Date().toISOString()
+            });
+            
+            resetCount++;
+        }
+        
+        console.log(`✅ Reset contests for ${resetCount} users`);
+        bot.sendMessage(chatId, `✅ *Contests Reset Complete!*
+
+🏆 **Reset Data:**
+• 📊 Daily contests: Reset to 0/10 for all users
+• 📅 Weekly contests: Reset to 0/30 for all users  
+• 📆 Monthly contests: Reset to 0/200 for all users
+• 🎯 Contests joined: Reset to 0 for all users
+• 👤 Users affected: ${resetCount}
+
+All users can now start fresh with contests!`, {
+            parse_mode: 'Markdown'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error resetting contests:', error);
+        bot.sendMessage(chatId, '❌ Error resetting contests');
+    }
 }
 
 // Start the bot

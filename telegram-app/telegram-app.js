@@ -832,33 +832,140 @@ class TelegramSbaroApp {
         return 'Just now';
     }
 
-    // Load recent activities on app start
-    loadRecentActivities() {
-        const activities = JSON.parse(localStorage.getItem('recentActivities') || '[]');
+    // Load recent activities from Firebase
+    async loadRecentActivities() {
         const activityList = document.getElementById('activityList');
+        if (!activityList) return;
         
-        if (activityList && activities.length > 0) {
-            activityList.innerHTML = ''; // Clear existing
-            
-            activities.slice(0, 10).forEach(activity => {
-                const activityItem = document.createElement('div');
-                activityItem.className = 'activity-item';
+        try {
+            if (this.firebaseInitialized && this.database && this.user) {
+                // Load activities from Firebase
+                const activitiesRef = this.database.ref('activities')
+                    .orderByChild('user_id')
+                    .equalTo(this.user.id.toString())
+                    .limitToLast(10);
                 
-                const iconClass = activity.type === 'earn' ? 'earn' : activity.type === 'contest' ? 'contest' : activity.type === 'vip' ? 'vip' : activity.type === 'task' ? 'task' : 'earn';
-                const icon = activity.type === 'contest' ? '🏆' : activity.type === 'vip' ? '💎' : activity.type === 'task' ? '✅' : activity.type === 'daily' ? '📅' : '+';
+                const snapshot = await activitiesRef.once('value');
+                const activities = snapshot.val() || {};
+                const activityArray = Object.values(activities)
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                 
-                activityItem.innerHTML = `
-                    <div class="activity-icon ${iconClass}">${icon}</div>
-                    <div class="activity-info">
-                        <div class="activity-title">${activity.title}</div>
-                        <div class="activity-time">${this.formatTimeAgo(activity.timestamp)}</div>
-                    </div>
-                    <div class="activity-points">${activity.points}</div>
-                `;
+                if (activityArray.length > 0) {
+                    activityList.innerHTML = ''; // Clear existing
+                    
+                    activityArray.forEach(activity => {
+                        const activityItem = document.createElement('div');
+                        activityItem.className = 'activity-item';
+                        
+                        const icon = this.getActivityIcon(activity.type);
+                        const title = this.getActivityTitle(activity.type, activity.data);
+                        const points = this.getActivityPoints(activity.type, activity.data);
+                        
+                        activityItem.innerHTML = `
+                            <div class="activity-icon">${icon}</div>
+                            <div class="activity-info">
+                                <div class="activity-title">${title}</div>
+                                <div class="activity-time">${this.formatTimeAgo(new Date(activity.created_at))}</div>
+                            </div>
+                            <div class="activity-points">${points}</div>
+                        `;
+                        
+                        activityList.appendChild(activityItem);
+                    });
+                } else {
+                    activityList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📊</div>
+                            <div class="empty-text">No recent activities</div>
+                            <div class="empty-subtext">Start watching ads or joining contests to see your activity here!</div>
+                        </div>
+                    `;
+                }
+            } else {
+                // Fallback to localStorage
+                const activities = JSON.parse(localStorage.getItem('recentActivities') || '[]');
                 
-                activityList.appendChild(activityItem);
-            });
+                if (activities.length > 0) {
+                    activityList.innerHTML = ''; // Clear existing
+                    
+                    activities.slice(0, 10).forEach(activity => {
+                        const activityItem = document.createElement('div');
+                        activityItem.className = 'activity-item';
+                        
+                        const iconClass = activity.type === 'earn' ? 'earn' : activity.type === 'contest' ? 'contest' : activity.type === 'vip' ? 'vip' : activity.type === 'task' ? 'task' : 'earn';
+                        const icon = activity.type === 'contest' ? '🏆' : activity.type === 'vip' ? '💎' : activity.type === 'task' ? '✅' : activity.type === 'daily' ? '📅' : '+';
+                        
+                        activityItem.innerHTML = `
+                            <div class="activity-icon ${iconClass}">${icon}</div>
+                            <div class="activity-info">
+                                <div class="activity-title">${activity.title}</div>
+                                <div class="activity-time">${this.formatTimeAgo(activity.timestamp)}</div>
+                            </div>
+                            <div class="activity-points">${activity.points}</div>
+                        `;
+                        
+                        activityList.appendChild(activityItem);
+                    });
+                } else {
+                    activityList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🎯</div>
+                            <div class="empty-text">Start Your Journey!</div>
+                            <div class="empty-subtext">Watch ads, join contests, and refer friends to see your activities here!</div>
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error loading activities:', error);
+            activityList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <div class="empty-text">Unable to load activities</div>
+                    <div class="empty-subtext">Please try refreshing the app</div>
+                </div>
+            `;
         }
+    }
+    
+    // Helper functions for activity display
+    getActivityIcon(type) {
+        const icons = {
+            'ad_watched': '📺',
+            'contest_ad': '🏆',
+            'vip_request': '👑',
+            'user_joined': '👋',
+            'referral_earned': '👥',
+            'vip_approved': '✅',
+            'vip_rejected': '❌',
+            'user_referred': '🎁'
+        };
+        return icons[type] || '📊';
+    }
+    
+    getActivityTitle(type, data) {
+        const titles = {
+            'ad_watched': 'Watched Video Ad',
+            'contest_ad': `${data?.contest_type || 'Contest'} Ad Watched`,
+            'vip_request': 'VIP Upgrade Requested',
+            'user_joined': 'Joined NAVIGI SBARO',
+            'referral_earned': 'Referral Bonus Earned',
+            'vip_approved': 'VIP Status Approved',
+            'vip_rejected': 'VIP Request Rejected',
+            'user_referred': 'Used Referral Link'
+        };
+        return titles[type] || 'Activity';
+    }
+    
+    getActivityPoints(type, data) {
+        if (type === 'ad_watched') {
+            return `+${data?.points_earned || 1.1}`;
+        } else if (type === 'referral_earned') {
+            return `+${data?.bonus_points || 5}`;
+        } else if (type === 'contest_ad') {
+            return `${data?.new_count || 0}/${data?.total_required || 10}`;
+        }
+        return '';
     }
 
     joinContest(contestType) {
