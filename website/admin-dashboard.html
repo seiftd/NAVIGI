@@ -544,6 +544,10 @@
                         <i class="fas fa-crown"></i>
                         VIP Management
                     </a>
+                    <a href="#leaderboard" class="nav-link" data-section="leaderboard">
+                        <i class="fas fa-trophy"></i>
+                        Leaderboards
+                    </a>
                     <a href="#notifications" class="nav-link" data-section="notifications">
                         <i class="fas fa-bell"></i>
                         Notifications
@@ -709,6 +713,98 @@
                             <button class="btn-primary" onclick="promoteUserToVip()">
                                 <i class="fas fa-crown"></i>
                                 Promote to VIP
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Leaderboards Section -->
+                <section id="leaderboardSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Leaderboards & Rankings</h2>
+                        <button class="btn-primary" onclick="refreshLeaderboards()">
+                            <i class="fas fa-sync"></i>
+                            Refresh Data
+                        </button>
+                    </div>
+
+                    <div class="stats-grid">
+                        <!-- Top Users by Points -->
+                        <div class="stat-card" style="grid-column: span 2;">
+                            <div style="flex: 1;">
+                                <h3>🏆 Top Users by Points</h3>
+                                <div class="leaderboard-container" id="pointsLeaderboard">
+                                    <!-- Points leaderboard will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VIP Users -->
+                        <div class="stat-card" style="grid-column: span 2;">
+                            <div style="flex: 1;">
+                                <h3>👑 VIP Users</h3>
+                                <div class="vip-users-container" id="vipUsersContainer">
+                                    <!-- VIP users will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contest Leaderboard -->
+                        <div class="stat-card" style="grid-column: span 2;">
+                            <div style="flex: 1;">
+                                <h3>🎯 Contest Winners</h3>
+                                <div class="contest-winners-container" id="contestWinnersContainer">
+                                    <!-- Contest winners will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Referral Leaderboard -->
+                        <div class="stat-card" style="grid-column: span 2;">
+                            <div style="flex: 1;">
+                                <h3>👥 Referral Champions</h3>
+                                <div class="referral-leaders-container" id="referralLeadersContainer">
+                                    <!-- Referral leaders will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Level Up Section -->
+                    <div class="level-up-section" style="margin-top: 30px;">
+                        <h3>⬆️ Level Up Users</h3>
+                        <div class="level-up-form" style="background: white; padding: 20px; border-radius: 10px;">
+                            <div class="form-group">
+                                <label>User ID or Username</label>
+                                <input type="text" id="levelUpUserId" placeholder="Enter user ID or @username">
+                            </div>
+                            <div class="form-group">
+                                <label>Action</label>
+                                <select id="levelUpAction">
+                                    <option value="add_points">Add Points</option>
+                                    <option value="set_points">Set Points</option>
+                                    <option value="add_balance">Add Balance ($)</option>
+                                    <option value="set_balance">Set Balance ($)</option>
+                                    <option value="promote_vip">Promote to VIP</option>
+                                    <option value="extend_vip">Extend VIP</option>
+                                    <option value="reset_user">Reset User Data</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="valueGroup">
+                                <label id="valueLabel">Value</label>
+                                <input type="number" id="levelUpValue" placeholder="Enter value" step="0.01">
+                            </div>
+                            <div class="form-group" id="vipTierGroup" style="display: none;">
+                                <label>VIP Tier</label>
+                                <select id="levelUpVipTier">
+                                    <option value="KING">KING</option>
+                                    <option value="EMPEROR">EMPEROR</option>
+                                    <option value="LORD">LORD</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" onclick="processLevelUp()">
+                                <i class="fas fa-magic"></i>
+                                Execute Action
                             </button>
                         </div>
                     </div>
@@ -1031,6 +1127,9 @@
                      break;
                  case 'vip':
                      await loadVipRequests();
+                     break;
+                 case 'leaderboard':
+                     await loadLeaderboards();
                      break;
                  case 'notifications':
                      // No initial data needed
@@ -1634,6 +1733,276 @@
                  } catch (error) {
                      showToast('Failed to reset daily progress: ' + error.message, 'error');
                  }
+             }
+         }
+
+         // Leaderboard Functions
+         async function loadLeaderboards() {
+             try {
+                 // Load all leaderboard data
+                 await Promise.all([
+                     loadPointsLeaderboard(),
+                     loadVipUsers(),
+                     loadContestWinners(),
+                     loadReferralLeaders()
+                 ]);
+             } catch (error) {
+                 console.error('Failed to load leaderboards:', error);
+                 showToast('Failed to load leaderboard data', 'error');
+             }
+         }
+
+         async function loadPointsLeaderboard() {
+             // Mock data - replace with real API call
+             const topUsers = [
+                 { rank: 1, user_id: '123456789', username: '@cryptoking', points: 15420, balance: 154.20, vip: 'EMPEROR' },
+                 { rank: 2, user_id: '987654321', username: '@pointmaster', points: 12890, balance: 128.90, vip: 'KING' },
+                 { rank: 3, user_id: '456789123', username: '@adwatcher', points: 11250, balance: 112.50, vip: 'LORD' },
+                 { rank: 4, user_id: '789123456', username: '@earnpro', points: 9870, balance: 98.70, vip: 'EMPEROR' },
+                 { rank: 5, user_id: '321654987', username: '@vipuser', points: 8900, balance: 89.00, vip: 'FREE' }
+             ];
+
+             const container = document.getElementById('pointsLeaderboard');
+             container.innerHTML = topUsers.map(user => `
+                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee;">
+                     <div style="display: flex; align-items: center;">
+                         <span style="width: 30px; height: 30px; background: ${user.rank <= 3 ? '#FFD700' : '#667eea'}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">
+                             ${user.rank}
+                         </span>
+                         <div>
+                             <strong>${user.username}</strong><br>
+                             <small>ID: ${user.user_id}</small>
+                         </div>
+                     </div>
+                     <div style="text-align: right;">
+                         <div><strong>${user.points.toLocaleString()} points</strong></div>
+                         <div style="color: #666;">$${user.balance.toFixed(2)}</div>
+                         <span class="vip-badge ${user.vip.toLowerCase()}">${user.vip}</span>
+                     </div>
+                     <button class="btn-primary" onclick="showUserActions('${user.user_id}', '${user.username}')" style="padding: 5px 10px; font-size: 12px;">
+                         Actions
+                     </button>
+                 </div>
+             `).join('');
+         }
+
+         async function loadVipUsers() {
+             // Mock VIP users data
+             const vipUsers = [
+                 { user_id: '123456789', username: '@cryptoking', tier: 'EMPEROR', expires: '2024-02-15', days_left: 25 },
+                 { user_id: '456789123', username: '@adwatcher', tier: 'LORD', expires: '2024-02-20', days_left: 30 },
+                 { user_id: '789123456', username: '@earnpro', tier: 'EMPEROR', expires: '2024-02-10', days_left: 20 },
+                 { user_id: '987654321', username: '@pointmaster', tier: 'KING', expires: '2024-02-05', days_left: 15 }
+             ];
+
+             const container = document.getElementById('vipUsersContainer');
+             container.innerHTML = vipUsers.map(user => `
+                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee;">
+                     <div>
+                         <strong>${user.username}</strong><br>
+                         <small>ID: ${user.user_id}</small>
+                     </div>
+                     <div style="text-align: center;">
+                         <span class="vip-badge ${user.tier.toLowerCase()}">${user.tier}</span><br>
+                         <small>${user.days_left} days left</small>
+                     </div>
+                     <div style="text-align: right;">
+                         <button class="btn-primary" onclick="extendVip('${user.user_id}', '${user.tier}')" style="padding: 5px 10px; font-size: 12px;">
+                             Extend
+                         </button>
+                     </div>
+                 </div>
+             `).join('');
+         }
+
+         async function loadContestWinners() {
+             // Mock contest winners
+             const winners = [
+                 { type: 'Daily', winner: '@cryptoking', date: '2024-01-15', prize: '220 points' },
+                 { type: 'Weekly', winner: '@pointmaster', date: '2024-01-14', prize: '275 points' },
+                 { type: 'Monthly', winner: '@adwatcher', date: '2024-01-01', prize: 'VIP King + 275 points' }
+             ];
+
+             const container = document.getElementById('contestWinnersContainer');
+             container.innerHTML = winners.map(winner => `
+                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee;">
+                     <div>
+                         <strong>${winner.type} Contest</strong><br>
+                         <small>${winner.date}</small>
+                     </div>
+                     <div style="text-align: center;">
+                         <strong>${winner.winner}</strong>
+                     </div>
+                     <div style="text-align: right;">
+                         <small>${winner.prize}</small>
+                     </div>
+                 </div>
+             `).join('');
+         }
+
+         async function loadReferralLeaders() {
+             // Mock referral leaders
+             const leaders = [
+                 { rank: 1, username: '@refking', referrals: 89, this_week: 12, total_earned: '445 points' },
+                 { rank: 2, username: '@inviter', referrals: 67, this_week: 8, total_earned: '335 points' },
+                 { rank: 3, username: '@networker', referrals: 45, this_week: 5, total_earned: '225 points' }
+             ];
+
+             const container = document.getElementById('referralLeadersContainer');
+             container.innerHTML = leaders.map(leader => `
+                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee;">
+                     <div style="display: flex; align-items: center;">
+                         <span style="width: 25px; height: 25px; background: #667eea; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">
+                             ${leader.rank}
+                         </span>
+                         <strong>${leader.username}</strong>
+                     </div>
+                     <div style="text-align: center;">
+                         <div><strong>${leader.referrals}</strong> total</div>
+                         <small>${leader.this_week} this week</small>
+                     </div>
+                     <div style="text-align: right;">
+                         <small>${leader.total_earned}</small>
+                     </div>
+                 </div>
+             `).join('');
+         }
+
+         async function refreshLeaderboards() {
+             showToast('Refreshing leaderboards...', 'info');
+             await loadLeaderboards();
+             showToast('Leaderboards refreshed!', 'success');
+         }
+
+         // Level Up Functions
+         function showUserActions(userId, username) {
+             document.getElementById('levelUpUserId').value = userId;
+             showSection('leaderboard');
+             showToast(`Ready to level up ${username}`, 'info');
+         }
+
+         // Handle level up action changes
+         document.addEventListener('DOMContentLoaded', function() {
+             const actionSelect = document.getElementById('levelUpAction');
+             if (actionSelect) {
+                 actionSelect.addEventListener('change', function() {
+                     const action = this.value;
+                     const valueGroup = document.getElementById('valueGroup');
+                     const vipTierGroup = document.getElementById('vipTierGroup');
+                     const valueLabel = document.getElementById('valueLabel');
+                     const valueInput = document.getElementById('levelUpValue');
+
+                     // Reset visibility
+                     valueGroup.style.display = 'block';
+                     vipTierGroup.style.display = 'none';
+
+                     switch(action) {
+                         case 'add_points':
+                             valueLabel.textContent = 'Points to Add';
+                             valueInput.placeholder = 'Enter points amount';
+                             valueInput.step = '1';
+                             break;
+                         case 'set_points':
+                             valueLabel.textContent = 'Set Points To';
+                             valueInput.placeholder = 'Enter total points';
+                             valueInput.step = '1';
+                             break;
+                         case 'add_balance':
+                             valueLabel.textContent = 'Balance to Add ($)';
+                             valueInput.placeholder = 'Enter dollar amount';
+                             valueInput.step = '0.01';
+                             break;
+                         case 'set_balance':
+                             valueLabel.textContent = 'Set Balance To ($)';
+                             valueInput.placeholder = 'Enter total balance';
+                             valueInput.step = '0.01';
+                             break;
+                         case 'promote_vip':
+                             valueLabel.textContent = 'VIP Duration (days)';
+                             valueInput.placeholder = 'Enter days';
+                             valueInput.step = '1';
+                             vipTierGroup.style.display = 'block';
+                             break;
+                         case 'extend_vip':
+                             valueLabel.textContent = 'Extend by (days)';
+                             valueInput.placeholder = 'Enter additional days';
+                             valueInput.step = '1';
+                             break;
+                         case 'reset_user':
+                             valueGroup.style.display = 'none';
+                             break;
+                     }
+                 });
+             }
+         });
+
+         async function processLevelUp() {
+             const userId = document.getElementById('levelUpUserId').value;
+             const action = document.getElementById('levelUpAction').value;
+             const value = document.getElementById('levelUpValue').value;
+             const vipTier = document.getElementById('levelUpVipTier').value;
+
+             if (!userId) {
+                 showToast('Please enter a user ID', 'error');
+                 return;
+             }
+
+             if (action !== 'reset_user' && !value) {
+                 showToast('Please enter a value', 'error');
+                 return;
+             }
+
+             const confirmMessage = `Are you sure you want to ${action.replace('_', ' ')} for user ${userId}?`;
+             if (!confirm(confirmMessage)) return;
+
+             try {
+                 const requestData = {
+                     user_id: userId,
+                     action: action,
+                     value: value ? parseFloat(value) : null,
+                     vip_tier: vipTier,
+                     platform: currentPlatform
+                 };
+
+                 await fetch(`${adminAPI.baseURL}/admin-level-up-user`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(requestData)
+                 });
+
+                 showToast(`Successfully executed ${action.replace('_', ' ')} for user ${userId}!`, 'success');
+                 
+                 // Clear form
+                 document.getElementById('levelUpUserId').value = '';
+                 document.getElementById('levelUpValue').value = '';
+                 
+                 // Refresh leaderboards
+                 await loadLeaderboards();
+                 
+             } catch (error) {
+                 showToast('Failed to execute action: ' + error.message, 'error');
+             }
+         }
+
+         async function extendVip(userId, currentTier) {
+             const days = prompt('How many days to extend VIP?', '30');
+             if (!days) return;
+
+             try {
+                 await fetch(`${adminAPI.baseURL}/admin-extend-vip`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({
+                         user_id: userId,
+                         days: parseInt(days),
+                         platform: currentPlatform
+                     })
+                 });
+
+                 showToast(`VIP extended by ${days} days for user ${userId}!`, 'success');
+                 await loadVipUsers();
+             } catch (error) {
+                 showToast('Failed to extend VIP: ' + error.message, 'error');
              }
          }
     </script>
