@@ -1,12 +1,12 @@
 // Firebase configuration for client-side
 const firebaseConfig = {
-    apiKey: "AIzaSyBXqZ8_YXnL9fGpYzYXZqGZqGZqGZqGZqG", // This will be provided by Firebase console
+    apiKey: "AIzaSyCfrl9jNATQFJJDZSWoh9sb4DDtil4aHpY",
     authDomain: "navigi-sbaro-bot.firebaseapp.com",
     databaseURL: "https://navigi-sbaro-bot-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "navigi-sbaro-bot",
     storageBucket: "navigi-sbaro-bot.appspot.com",
-    messagingSenderId: "117901818637830270085",
-    appId: "1:117901818637830270085:web:your-app-id-here" // This will be provided by Firebase console
+    messagingSenderId: "22015997314",
+    appId: "1:22015997314:web:6b19b809bfb996a2ea8b9b"
 };
 
 // Telegram Mini App - NAVIGI SBARO with Firebase Integration
@@ -27,6 +27,13 @@ class TelegramSbaroApp {
         this.isArabic = localStorage.getItem('isArabic') === 'true';
         this.firebaseInitialized = false;
         this.database = null;
+        
+        // Contest progress tracking
+        this.contestProgress = {
+            daily: 0,
+            weekly: 0,
+            monthly: 0
+        };
         
         // Daily login and tasks
         this.dailyLoginClaimed = false;
@@ -273,7 +280,7 @@ class TelegramSbaroApp {
             this.startCooldownTimer('contest', 'monthly');
             
             // Reset ALL bot data to zero (complete reset)
-            this.resetAllBotData();
+            await this.resetAllBotData();
             
         } catch (error) {
             console.error('Failed to load user data:', error);
@@ -382,6 +389,41 @@ class TelegramSbaroApp {
             console.log('👂 Firebase real-time listeners set up successfully');
         } catch (error) {
             console.error('❌ Failed to set up Firebase listeners:', error);
+        }
+    }
+
+    updateContestProgress(contestData) {
+        // Update contest progress display
+        if (contestData) {
+            this.contestProgress = {
+                daily: contestData.daily || 0,
+                weekly: contestData.weekly || 0,
+                monthly: contestData.monthly || 0
+            };
+            
+            // Update contest UI elements
+            const dailyProgress = document.getElementById('dailyContestProgress');
+            const weeklyProgress = document.getElementById('weeklyContestProgress');
+            const monthlyProgress = document.getElementById('monthlyContestProgress');
+            
+            if (dailyProgress) {
+                dailyProgress.textContent = `${this.contestProgress.daily}/10`;
+            }
+            if (weeklyProgress) {
+                weeklyProgress.textContent = `${this.contestProgress.weekly}/30`;
+            }
+            if (monthlyProgress) {
+                monthlyProgress.textContent = `${this.contestProgress.monthly}/200`;
+            }
+            
+            // Update contest stats in profile
+            const contestsJoined = document.getElementById('contestsJoined');
+            if (contestsJoined) {
+                const totalContests = this.contestProgress.daily + this.contestProgress.weekly + this.contestProgress.monthly;
+                contestsJoined.textContent = totalContests;
+            }
+            
+            console.log('✅ Contest progress updated:', this.contestProgress);
         }
     }
 
@@ -2439,7 +2481,9 @@ class TelegramSbaroApp {
     }
 
     // Reset all bot data completely
-    resetAllBotData() {
+    async resetAllBotData() {
+        console.log('🔄 Resetting all bot data...');
+        
         // Clear all localStorage data
         const keysToKeep = ['telegram_user_id', 'telegram_username']; // Keep user identity
         const allKeys = Object.keys(localStorage);
@@ -2460,13 +2504,23 @@ class TelegramSbaroApp {
             referrals: 0,
             level: 1,
             rank: 'Beginner',
-            joinDate: new Date().toISOString().split('T')[0]
+            joinDate: new Date().toISOString().split('T')[0],
+            adsWatched: 0,
+            contestAdsWatched: 0,
+            contestsJoined: 0
         };
         
         // Reset all progress
         this.todayAdsWatched = 0;
         this.lastAdTime = '0';
         this.lastDailyLogin = '0';
+        
+        // Reset contest progress
+        this.contestProgress = {
+            daily: 0,
+            weekly: 0,
+            monthly: 0
+        };
         
         // Reset VIP mining
         this.vipMining = {
@@ -2487,6 +2541,31 @@ class TelegramSbaroApp {
         localStorage.removeItem('activityLog');
         localStorage.removeItem('notifications');
         localStorage.removeItem('unreadNotifications');
+        
+        // Sync reset data to Firebase if available
+        if (this.firebaseInitialized && this.database && this.user) {
+            try {
+                const userId = this.user.id;
+                const userRef = this.database.ref(`users/${userId}`);
+                
+                await userRef.update({
+                    points: 0,
+                    balance: 0,
+                    ads_watched: 0,
+                    daily_ads_watched: 0,
+                    contest_ads: { daily: 0, weekly: 0, monthly: 0 },
+                    contests_joined: 0,
+                    referrals: 0,
+                    referred_by: null,
+                    vip_status: 'FREE',
+                    updated_at: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                console.log('✅ User data reset synced to Firebase');
+            } catch (error) {
+                console.error('❌ Failed to sync reset to Firebase:', error);
+            }
+        }
         
         // Update all UI elements
         this.updateUI();

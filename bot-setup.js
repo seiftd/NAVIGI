@@ -66,6 +66,12 @@ async function initUser(userId, userData = {}) {
             first_name: userData.first_name,
             platform: 'telegram_bot'
         });
+    } else {
+        // User exists in Firebase, make sure contest_ads is properly structured
+        if (!user.contest_ads || typeof user.contest_ads !== 'object') {
+            user.contest_ads = { daily: 0, weekly: 0, monthly: 0 };
+            await firebaseManager.updateUser(userId, { contest_ads: user.contest_ads });
+        }
     }
     
     // Also store in local cache for quick access
@@ -432,6 +438,13 @@ bot.on('callback_query', async (query) => {
 async function handleContests(chatId, userId) {
     const user = users.get(userId);
     
+    // Ensure contest_ads is properly initialized
+    if (!user.contest_ads) {
+        user.contest_ads = { daily: 0, weekly: 0, monthly: 0 };
+        users.set(userId, user);
+        await firebaseManager.updateUser(userId, { contest_ads: user.contest_ads });
+    }
+    
     let message = `🏆 *Contest Center*\n\n`;
     message += `Join contests by watching contest ads!\n`;
     message += `Contest ads don't earn points but qualify you for prizes.\n\n`;
@@ -780,8 +793,8 @@ bot.onText(/\/admin/, (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
     
-    // Simple admin check (UPDATE WITH YOUR ACTUAL TELEGRAM USER ID)
-    const adminIds = ['YOUR_TELEGRAM_USER_ID_HERE']; // Replace with your actual Telegram user ID
+    // Simple admin check
+    const adminIds = ['7544271642']; // @Sbaroone
     
     if (adminIds.includes(userId.toString())) {
         const message = `🔧 *Admin Panel*\n\nDashboard: ${ADMIN_DASHBOARD_URL}\n\n📊 Bot Stats:\n• Total Users: ${users.size}\n• Active Today: ${Array.from(users.values()).filter(u => u.last_ad_reset === new Date().toDateString()).length}`;
@@ -790,12 +803,110 @@ bot.onText(/\/admin/, (msg) => {
             parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: '🌐 Open Dashboard', url: ADMIN_DASHBOARD_URL }]
+                    [{ text: '🌐 Open Dashboard', url: ADMIN_DASHBOARD_URL }],
+                    [{ text: '🔄 Reset Leaderboards', callback_data: 'admin_reset_leaderboards' }],
+                    [{ text: '🏆 Reset Contests', callback_data: 'admin_reset_contests' }]
                 ]
             }
         });
     } else {
         bot.sendMessage(chatId, '❌ Access denied');
+    }
+});
+
+// Admin reset leaderboards command
+bot.onText(/\/reset_leaderboards/, async (msg) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id;
+    
+    // Simple admin check
+    const adminIds = ['7544271642']; // @Sbaroone
+    
+    if (adminIds.includes(userId.toString())) {
+        await resetAllLeaderboards();
+        bot.sendMessage(chatId, '✅ All leaderboards and referrals have been reset to zero!');
+    } else {
+        bot.sendMessage(chatId, '❌ Access denied');
+    }
+});
+
+// Reset all leaderboards and referrals function
+async function resetAllLeaderboards() {
+    try {
+        console.log('🔄 Resetting all leaderboards and referrals...');
+        
+        // Reset local users
+        for (const [userId, user] of users.entries()) {
+            user.referrals = 0;
+            user.referred_by = null;
+            user.contest_ads = { daily: 0, weekly: 0, monthly: 0 };
+            user.contests_joined = 0;
+            users.set(userId, user);
+            
+            // Update Firebase
+            await firebaseManager.updateUser(userId, {
+                referrals: 0,
+                referred_by: null,
+                contest_ads: { daily: 0, weekly: 0, monthly: 0 },
+                contests_joined: 0
+            });
+            
+            // Log activity
+            await firebaseManager.logActivity(userId, 'leaderboards_reset', {
+                reset_by: 'admin',
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        console.log('✅ All leaderboards and referrals reset successfully!');
+        return true;
+    } catch (error) {
+        console.error('❌ Error resetting leaderboards:', error);
+        return false;
+    }
+}
+
+// Handle admin callback queries
+bot.on('callback_query', async (query) => {
+    if (query.data === 'admin_reset_leaderboards') {
+        const chatId = query.message.chat.id;
+        const userId = query.from.id;
+        
+        // Simple admin check
+        const adminIds = ['7544271642']; // @Sbaroone
+        
+        if (adminIds.includes(userId.toString())) {
+            await resetAllLeaderboards();
+            bot.answerCallbackQuery(query.id, { text: '✅ Leaderboards reset!' });
+            bot.sendMessage(chatId, '✅ All leaderboards and referrals have been reset to zero!');
+        } else {
+            bot.answerCallbackQuery(query.id, { text: '❌ Access denied' });
+        }
+    }
+    
+    if (query.data === 'admin_reset_contests') {
+        const chatId = query.message.chat.id;
+        const userId = query.from.id;
+        
+        // Simple admin check
+        const adminIds = ['7544271642']; // @Sbaroone
+        
+        if (adminIds.includes(userId.toString())) {
+            // Reset all contest progress
+            for (const [userId, user] of users.entries()) {
+                user.contest_ads = { daily: 0, weekly: 0, monthly: 0 };
+                users.set(userId, user);
+                
+                await firebaseManager.updateUser(userId, {
+                    contest_ads: { daily: 0, weekly: 0, monthly: 0 }
+                });
+            }
+            
+            bot.answerCallbackQuery(query.id, { text: '✅ Contests reset!' });
+            bot.sendMessage(chatId, '✅ All contest progress has been reset to zero!');
+        } else {
+            bot.answerCallbackQuery(query.id, { text: '❌ Access denied' });
+        }
     }
 });
 
