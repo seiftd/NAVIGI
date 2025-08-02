@@ -1,1377 +1,960 @@
-// Admin Dashboard JavaScript
+// NAVIGI SBARO Admin Dashboard - Firebase Real-time Integration
 let isAdminArabic = false;
 let currentTab = 'overview';
+let database = null;
+let isFirebaseInitialized = false;
 
-// Sample VIP Payment Data
-const sampleVipPayments = [
-    {
-        id: 'PAY_1704123456_ABC123',
-        userId: 'USR001',
-        userEmail: 'user1@example.com',
-        tier: 'king',
-        amount: '2.50',
-        currency: 'USDT',
-        network: 'TRC20',
-        transactionHash: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t...123456',
-        screenshotUrl: 'https://example.com/screenshots/payment1.jpg',
-        additionalNotes: 'Payment completed via TronLink wallet',
-        status: 'pending',
-        submittedAt: new Date('2024-01-15T10:30:00'),
-        tronAddress: 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX'
-    },
-    {
-        id: 'PAY_1704123789_DEF456',
-        userId: 'USR045',
-        userEmail: 'vipuser@example.com',
-        tier: 'emperor',
-        amount: '9.00',
-        currency: 'USDT',
-        network: 'TRC20',
-        transactionHash: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t...789012',
-        screenshotUrl: 'https://example.com/screenshots/payment2.jpg',
-        additionalNotes: '',
-        status: 'pending',
-        submittedAt: new Date('2024-01-15T14:20:00'),
-        tronAddress: 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX'
-    },
-    {
-        id: 'PAY_1704124012_GHI789',
-        userId: 'USR078',
-        userEmail: 'lorduser@example.com',
-        tier: 'lord',
-        amount: '25.00',
-        currency: 'USDT',
-        network: 'TRC20',
-        transactionHash: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t...345678',
-        screenshotUrl: 'https://example.com/screenshots/payment3.jpg',
-        additionalNotes: 'Upgrading from Emperor to Lord tier',
-        status: 'pending',
-        submittedAt: new Date('2024-01-15T16:45:00'),
-        tronAddress: 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX'
-    },
-    {
-        id: 'PAY_1704120000_JKL012',
-        userId: 'USR123',
-        userEmail: 'approved@example.com',
-        tier: 'king',
-        amount: '2.50',
-        currency: 'USDT',
-        network: 'TRC20',
-        transactionHash: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t...901234',
-        screenshotUrl: 'https://example.com/screenshots/payment4.jpg',
-        additionalNotes: '',
-        status: 'approved',
-        submittedAt: new Date('2024-01-15T08:15:00'),
-        approvedAt: new Date('2024-01-15T09:30:00'),
-        tronAddress: 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX'
-    },
-    {
-        id: 'PAY_1704118800_MNO345',
-        userId: 'USR156',
-        userEmail: 'rejected@example.com',
-        tier: 'emperor',
-        amount: '9.00',
-        currency: 'USDT',
-        network: 'TRC20',
-        transactionHash: 'INVALID_HASH_123',
-        screenshotUrl: 'https://example.com/screenshots/payment5.jpg',
-        additionalNotes: 'Suspicious transaction',
-        status: 'rejected',
-        submittedAt: new Date('2024-01-15T06:00:00'),
-        rejectedAt: new Date('2024-01-15T07:15:00'),
-        rejectionReason: 'Invalid transaction hash provided',
-        tronAddress: 'TLDsutnxpdLZaRxhGWBJismwsjY3WiTHWX'
-    }
-];
-let charts = {};
-
-// Demo Credentials
-const ADMIN_CREDENTIALS = {
-    email: 'seiftouatllol@gmail.com',
-    password: 'seif0662',
-    twofa: '112023'
+// Firebase configuration with your actual credentials
+const firebaseConfig = {
+    apiKey: "AIzaSyCfrl9jNATQFJJDZSWoh9sb4DDtil4aHpY",
+    authDomain: "navigi-sbaro-bot.firebaseapp.com",
+    databaseURL: "https://navigi-sbaro-bot-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "navigi-sbaro-bot",
+    storageBucket: "navigi-sbaro-bot.appspot.com",
+    messagingSenderId: "22015997314",
+    appId: "1:22015997314:web:6b19b809bfb996a2ea8b9b"
 };
 
-// Sample Data
-const sampleVipUsers = [
-    {
-        id: 'USR001',
-        email: 'user1@example.com',
-        tier: 'king',
-        startDate: '2024-01-15',
-        expiryDate: '2024-02-15',
-        revenue: 2.50,
-        daysLeft: 12
-    },
-    {
-        id: 'USR002',
-        email: 'user2@example.com',
-        tier: 'emperor',
-        startDate: '2024-01-10',
-        expiryDate: '2024-02-10',
-        revenue: 9.00,
-        daysLeft: 7
-    },
-    {
-        id: 'USR003',
-        email: 'user3@example.com',
-        tier: 'lord',
-        startDate: '2024-01-20',
-        expiryDate: '2024-02-20',
-        revenue: 25.00,
-        daysLeft: 17
-    },
-    {
-        id: 'USR004',
-        email: 'ahmed.hassan@example.com',
-        tier: 'king',
-        startDate: '2024-01-12',
-        expiryDate: '2024-02-12',
-        revenue: 2.50,
-        daysLeft: 9
-    },
-    {
-        id: 'USR005',
-        email: 'fatima.ali@example.com',
-        tier: 'emperor',
-        startDate: '2024-01-18',
-        expiryDate: '2024-02-18',
-        revenue: 9.00,
-        daysLeft: 15
-    }
-];
+// Real-time data storage
+let realTimeData = {
+    users: {},
+    activities: {},
+    vipNotifications: {},
+    systemStats: {},
+    lastUpdate: new Date()
+};
 
-const sampleUsers = [
-    {
-        id: 'USR001',
-        email: 'user1@example.com',
-        points: 2547,
-        adsWatched: 156,
-        referrals: 3,
-        joinDate: '2024-01-15',
-        status: 'active'
-    },
-    {
-        id: 'USR002',
-        email: 'user2@example.com',
-        points: 1823,
-        adsWatched: 98,
-        referrals: 1,
-        joinDate: '2024-01-10',
-        status: 'active'
-    },
-    {
-        id: 'USR003',
-        email: 'user3@example.com',
-        points: 4561,
-        adsWatched: 267,
-        referrals: 8,
-        joinDate: '2024-01-05',
-        status: 'vip'
-    }
-];
-
-const sampleWithdrawals = [
-    {
-        id: 'WD001',
-        userEmail: 'user1@example.com',
-        method: 'Binance Pay',
-        amount: '$5.20',
-        points: 520,
-        requestDate: '2024-01-25',
-        status: 'pending'
-    },
-    {
-        id: 'WD002',
-        userEmail: 'user2@example.com',
-        method: 'BaridiMob',
-        amount: '$12.80',
-        points: 1280,
-        requestDate: '2024-01-24',
-        status: 'approved'
-    },
-    {
-        id: 'WD003',
-        userEmail: 'user3@example.com',
-        method: 'Google Play',
-        amount: '$25.00',
-        points: 2500,
-        requestDate: '2024-01-23',
-        status: 'pending'
-    }
-];
-
-const recentActivities = [
-    {
-        type: 'user',
-        title: 'New User Registration',
-        description: 'user456@example.com joined NAVIGI',
-        time: '2 minutes ago',
-        icon: '👤'
-    },
-    {
-        type: 'vip',
-        title: 'VIP Upgrade',
-        description: 'ahmed.hassan@example.com upgraded to Emperor Tier',
-        time: '15 minutes ago',
-        icon: '👑'
-    },
-    {
-        type: 'withdrawal',
-        title: 'Withdrawal Request',
-        description: 'fatima.ali@example.com requested $15.50 via Binance Pay',
-        time: '32 minutes ago',
-        icon: '💰'
-    },
-    {
-        type: 'contest',
-        title: 'Contest Winner',
-        description: 'Daily contest winner: user789@example.com (Prize: $146.30)',
-        time: '1 hour ago',
-        icon: '🏆'
-    }
-];
-
-// Initialize Dashboard
-document.addEventListener('DOMContentLoaded', function() {
-    // Login form handler
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
-    }
-
-    // Tab navigation
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
-        item.addEventListener('click', handleTabChange);
-    });
-
-    // Initialize charts if dashboard is visible
-    if (document.getElementById('dashboardMain').style.display !== 'none') {
-        initializeDashboard();
-    }
-
-    // Mobile menu toggle
-    initializeMobileMenu();
-});
-
-// Login Handler
-function handleLogin(e) {
-    e.preventDefault();
-    
-    const email = document.getElementById('email').value.trim().toLowerCase();
-    const password = document.getElementById('password').value.trim();
-    const twofa = document.getElementById('twofa').value.trim();
-    
-
-
-    // Simple credential validation
-    const isEmailValid = email.toLowerCase() === ADMIN_CREDENTIALS.email.toLowerCase();
-    const isPasswordValid = password === ADMIN_CREDENTIALS.password;
-    const is2FAValid = !twofa || twofa === ADMIN_CREDENTIALS.twofa;
-    
-    if (isEmailValid && isPasswordValid && is2FAValid) {
-        // Hide login screen and show dashboard
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('dashboardMain').style.display = 'flex';
-        
-        // Initialize dashboard
-        initializeDashboard();
-        
-        showNotification('Login successful! Welcome to NAVIGI Admin Dashboard.', 'success');
-    } else {
-        console.error('Login failed - credentials mismatch');
-        showNotification('Invalid credentials. Please try again.', 'error');
-        
-        // Login failed
-        console.log('Invalid credentials entered');
-    }
-}
-
-
-
-// Initialize Dashboard
-function initializeDashboard() {
-    initializeCharts();
-    populateVipUsersTable();
-    populateUsersTable();
-    populateWithdrawalsTable();
-    populateVipPaymentsTable();
-    populateRecentActivity();
-    startCountdownTimers();
-}
-
-// Tab Change Handler
-function handleTabChange(e) {
-    e.preventDefault();
-    
-    const tabName = e.currentTarget.getAttribute('data-tab');
-    
-    // Update active nav item
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    e.currentTarget.classList.add('active');
-    
-    // Update active tab content
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    document.getElementById(`${tabName}-tab`).classList.add('active');
-    
-    // Update page title
-    updatePageTitle(tabName);
-    
-    currentTab = tabName;
-}
-
-// Update Page Title
-function updatePageTitle(tabName) {
-    const titles = {
-        'overview': isAdminArabic ? 'نظرة عامة على لوحة التحكم' : 'Dashboard Overview',
-        'vip-management': isAdminArabic ? 'إدارة مستخدمي VIP' : 'VIP Users Management',
-        'users': isAdminArabic ? 'إدارة المستخدمين' : 'User Management',
-        'contests': isAdminArabic ? 'إدارة المسابقات' : 'Contest Management',
-        'withdrawals': isAdminArabic ? 'طلبات السحب' : 'Withdrawal Requests',
-        'vip-payments': isAdminArabic ? 'موافقات مدفوعات VIP' : 'VIP Payment Approvals',
-        'ads': isAdminArabic ? 'إدارة أرباح الإعلانات' : 'Ad Revenue Management',
-        'notifications': isAdminArabic ? 'إرسال الإشعارات' : 'Send Notifications'
-    };
-    
-    document.getElementById('pageTitle').textContent = titles[tabName] || titles['overview'];
-}
-
-// Initialize Charts
-function initializeCharts() {
-    // Revenue Chart
-    const revenueCtx = document.getElementById('revenueChart');
-    if (revenueCtx) {
-        charts.revenue = new Chart(revenueCtx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                datasets: [{
-                    label: 'Total Revenue ($)',
-                    data: [12000, 15500, 18200, 16800, 21300, 24562, 23100],
-                    borderColor: '#3498DB',
-                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'VIP Revenue ($)',
-                    data: [3000, 4200, 5800, 6200, 7100, 8200, 8500],
-                    borderColor: '#9B59B6',
-                    backgroundColor: 'rgba(155, 89, 182, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // User Growth Chart
-    const userCtx = document.getElementById('userChart');
-    if (userCtx) {
-        charts.users = new Chart(userCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Free Users', 'King VIP', 'Emperor VIP', 'Lord VIP'],
-                datasets: [{
-                    label: 'User Count',
-                    data: [11591, 342, 398, 107],
-                    backgroundColor: [
-                        '#3498DB',
-                        '#3498DB',
-                        '#9B59B6',
-                        '#E74C3C'
-                    ],
-                    borderColor: [
-                        '#2980B9',
-                        '#2980B9',
-                        '#8E44AD',
-                        '#C0392B'
-                    ],
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-}
-
-// Populate VIP Users Table
-function populateVipUsersTable() {
-    const tbody = document.getElementById('vipUsersBody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-    
-    sampleVipUsers.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${user.id}</td>
-            <td>${user.email}</td>
-            <td><span class="tier-badge ${user.tier}">👑 ${user.tier.toUpperCase()}</span></td>
-            <td>${formatDate(user.startDate)}</td>
-            <td>${formatDate(user.expiryDate)}</td>
-            <td class="${user.daysLeft <= 7 ? 'text-danger' : user.daysLeft <= 14 ? 'text-warning' : 'text-success'}">
-                ${user.daysLeft} days
-            </td>
-            <td class="text-success font-weight-bold">$${user.revenue.toFixed(2)}</td>
-            <td>
-                <button class="btn btn-sm btn-primary" onclick="extendVip('${user.id}')">
-                    <i class="fas fa-plus"></i> Extend
-                </button>
-                <button class="btn btn-sm btn-secondary" onclick="viewVipDetails('${user.id}')">
-                    <i class="fas fa-eye"></i> View
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-// Populate Users Table
-function populateUsersTable() {
-    const tbody = document.getElementById('usersBody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-    
-    sampleUsers.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${user.id}</td>
-            <td>${user.email}</td>
-            <td><span class="font-weight-bold text-primary">${user.points.toLocaleString()}</span></td>
-            <td>${user.adsWatched}</td>
-            <td>${user.referrals}</td>
-            <td>${formatDate(user.joinDate)}</td>
-            <td><span class="status-badge ${user.status}">${user.status.toUpperCase()}</span></td>
-            <td>
-                <button class="btn btn-sm btn-primary" onclick="editUser('${user.id}')">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="blockUser('${user.id}')">
-                    <i class="fas fa-ban"></i> Block
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-// Populate Withdrawals Table
-function populateWithdrawalsTable() {
-    const tbody = document.getElementById('withdrawalsBody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-    
-    sampleWithdrawals.forEach(withdrawal => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${withdrawal.id}</td>
-            <td>${withdrawal.userEmail}</td>
-            <td>${withdrawal.method}</td>
-            <td class="text-success font-weight-bold">${withdrawal.amount}</td>
-            <td>${withdrawal.points.toLocaleString()}</td>
-            <td>${formatDate(withdrawal.requestDate)}</td>
-            <td><span class="status-badge ${withdrawal.status}">${withdrawal.status.toUpperCase()}</span></td>
-            <td>
-                ${withdrawal.status === 'pending' ? `
-                    <button class="btn btn-sm btn-success" onclick="approveWithdrawal('${withdrawal.id}')">
-                        <i class="fas fa-check"></i> Approve
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${withdrawal.id}')">
-                        <i class="fas fa-times"></i> Reject
-                    </button>
-                ` : `
-                    <button class="btn btn-sm btn-secondary" onclick="viewWithdrawal('${withdrawal.id}')">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                `}
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-// Populate Recent Activity
-function populateRecentActivity() {
-    const activityList = document.getElementById('activityList');
-    if (!activityList) return;
-
-    activityList.innerHTML = '';
-    
-    recentActivities.forEach(activity => {
-        const activityItem = document.createElement('div');
-        activityItem.className = 'activity-item';
-        activityItem.innerHTML = `
-            <div class="activity-icon ${activity.type}">
-                ${activity.icon}
-            </div>
-            <div class="activity-content">
-                <h4>${activity.title}</h4>
-                <p>${activity.description}</p>
-            </div>
-            <div class="activity-time">${activity.time}</div>
-        `;
-        activityList.appendChild(activityItem);
-    });
-}
-
-// Countdown Timers
-function startCountdownTimers() {
-    const timers = ['dailyCountdown', 'weeklyCountdown', 'monthlyCountdown'];
-    
-    timers.forEach(timerId => {
-        const element = document.getElementById(timerId);
-        if (element) {
-            updateCountdown(timerId);
-            setInterval(() => updateCountdown(timerId), 1000);
+// Initialize Firebase
+function initializeFirebase() {
+    try {
+        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            isFirebaseInitialized = true;
+            console.log('🔥 Firebase initialized successfully in admin dashboard');
+            setupRealtimeListeners();
+            return true;
         }
-    });
-}
-
-function updateCountdown(timerId) {
-    const element = document.getElementById(timerId);
-    if (!element) return;
-
-    // Sample countdown logic
-    const now = new Date().getTime();
-    let endTime;
-    
-    switch(timerId) {
-        case 'dailyCountdown':
-            endTime = new Date().setHours(23, 59, 59, 999);
-            break;
-        case 'weeklyCountdown':
-            endTime = now + (2 * 24 * 60 * 60 * 1000) + (14 * 60 * 60 * 1000);
-            break;
-        case 'monthlyCountdown':
-            endTime = now + (18 * 24 * 60 * 60 * 1000) + (7 * 60 * 60 * 1000);
-            break;
-    }
-    
-    const distance = endTime - now;
-    
-    if (distance > 0) {
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        
-        if (days > 0) {
-            element.textContent = `${days}d ${hours}h ${minutes}m`;
-        } else {
-            element.textContent = `${hours}h ${minutes}m ${seconds}s`;
-        }
-    } else {
-        element.textContent = "EXPIRED";
+    } catch (error) {
+        console.error('❌ Firebase initialization failed:', error);
+        showNotification('Firebase connection failed. Using demo data.', 'error');
+        return false;
     }
 }
 
-// Language Toggle
-function toggleAdminLanguage() {
-    isAdminArabic = !isAdminArabic;
-    const html = document.documentElement;
-    const langToggle = document.getElementById('adminLangText');
-    
-    if (isAdminArabic) {
-        html.setAttribute('lang', 'ar');
-        html.setAttribute('dir', 'rtl');
-        langToggle.textContent = 'English';
-        updateAdminTexts('ar');
-    } else {
-        html.setAttribute('lang', 'en');
-        html.setAttribute('dir', 'ltr');
-        langToggle.textContent = 'العربية';
-        updateAdminTexts('en');
-    }
-    
-    updatePageTitle(currentTab);
-}
-
-function updateAdminTexts(lang) {
-    const elements = document.querySelectorAll('[data-en][data-ar]');
-    elements.forEach(element => {
-        if (lang === 'ar') {
-            element.textContent = element.getAttribute('data-ar');
-        } else {
-            element.textContent = element.getAttribute('data-en');
-        }
-    });
-}
-
-// VIP Management Functions
-function extendVip(userId) {
-    showNotification(`VIP subscription extended for user ${userId}`, 'success');
-    // Refresh VIP table
-    populateVipUsersTable();
-}
-
-function viewVipDetails(userId) {
-    const user = sampleVipUsers.find(u => u.id === userId);
-    if (user) {
-        showModal('VIP User Details', `
-            <div class="vip-details-modal">
-                <h4>👑 ${user.tier.toUpperCase()} TIER</h4>
-                <p><strong>User ID:</strong> ${user.id}</p>
-                <p><strong>Email:</strong> ${user.email}</p>
-                <p><strong>Start Date:</strong> ${formatDate(user.startDate)}</p>
-                <p><strong>Expiry Date:</strong> ${formatDate(user.expiryDate)}</p>
-                <p><strong>Days Remaining:</strong> ${user.daysLeft} days</p>
-                <p><strong>Monthly Revenue:</strong> $${user.revenue.toFixed(2)}</p>
-                <p><strong>Total Revenue:</strong> $${(user.revenue * 3).toFixed(2)}</p>
-            </div>
-        `);
-    }
-}
-
-function exportVipData() {
-    // Create CSV data
-    const headers = ['User ID', 'Email', 'VIP Tier', 'Start Date', 'Expiry Date', 'Days Left', 'Revenue'];
-    const csvData = [headers];
-    
-    sampleVipUsers.forEach(user => {
-        csvData.push([
-            user.id,
-            user.email,
-            user.tier.toUpperCase(),
-            user.startDate,
-            user.expiryDate,
-            user.daysLeft,
-            user.revenue
-        ]);
-    });
-    
-    // Convert to CSV string
-    const csvContent = csvData.map(row => row.join(',')).join('\n');
-    
-    // Download file
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `vip-users-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    showNotification('VIP data exported successfully!', 'success');
-}
-
-function refreshVipData() {
-    showNotification('Refreshing VIP data...', 'info');
-    setTimeout(() => {
-        populateVipUsersTable();
-        showNotification('VIP data refreshed!', 'success');
-    }, 1000);
-}
-
-// User Management Functions
-function addUser() {
-    showModal('Add New User', `
-        <form id="addUserForm">
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="newUserEmail" required>
-            </div>
-            <div class="form-group">
-                <label>Initial Points</label>
-                <input type="number" id="newUserPoints" value="0" min="0">
-            </div>
-            <div class="form-group">
-                <label>Status</label>
-                <select id="newUserStatus">
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Add User</button>
-        </form>
-    `);
-}
-
-function editUser(userId) {
-    const user = sampleUsers.find(u => u.id === userId);
-    if (user) {
-        showModal('Edit User', `
-            <form id="editUserForm">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" value="${user.email}" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Points</label>
-                    <input type="number" id="editUserPoints" value="${user.points}" min="0">
-                </div>
-                <div class="form-group">
-                    <label>Status</label>
-                    <select id="editUserStatus">
-                        <option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option>
-                        <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inactive</option>
-                        <option value="vip" ${user.status === 'vip' ? 'selected' : ''}>VIP</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Update User</button>
-            </form>
-        `);
-    }
-}
-
-function blockUser(userId) {
-    if (confirm('Are you sure you want to block this user?')) {
-        showNotification(`User ${userId} has been blocked`, 'warning');
-        populateUsersTable();
-    }
-}
-
-// Withdrawal Management Functions
-function approveWithdrawal(withdrawalId) {
-    const withdrawal = sampleWithdrawals.find(w => w.id === withdrawalId);
-    if (withdrawal) {
-        withdrawal.status = 'approved';
-        showNotification(`Withdrawal ${withdrawalId} approved! Payment of ${withdrawal.amount} sent to ${withdrawal.userEmail}`, 'success');
-        populateWithdrawalsTable();
-    }
-}
-
-function rejectWithdrawal(withdrawalId) {
-    const reason = prompt('Enter rejection reason:');
-    if (reason) {
-        const withdrawal = sampleWithdrawals.find(w => w.id === withdrawalId);
-        if (withdrawal) {
-            withdrawal.status = 'rejected';
-            showNotification(`Withdrawal ${withdrawalId} rejected. Reason: ${reason}`, 'warning');
-            populateWithdrawalsTable();
-        }
-    }
-}
-
-function viewWithdrawal(withdrawalId) {
-    const withdrawal = sampleWithdrawals.find(w => w.id === withdrawalId);
-    if (withdrawal) {
-        showModal('Withdrawal Details', `
-            <div class="withdrawal-details">
-                <p><strong>Request ID:</strong> ${withdrawal.id}</p>
-                <p><strong>User:</strong> ${withdrawal.userEmail}</p>
-                <p><strong>Method:</strong> ${withdrawal.method}</p>
-                <p><strong>Amount:</strong> ${withdrawal.amount}</p>
-                <p><strong>Points:</strong> ${withdrawal.points.toLocaleString()}</p>
-                <p><strong>Request Date:</strong> ${formatDate(withdrawal.requestDate)}</p>
-                <p><strong>Status:</strong> <span class="status-badge ${withdrawal.status}">${withdrawal.status.toUpperCase()}</span></p>
-            </div>
-        `);
-    }
-}
-
-function approveAll() {
-    if (confirm('Are you sure you want to approve all pending withdrawals?')) {
-        const pendingCount = sampleWithdrawals.filter(w => w.status === 'pending').length;
-        sampleWithdrawals.forEach(w => {
-            if (w.status === 'pending') {
-                w.status = 'approved';
-            }
-        });
-        showNotification(`${pendingCount} withdrawals approved successfully!`, 'success');
-        populateWithdrawalsTable();
-    }
-}
-
-// Contest Management Functions
-function createContest() {
-    showModal('Create New Contest', `
-        <form id="createContestForm">
-            <div class="form-group">
-                <label>Contest Type</label>
-                <select id="contestType">
-                    <option value="daily">Daily Contest</option>
-                    <option value="weekly">Weekly Contest</option>
-                    <option value="monthly">Monthly Contest</option>
-                    <option value="special">Special Contest</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Prize Pool ($)</label>
-                <input type="number" id="contestPrize" value="100" min="10" step="0.01">
-            </div>
-            <div class="form-group">
-                <label>Required Ads</label>
-                <input type="number" id="contestAds" value="10" min="1">
-            </div>
-            <div class="form-group">
-                <label>Duration (hours)</label>
-                <input type="number" id="contestDuration" value="24" min="1">
-            </div>
-            <button type="submit" class="btn btn-primary">Create Contest</button>
-        </form>
-    `);
-}
-
-function viewContestDetails(contestType) {
-    const contestData = {
-        daily: { participants: 2847, prize: 486.30, required: 10 },
-        weekly: { participants: 8234, prize: 1247.80, required: 25 },
-        monthly: { participants: 15672, prize: 3842.90, required: 120 }
-    };
-    
-    const contest = contestData[contestType];
-    if (contest) {
-        showModal(`${contestType.charAt(0).toUpperCase() + contestType.slice(1)} Contest Details`, `
-            <div class="contest-details">
-                <h4>🏆 ${contestType.toUpperCase()} CONTEST</h4>
-                <p><strong>Participants:</strong> ${contest.participants.toLocaleString()}</p>
-                <p><strong>Prize Pool:</strong> $${contest.prize.toFixed(2)}</p>
-                <p><strong>Required Ads:</strong> ${contest.required}</p>
-                <p><strong>Status:</strong> <span class="status-badge active">ACTIVE</span></p>
-                <hr>
-                <h5>Top Participants:</h5>
-                <ul>
-                    <li>user123@example.com - ${contest.required} ads</li>
-                    <li>ahmed.hassan@example.com - ${contest.required - 1} ads</li>
-                    <li>fatima.ali@example.com - ${contest.required - 2} ads</li>
-                </ul>
-            </div>
-        `);
-    }
-}
-
-function endContest(contestType) {
-    if (confirm(`Are you sure you want to end the ${contestType} contest early?`)) {
-        showNotification(`${contestType.charAt(0).toUpperCase() + contestType.slice(1)} contest ended. Winners will be announced shortly.`, 'info');
-    }
-}
-
-// Notification Functions
-function sendNotification() {
-    const type = document.getElementById('notificationType').value;
-    const audience = document.getElementById('targetAudience').value;
-    const titleEn = document.getElementById('titleEn').value;
-    const titleAr = document.getElementById('titleAr').value;
-    const messageEn = document.getElementById('messageEn').value;
-    const messageAr = document.getElementById('messageAr').value;
-    
-    if (!titleEn || !messageEn) {
-        showNotification('Please fill in at least the English title and message.', 'error');
+// Setup real-time listeners for Firebase data
+function setupRealtimeListeners() {
+    if (!isFirebaseInitialized || !database) {
+        console.log('⚠️ Firebase not available - using demo data');
         return;
     }
-    
-    // Simulate sending notification
-    setTimeout(() => {
-        showNotification(`Notification sent successfully to ${audience} users!`, 'success');
-        
-        // Clear form
-        document.getElementById('titleEn').value = '';
-        document.getElementById('titleAr').value = '';
-        document.getElementById('messageEn').value = '';
-        document.getElementById('messageAr').value = '';
-    }, 1000);
-    
-    showNotification('Sending notification...', 'info');
-}
 
-// Utility Functions
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
-}
-
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${getNotificationColor(type)};
-        color: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 10000;
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-        max-width: 400px;
-    `;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-    
-    setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                document.body.removeChild(notification);
-            }
-        }, 300);
-    }, 4000);
-}
-
-function getNotificationColor(type) {
-    switch(type) {
-        case 'success': return '#27AE60';
-        case 'error': return '#E74C3C';
-        case 'warning': return '#F39C12';
-        case 'info': return '#3498DB';
-        default: return '#3498DB';
-    }
-}
-
-function showModal(title, content) {
-    // Remove existing modal if any
-    const existingModal = document.querySelector('.admin-modal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    const modal = document.createElement('div');
-    modal.className = 'admin-modal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-    `;
-    
-    modal.innerHTML = `
-        <div class="admin-modal-content" style="
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-        ">
-            <button class="modal-close" style="
-                position: absolute;
-                top: 15px;
-                right: 20px;
-                background: none;
-                border: none;
-                font-size: 24px;
-                cursor: pointer;
-                color: #999;
-            ">&times;</button>
-            <h3 style="margin-bottom: 20px; color: #2C3E50;">${title}</h3>
-            ${content}
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Close modal handlers
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal || e.target.classList.contains('modal-close')) {
-            modal.remove();
+    // Listen to users data
+    database.ref('users').on('value', (snapshot) => {
+        const users = snapshot.val() || {};
+        realTimeData.users = users;
+        console.log('👥 Users data updated:', Object.keys(users).length, 'users');
+        updateDashboardStats();
+        if (currentTab === 'users') {
+            renderUsersTab();
         }
     });
+
+    // Listen to activities data
+    database.ref('activities').orderByChild('timestamp').limitToLast(100).on('value', (snapshot) => {
+        const activities = snapshot.val() || {};
+        realTimeData.activities = activities;
+        console.log('📊 Activities updated:', Object.keys(activities).length, 'activities');
+        if (currentTab === 'activities') {
+            renderActivitiesTab();
+        }
+    });
+
+    // Listen to VIP notifications
+    database.ref('vip_notifications').orderByChild('status').equalTo('pending').on('value', (snapshot) => {
+        const notifications = snapshot.val() || {};
+        realTimeData.vipNotifications = notifications;
+        console.log('📞 VIP notifications updated:', Object.keys(notifications).length, 'pending');
+        updateVipNotificationCount();
+        if (currentTab === 'vip') {
+            renderVipTab();
+        }
+    });
+
+    // Listen to system stats
+    database.ref('system').on('value', (snapshot) => {
+        const system = snapshot.val() || {};
+        realTimeData.systemStats = system;
+        console.log('⚙️ System stats updated');
+        updateDashboardStats();
+    });
+
+    console.log('👂 Real-time listeners set up successfully');
+}
+
+// Initialize dashboard when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Initializing NAVIGI SBARO Admin Dashboard...');
     
-    // Handle form submissions in modals
-    const forms = modal.querySelectorAll('form');
-    forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
+    // Initialize Firebase
+    initializeFirebase();
+    
+    // Set up navigation
+    setupNavigation();
+    
+    // Load initial tab
+    switchTab('overview');
+    
+    // Update dashboard every 30 seconds
+    setInterval(updateDashboardStats, 30000);
+    
+    console.log('✅ Admin Dashboard initialized successfully');
+});
+
+// Navigation setup
+function setupNavigation() {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
             e.preventDefault();
-            // Handle form submission based on form ID
-            handleModalFormSubmission(form);
-            modal.remove();
+            const tab = item.getAttribute('data-tab');
+            if (tab) {
+                switchTab(tab);
+            }
         });
     });
-}
 
-function handleModalFormSubmission(form) {
-    const formId = form.id;
-    
-    switch(formId) {
-        case 'addUserForm':
-            const email = form.querySelector('#newUserEmail').value;
-            const points = form.querySelector('#newUserPoints').value;
-            const status = form.querySelector('#newUserStatus').value;
-            showNotification(`User ${email} added successfully with ${points} points!`, 'success');
-            break;
-            
-        case 'editUserForm':
-            showNotification('User updated successfully!', 'success');
-            break;
-            
-        case 'createContestForm':
-            const contestType = form.querySelector('#contestType').value;
-            const prize = form.querySelector('#contestPrize').value;
-            showNotification(`${contestType} contest created with $${prize} prize pool!`, 'success');
-            break;
+    // Language toggle
+    const langToggle = document.getElementById('langToggle');
+    if (langToggle) {
+        langToggle.addEventListener('click', toggleLanguage);
+    }
+
+    // Refresh button
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', refreshDashboard);
     }
 }
 
-function initializeMobileMenu() {
-    // Add mobile menu functionality if needed
-    const hamburger = document.querySelector('.hamburger');
-    const sidebar = document.querySelector('.sidebar');
+// Switch between tabs
+function switchTab(tabName) {
+    currentTab = tabName;
     
-    if (hamburger && sidebar) {
-        hamburger.addEventListener('click', function() {
-            sidebar.classList.toggle('open');
-        });
+    // Update navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-tab') === tabName) {
+            item.classList.add('active');
+        }
+    });
+
+    // Show loading
+    showLoading();
+
+    // Render tab content
+    setTimeout(() => {
+        switch (tabName) {
+            case 'overview':
+                renderOverviewTab();
+                break;
+            case 'users':
+                renderUsersTab();
+                break;
+            case 'activities':
+                renderActivitiesTab();
+                break;
+            case 'vip':
+                renderVipTab();
+                break;
+            case 'contests':
+                renderContestsTab();
+                break;
+            case 'analytics':
+                renderAnalyticsTab();
+                break;
+            case 'settings':
+                renderSettingsTab();
+                break;
+            default:
+                renderOverviewTab();
+        }
+        hideLoading();
+    }, 500);
+}
+
+// Render Overview Tab
+function renderOverviewTab() {
+    const content = document.getElementById('mainContent');
+    if (!content) return;
+
+    const users = Object.values(realTimeData.users || {});
+    const activities = Object.values(realTimeData.activities || {});
+    const vipNotifications = Object.values(realTimeData.vipNotifications || {});
+
+    // Calculate stats
+    const totalUsers = users.length;
+    const totalPoints = users.reduce((sum, user) => sum + (user.points || 0), 0);
+    const totalAds = users.reduce((sum, user) => sum + (user.ads_watched || 0), 0);
+    const activeToday = users.filter(user => 
+        user.last_ad_reset === new Date().toDateString()
+    ).length;
+
+    // VIP users
+    const vipUsers = users.filter(user => user.vip_status !== 'FREE').length;
+    const freeUsers = totalUsers - vipUsers;
+
+    // Recent activities (last 24 hours)
+    const recentActivities = activities.filter(activity => {
+        const activityDate = new Date(activity.created_at);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        return activityDate > yesterday;
+    });
+
+    content.innerHTML = `
+        <div class="dashboard-header">
+            <h2>📊 Dashboard Overview</h2>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="refreshDashboard()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <h3>${totalUsers.toLocaleString()}</h3>
+                    <p>Total Users</p>
+                </div>
+                <div class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>${activeToday} active today</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">💎</div>
+                <div class="stat-info">
+                    <h3>${totalPoints.toLocaleString()}</h3>
+                    <p>Total Points Distributed</p>
+                </div>
+                <div class="stat-trend positive">
+                    <i class="fas fa-coins"></i>
+                    <span>$${(totalPoints * 0.01).toFixed(2)} value</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📺</div>
+                <div class="stat-info">
+                    <h3>${totalAds.toLocaleString()}</h3>
+                    <p>Total Ads Watched</p>
+                </div>
+                <div class="stat-trend positive">
+                    <i class="fas fa-play"></i>
+                    <span>${recentActivities.filter(a => a.type === 'ad_watched').length} today</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">👑</div>
+                <div class="stat-info">
+                    <h3>${vipUsers}</h3>
+                    <p>VIP Users</p>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-users"></i>
+                    <span>${freeUsers} free users</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity & VIP Notifications -->
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>📊 Recent Activities</h3>
+                    <span class="badge">${recentActivities.length}</span>
+                </div>
+                <div class="activity-list">
+                    ${renderRecentActivities(recentActivities.slice(-10))}
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>📞 VIP Notifications</h3>
+                    <span class="badge badge-warning">${vipNotifications.length}</span>
+                </div>
+                <div class="vip-notifications">
+                    ${renderVipNotifications(vipNotifications)}
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3>⚙️ System Status</h3>
+                <div class="status-indicators">
+                    <span class="status-indicator online">🟢 Firebase Connected</span>
+                    <span class="status-indicator online">🟢 Bot Online</span>
+                    <span class="status-indicator online">🟢 Dashboard Active</span>
+                </div>
+            </div>
+            <div class="system-info">
+                <p><strong>Last Update:</strong> ${new Date().toLocaleString()}</p>
+                <p><strong>Database URL:</strong> https://navigi-sbaro-bot-default-rtdb.europe-west1.firebasedatabase.app/</p>
+                <p><strong>Region:</strong> Europe West 1</p>
+            </div>
+        </div>
+    `;
+}
+
+// Render Users Tab
+function renderUsersTab() {
+    const content = document.getElementById('mainContent');
+    if (!content) return;
+
+    const users = Object.values(realTimeData.users || {});
+    
+    content.innerHTML = `
+        <div class="dashboard-header">
+            <h2>👥 User Management</h2>
+            <div class="header-actions">
+                <input type="text" id="userSearch" placeholder="Search users..." class="search-input">
+                <button class="btn btn-primary" onclick="exportUsers()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+
+        <div class="users-stats">
+            <div class="stat-item">
+                <span class="stat-number">${users.length}</span>
+                <span class="stat-label">Total Users</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">${users.filter(u => u.vip_status !== 'FREE').length}</span>
+                <span class="stat-label">VIP Users</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">${users.filter(u => u.last_ad_reset === new Date().toDateString()).length}</span>
+                <span class="stat-label">Active Today</span>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Points</th>
+                        <th>Balance</th>
+                        <th>VIP Status</th>
+                        <th>Ads Watched</th>
+                        <th>Referrals</th>
+                        <th>Join Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${renderUsersTable(users)}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    // Setup user search
+    const searchInput = document.getElementById('userSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', filterUsers);
     }
 }
 
-function logout() {
-    if (confirm(isAdminArabic ? 'هل أنت متأكد من تسجيل الخروج؟' : 'Are you sure you want to logout?')) {
-        document.getElementById('dashboardMain').style.display = 'none';
-        document.getElementById('loginScreen').style.display = 'flex';
-        
-        // Reset form
-        document.getElementById('loginForm').reset();
-        
-        showNotification(isAdminArabic ? 'تم تسجيل الخروج بنجاح' : 'Logged out successfully', 'info');
+// Render Activities Tab
+function renderActivitiesTab() {
+    const content = document.getElementById('mainContent');
+    if (!content) return;
+
+    const activities = Object.values(realTimeData.activities || {})
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    content.innerHTML = `
+        <div class="dashboard-header">
+            <h2>📊 User Activities</h2>
+            <div class="header-actions">
+                <select id="activityFilter" class="filter-select">
+                    <option value="all">All Activities</option>
+                    <option value="ad_watched">Ad Watched</option>
+                    <option value="contest_ad">Contest Ads</option>
+                    <option value="vip_request">VIP Requests</option>
+                    <option value="user_joined">New Users</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="activities-stats">
+            <div class="stat-item">
+                <span class="stat-number">${activities.length}</span>
+                <span class="stat-label">Total Activities</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">${activities.filter(a => a.type === 'ad_watched').length}</span>
+                <span class="stat-label">Ads Watched</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">${activities.filter(a => a.type === 'contest_ad').length}</span>
+                <span class="stat-label">Contest Ads</span>
+            </div>
+        </div>
+
+        <div class="activities-container">
+            ${renderActivitiesList(activities)}
+        </div>
+    `;
+
+    // Setup activity filter
+    const filterSelect = document.getElementById('activityFilter');
+    if (filterSelect) {
+        filterSelect.addEventListener('change', filterActivities);
     }
 }
 
-// Export functions for global use
-window.toggleAdminLanguage = toggleAdminLanguage;
-window.logout = logout;
-window.sendNotification = sendNotification;
-window.extendVip = extendVip;
-window.viewVipDetails = viewVipDetails;
-window.exportVipData = exportVipData;
-window.refreshVipData = refreshVipData;
-window.addUser = addUser;
-window.editUser = editUser;
-window.blockUser = blockUser;
-window.approveWithdrawal = approveWithdrawal;
-window.rejectWithdrawal = rejectWithdrawal;
-window.viewWithdrawal = viewWithdrawal;
-window.approveAll = approveAll;
-window.createContest = createContest;
-window.viewContestDetails = viewContestDetails;
-window.endContest = endContest;
-window.sendNotification = sendNotification;
-window.logout = logout;
+// Render VIP Tab
+function renderVipTab() {
+    const content = document.getElementById('mainContent');
+    if (!content) return;
 
-// VIP Payment Management Functions
-function populateVipPaymentsTable() {
-    const tbody = document.getElementById('vipPaymentsBody');
-    if (!tbody) return;
-    
-    const rows = sampleVipPayments.map(payment => {
-        const tierColors = {
-            'king': '#3498DB',
-            'emperor': '#9B59B6', 
-            'lord': '#E74C3C'
-        };
-        
-        const statusColors = {
-            'pending': '#F39C12',
-            'approved': '#27AE60',
-            'rejected': '#E74C3C'
-        };
+    const vipNotifications = Object.values(realTimeData.vipNotifications || {});
+    const users = Object.values(realTimeData.users || {});
+    const vipUsers = users.filter(u => u.vip_status !== 'FREE');
+
+    content.innerHTML = `
+        <div class="dashboard-header">
+            <h2>👑 VIP Management</h2>
+            <div class="header-actions">
+                <button class="btn btn-success" onclick="approveAllVip()">
+                    <i class="fas fa-check-double"></i> Approve All
+                </button>
+            </div>
+        </div>
+
+        <div class="vip-stats">
+            <div class="stat-item">
+                <span class="stat-number">${vipNotifications.length}</span>
+                <span class="stat-label">Pending Requests</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">${vipUsers.length}</span>
+                <span class="stat-label">VIP Users</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">${vipUsers.filter(u => u.vip_status === 'KING').length}</span>
+                <span class="stat-label">King Users</span>
+            </div>
+        </div>
+
+        <div class="vip-requests">
+            <h3>📞 Pending VIP Requests</h3>
+            <div class="requests-container">
+                ${renderVipRequests(vipNotifications)}
+            </div>
+        </div>
+
+        <div class="current-vip-users">
+            <h3>👑 Current VIP Users</h3>
+            <div class="table-container">
+                <table class="vip-users-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>VIP Tier</th>
+                            <th>Points</th>
+                            <th>Ads Watched</th>
+                            <th>Join Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${renderVipUsersTable(vipUsers)}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+// Helper functions for rendering data
+function renderRecentActivities(activities) {
+    if (!activities || activities.length === 0) {
+        return '<div class="empty-state">No recent activities</div>';
+    }
+
+    return activities.map(activity => {
+        const icon = getActivityIcon(activity.type);
+        const time = formatTimeAgo(new Date(activity.created_at));
+        const user = realTimeData.users[activity.user_id];
+        const userName = user ? (user.first_name || user.username || `User ${activity.user_id}`) : `User ${activity.user_id}`;
+
+        return `
+            <div class="activity-item">
+                <div class="activity-icon">${icon}</div>
+                <div class="activity-info">
+                    <div class="activity-text">
+                        <strong>${userName}</strong> ${getActivityText(activity)}
+                    </div>
+                    <div class="activity-time">${time}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderVipNotifications(notifications) {
+    if (!notifications || Object.keys(notifications).length === 0) {
+        return '<div class="empty-state">No pending VIP requests</div>';
+    }
+
+    return Object.values(notifications).map(notification => {
+        return `
+            <div class="vip-notification">
+                <div class="notification-info">
+                    <div class="user-name">${notification.first_name || 'Unknown'}</div>
+                    <div class="user-id">ID: ${notification.user_id}</div>
+                    <div class="request-time">${formatTimeAgo(new Date(notification.created_at))}</div>
+                </div>
+                <div class="notification-actions">
+                    <button class="btn btn-success btn-sm" onclick="approveVipRequest('${notification.id}', '${notification.user_id}')">
+                        <i class="fas fa-check"></i> Approve
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectVipRequest('${notification.id}', '${notification.user_id}')">
+                        <i class="fas fa-times"></i> Reject
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderUsersTable(users) {
+    if (!users || users.length === 0) {
+        return '<tr><td colspan="8" class="empty-state">No users found</td></tr>';
+    }
+
+    return users.map(user => {
+        const joinDate = new Date(user.join_date).toLocaleDateString();
+        const vipBadge = getVipBadge(user.vip_status);
         
         return `
             <tr>
                 <td>
-                    <span class="payment-id" title="${payment.id}">${payment.id.substring(0, 12)}...</span>
-                </td>
-                <td>
                     <div class="user-info">
-                        <strong>${payment.userId}</strong>
-                        <small>${payment.userEmail}</small>
+                        <div class="user-name">${user.first_name || 'Unknown'}</div>
+                        <div class="user-id">ID: ${user.id}</div>
+                        ${user.username ? `<div class="user-username">@${user.username}</div>` : ''}
                     </div>
                 </td>
-                <td>
-                    <span class="tier-badge" style="background: ${tierColors[payment.tier]}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem;">
-                        👑 ${payment.tier.toUpperCase()}
-                    </span>
-                </td>
-                <td>
-                    <strong>$${payment.amount}</strong>
-                    <small>USDT (${payment.network})</small>
-                </td>
-                <td>
-                    <span class="transaction-hash" title="${payment.transactionHash}">
-                        ${payment.transactionHash.substring(0, 20)}...
-                    </span>
-                </td>
-                <td>
-                    <button onclick="viewScreenshot('${payment.screenshotUrl}')" class="btn btn-sm btn-secondary">
-                        <i class="fas fa-image"></i>
-                        View
-                    </button>
-                </td>
-                <td>${formatDate(payment.submittedAt)}</td>
-                <td>
-                    <span class="status-badge" style="background: ${statusColors[payment.status]}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem;">
-                        ${payment.status.toUpperCase()}
-                    </span>
-                </td>
+                <td><span class="points-badge">${(user.points || 0).toLocaleString()}</span></td>
+                <td><span class="balance-badge">$${(user.balance || 0).toFixed(2)}</span></td>
+                <td>${vipBadge}</td>
+                <td>${user.ads_watched || 0}</td>
+                <td>${user.referrals || 0}</td>
+                <td>${joinDate}</td>
                 <td>
                     <div class="action-buttons">
-                        ${payment.status === 'pending' ? `
-                            <button onclick="approveVipPayment('${payment.id}')" class="btn btn-sm btn-success" title="Approve">
-                                <i class="fas fa-check"></i>
-                            </button>
-                            <button onclick="rejectVipPayment('${payment.id}')" class="btn btn-sm btn-danger" title="Reject">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        ` : `
-                            <button onclick="viewVipPaymentDetails('${payment.id}')" class="btn btn-sm btn-info" title="View Details">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        `}
+                        <button class="btn btn-sm btn-primary" onclick="editUser('${user.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser('${user.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </td>
             </tr>
         `;
     }).join('');
-    
-    tbody.innerHTML = rows;
-    updateVipPaymentStats();
 }
 
-function updateVipPaymentStats() {
-    const pending = sampleVipPayments.filter(p => p.status === 'pending').length;
-    const approved = sampleVipPayments.filter(p => p.status === 'approved' && isToday(p.approvedAt)).length;
-    const rejected = sampleVipPayments.filter(p => p.status === 'rejected' && isToday(p.rejectedAt)).length;
-    const totalValue = sampleVipPayments
-        .filter(p => p.status === 'approved' && isToday(p.approvedAt))
-        .reduce((sum, p) => sum + parseFloat(p.amount), 0);
-    
-    document.getElementById('pendingPaymentsCount').textContent = pending;
-    document.getElementById('approvedPaymentsCount').textContent = approved;
-    document.getElementById('rejectedPaymentsCount').textContent = rejected;
-    document.getElementById('totalPaymentValue').textContent = `$${totalValue.toFixed(2)}`;
-}
-
-function isToday(date) {
-    if (!date) return false;
-    const today = new Date();
-    const checkDate = new Date(date);
-    return checkDate.toDateString() === today.toDateString();
-}
-
-async function approveVipPayment(paymentId) {
-    console.log('Approving VIP payment:', paymentId);
-    
-    // Check both sample data and localStorage
-    let payment = sampleVipPayments.find(p => p.id === paymentId);
-    
-    // If not found in sample data, check localStorage
-    if (!payment) {
-        try {
-            const localPayments = JSON.parse(localStorage.getItem('vip_payments') || '[]');
-            payment = localPayments.find(p => p.id === paymentId);
-            if (payment) {
-                // Add to sample data for display
-                sampleVipPayments.push(payment);
-            }
-        } catch (error) {
-            console.error('Error reading from localStorage:', error);
-        }
+function renderActivitiesList(activities) {
+    if (!activities || activities.length === 0) {
+        return '<div class="empty-state">No activities found</div>';
     }
-    
-    if (!payment) {
-        showNotification('Payment not found!', 'error');
+
+    return activities.map(activity => {
+        const user = realTimeData.users[activity.user_id];
+        const userName = user ? (user.first_name || user.username || `User ${activity.user_id}`) : `User ${activity.user_id}`;
+        const icon = getActivityIcon(activity.type);
+        const time = new Date(activity.created_at).toLocaleString();
+
+        return `
+            <div class="activity-card">
+                <div class="activity-header">
+                    <div class="activity-icon">${icon}</div>
+                    <div class="activity-title">${getActivityTitle(activity.type)}</div>
+                    <div class="activity-time">${time}</div>
+                </div>
+                <div class="activity-details">
+                    <div class="activity-user">👤 ${userName}</div>
+                    <div class="activity-description">${getActivityDescription(activity)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderVipRequests(notifications) {
+    if (!notifications || Object.keys(notifications).length === 0) {
+        return '<div class="empty-state">No pending VIP requests</div>';
+    }
+
+    return Object.values(notifications).map(notification => {
+        const user = realTimeData.users[notification.user_id];
+        const userStats = user ? {
+            points: user.points || 0,
+            ads: user.ads_watched || 0,
+            referrals: user.referrals || 0
+        } : { points: 0, ads: 0, referrals: 0 };
+
+        return `
+            <div class="vip-request-card">
+                <div class="request-header">
+                    <div class="user-info">
+                        <h4>${notification.first_name || 'Unknown User'}</h4>
+                        <p>ID: ${notification.user_id}</p>
+                        ${notification.username ? `<p>@${notification.username}</p>` : ''}
+                    </div>
+                    <div class="request-time">
+                        ${formatTimeAgo(new Date(notification.created_at))}
+                    </div>
+                </div>
+                <div class="request-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">${userStats.points}</span>
+                        <span class="stat-label">Points</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">${userStats.ads}</span>
+                        <span class="stat-label">Ads Watched</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">${userStats.referrals}</span>
+                        <span class="stat-label">Referrals</span>
+                    </div>
+                </div>
+                <div class="request-actions">
+                    <button class="btn btn-success" onclick="approveVipRequest('${notification.id}', '${notification.user_id}')">
+                        <i class="fas fa-check"></i> Approve as KING
+                    </button>
+                    <button class="btn btn-warning" onclick="approveVipRequest('${notification.id}', '${notification.user_id}', 'EMPEROR')">
+                        <i class="fas fa-crown"></i> Approve as EMPEROR
+                    </button>
+                    <button class="btn btn-danger" onclick="rejectVipRequest('${notification.id}', '${notification.user_id}')">
+                        <i class="fas fa-times"></i> Reject
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderVipUsersTable(vipUsers) {
+    if (!vipUsers || vipUsers.length === 0) {
+        return '<tr><td colspan="6" class="empty-state">No VIP users found</td></tr>';
+    }
+
+    return vipUsers.map(user => {
+        const joinDate = new Date(user.join_date).toLocaleDateString();
+        const vipBadge = getVipBadge(user.vip_status);
+        
+        return `
+            <tr>
+                <td>
+                    <div class="user-info">
+                        <div class="user-name">${user.first_name || 'Unknown'}</div>
+                        <div class="user-id">ID: ${user.id}</div>
+                    </div>
+                </td>
+                <td>${vipBadge}</td>
+                <td>${(user.points || 0).toLocaleString()}</td>
+                <td>${user.ads_watched || 0}</td>
+                <td>${joinDate}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="downgradeVip('${user.id}')">
+                        <i class="fas fa-arrow-down"></i> Downgrade
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// VIP Management Functions
+async function approveVipRequest(notificationId, userId, vipTier = 'KING') {
+    if (!isFirebaseInitialized || !database) {
+        showNotification('Firebase not connected', 'error');
         return;
     }
-    
-    const userDisplay = payment.userEmail || payment.userId || 'Unknown User';
-    if (confirm(`Approve VIP payment for ${userDisplay}?\n\nThis will:\n- Activate ${payment.tier.toUpperCase()} VIP status\n- Update user's app status\n- Send confirmation notification`)) {
-        try {
-            payment.status = 'approved';
-            payment.approvedAt = new Date().toISOString();
-            payment.approvedBy = 'Admin';
-            
-            // Update localStorage if payment came from there
-            updateLocalStoragePayment(payment);
-            
-            // Simulate backend operations (without actual Firebase calls)
-            console.log(`Simulating VIP status update for user ${payment.userId} to ${payment.tier}`);
-            console.log(`Simulating notification send to user`);
-            
-            populateVipPaymentsTable();
-            updateVipPaymentStats();
-            
-            showNotification(`✅ VIP payment approved! User ${userDisplay} is now ${payment.tier.toUpperCase()} VIP`, 'success');
-            
-        } catch (error) {
-            console.error('Approval error:', error);
-            showNotification('❌ Failed to approve payment. Please try again.', 'error');
-        }
-    }
-}
 
-// Update payment in localStorage
-function updateLocalStoragePayment(payment) {
     try {
-        const localPayments = JSON.parse(localStorage.getItem('vip_payments') || '[]');
-        const index = localPayments.findIndex(p => p.id === payment.id);
-        if (index !== -1) {
-            localPayments[index] = payment;
-            localStorage.setItem('vip_payments', JSON.stringify(localPayments));
-            console.log('Payment updated in localStorage');
-        }
-    } catch (error) {
-        console.error('Failed to update localStorage:', error);
-    }
-}
-
-async function rejectVipPayment(paymentId) {
-    const reason = prompt('Please enter rejection reason:');
-    if (!reason) return;
-    
-    const payment = sampleVipPayments.find(p => p.id === paymentId);
-    if (!payment) return;
-    
-    try {
-        payment.status = 'rejected';
-        payment.rejectedAt = new Date();
-        payment.rejectionReason = reason;
-        
-        await sendVipRejectionNotification(payment, reason);
-        populateVipPaymentsTable();
-        showNotification(`Payment rejected for ${payment.userEmail}`, 'warning');
-        
-    } catch (error) {
-        console.error('Rejection error:', error);
-        showNotification('Failed to reject payment. Please try again.', 'error');
-    }
-}
-
-async function updateUserVipStatus(userId, tier, days) {
-    console.log(`Updating user ${userId} to ${tier} VIP for ${days} days`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-}
-
-async function sendVipActivationNotification(payment) {
-    console.log(`Sending VIP activation notification to ${payment.userEmail}`);
-}
-
-async function sendVipRejectionNotification(payment, reason) {
-    console.log(`Sending VIP rejection notification to ${payment.userEmail}: ${reason}`);
-}
-
-function viewScreenshot(url) {
-    showModal('Payment Screenshot', `
-        <div class="screenshot-viewer">
-            <img src="${url}" alt="Payment Screenshot" style="max-width: 100%; height: auto; border-radius: 8px;" 
-                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjhGOUZBIi8+CjxwYXRoIGQ9Ik0yMDAgMTUwQzIwNSAxNTAgMjEwIDE0NSAyMTAgMTQwQzIxMCAxMzUgMjA1IDEzMCAyMDAgMTMwQzE5NSAxMzAgMTkwIDEzNSAxOTAgMTQwQzE5MCAxNDUgMTk1IDE1MCAyMDAgMTUwWiIgZmlsbD0iIzZCNzI4MCIvPgo8L3N2Zz4K'; this.onerror=null;"
-                 />
-            <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">
-                <i class="fas fa-info-circle"></i>
-                Screenshot submitted by user as payment proof
-            </p>
-        </div>
-    `);
-}
-
-function viewVipPaymentDetails(paymentId) {
-    const payment = sampleVipPayments.find(p => p.id === paymentId);
-    if (!payment) return;
-    
-    const statusColor = {
-        'pending': '#F39C12',
-        'approved': '#27AE60',
-        'rejected': '#E74C3C'
-    }[payment.status];
-    
-    showModal('VIP Payment Details', `
-        <div class="payment-details">
-            <div class="detail-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3>${payment.id}</h3>
-                <span class="status-badge" style="background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 16px;">
-                    ${payment.status.toUpperCase()}
-                </span>
-            </div>
-            
-            <div class="detail-grid" style="display: grid; gap: 15px;">
-                <div><strong>User:</strong> ${payment.userEmail} (${payment.userId})</div>
-                <div><strong>VIP Tier:</strong> 👑 ${payment.tier.toUpperCase()}</div>
-                <div><strong>Amount:</strong> $${payment.amount} USDT (${payment.network})</div>
-                <div><strong>Transaction:</strong> <code style="font-size: 0.9rem; word-break: break-all;">${payment.transactionHash}</code></div>
-                <div><strong>Submitted:</strong> ${formatDate(payment.submittedAt)}</div>
-                ${payment.approvedAt ? `<div><strong>Approved:</strong> ${formatDate(payment.approvedAt)}</div>` : ''}
-                ${payment.rejectedAt ? `<div><strong>Rejected:</strong> ${formatDate(payment.rejectedAt)}<br><em style="color: #E74C3C;">${payment.rejectionReason}</em></div>` : ''}
-                ${payment.additionalNotes ? `<div><strong>Notes:</strong> ${payment.additionalNotes}</div>` : ''}
-            </div>
-        </div>
-    `);
-}
-
-function refreshVipPayments() {
-    populateVipPaymentsTable();
-    showNotification('VIP payments refreshed', 'success');
-}
-
-function approveAllVipPayments() {
-    const pendingPayments = sampleVipPayments.filter(p => p.status === 'pending');
-    
-    if (pendingPayments.length === 0) {
-        showNotification('No pending payments to approve', 'info');
-        return;
-    }
-    
-    if (confirm(`Approve all ${pendingPayments.length} pending VIP payments?`)) {
-        pendingPayments.forEach(async payment => {
-            payment.status = 'approved';
-            payment.approvedAt = new Date();
-            await updateUserVipStatus(payment.userId, payment.tier, 30);
-            await sendVipActivationNotification(payment);
+        // Update notification status
+        await database.ref(`vip_notifications/${notificationId}`).update({
+            status: 'approved',
+            admin_response: `Approved as ${vipTier}`,
+            processed_at: firebase.database.ServerValue.TIMESTAMP
         });
+
+        // Update user VIP status
+        const vipExpiry = new Date();
+        vipExpiry.setDate(vipExpiry.getDate() + 30); // 30 days
+
+        await database.ref(`users/${userId}`).update({
+            vip_status: vipTier,
+            vip_expires: vipExpiry.toISOString(),
+            updated_at: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        showNotification(`VIP request approved! User upgraded to ${vipTier}`, 'success');
         
-        populateVipPaymentsTable();
-        showNotification(`${pendingPayments.length} VIP payments approved!`, 'success');
+        // Refresh VIP tab if currently active
+        if (currentTab === 'vip') {
+            renderVipTab();
+        }
+    } catch (error) {
+        console.error('Error approving VIP request:', error);
+        showNotification('Failed to approve VIP request', 'error');
     }
 }
 
-// Export VIP payment functions
-window.populateVipPaymentsTable = populateVipPaymentsTable;
-window.approveVipPayment = approveVipPayment;
-window.rejectVipPayment = rejectVipPayment;
-window.viewVipPaymentDetails = viewVipPaymentDetails;
-window.viewScreenshot = viewScreenshot;
-window.refreshVipPayments = refreshVipPayments;
-window.approveAllVipPayments = approveAllVipPayments;
+async function rejectVipRequest(notificationId, userId) {
+    if (!isFirebaseInitialized || !database) {
+        showNotification('Firebase not connected', 'error');
+        return;
+    }
+
+    try {
+        // Update notification status
+        await database.ref(`vip_notifications/${notificationId}`).update({
+            status: 'rejected',
+            admin_response: 'Request rejected by admin',
+            processed_at: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        showNotification('VIP request rejected', 'info');
+        
+        // Refresh VIP tab if currently active
+        if (currentTab === 'vip') {
+            renderVipTab();
+        }
+    } catch (error) {
+        console.error('Error rejecting VIP request:', error);
+        showNotification('Failed to reject VIP request', 'error');
+    }
+}
+
+// Utility Functions
+function getActivityIcon(type) {
+    const icons = {
+        'ad_watched': '📺',
+        'contest_ad': '🏆',
+        'vip_request': '👑',
+        'user_joined': '👋',
+        'referral_earned': '👥',
+        'vip_approved': '✅',
+        'vip_rejected': '❌',
+        'leaderboards_reset': '🔄',
+        'contests_reset': '🏆'
+    };
+    return icons[type] || '📊';
+}
+
+function getActivityText(activity) {
+    const texts = {
+        'ad_watched': 'watched an ad',
+        'contest_ad': 'participated in contest',
+        'vip_request': 'requested VIP upgrade',
+        'user_joined': 'joined the bot',
+        'referral_earned': 'earned a referral',
+        'vip_approved': 'got VIP approved',
+        'vip_rejected': 'got VIP rejected'
+    };
+    return texts[activity.type] || 'performed an action';
+}
+
+function getActivityTitle(type) {
+    const titles = {
+        'ad_watched': 'Ad Watched',
+        'contest_ad': 'Contest Participation',
+        'vip_request': 'VIP Request',
+        'user_joined': 'New User',
+        'referral_earned': 'Referral',
+        'vip_approved': 'VIP Approved',
+        'vip_rejected': 'VIP Rejected'
+    };
+    return titles[type] || 'Activity';
+}
+
+function getActivityDescription(activity) {
+    if (activity.data) {
+        if (activity.type === 'ad_watched') {
+            return `Earned ${activity.data.points_earned || 0} points`;
+        }
+        if (activity.type === 'contest_ad') {
+            return `${activity.data.contest_type || 'Unknown'} contest - Count: ${activity.data.new_count || 0}`;
+        }
+        if (activity.type === 'vip_request') {
+            return `Current status: ${activity.data.current_status || 'FREE'}`;
+        }
+    }
+    return 'No additional details';
+}
+
+function getVipBadge(vipStatus) {
+    const badges = {
+        'FREE': '<span class="vip-badge free">FREE</span>',
+        'KING': '<span class="vip-badge king">👑 KING</span>',
+        'EMPEROR': '<span class="vip-badge emperor">💎 EMPEROR</span>',
+        'LORD': '<span class="vip-badge lord">🏆 LORD</span>'
+    };
+    return badges[vipStatus] || badges['FREE'];
+}
+
+function formatTimeAgo(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+}
+
+// Dashboard utility functions
+function updateDashboardStats() {
+    // Update stats in real-time
+    const users = Object.values(realTimeData.users || {});
+    const activities = Object.values(realTimeData.activities || {});
+    
+    // Update header stats if visible
+    const totalUsersEl = document.querySelector('.stat-card h3');
+    if (totalUsersEl) {
+        totalUsersEl.textContent = users.length.toLocaleString();
+    }
+}
+
+function updateVipNotificationCount() {
+    const vipNotifications = Object.values(realTimeData.vipNotifications || {});
+    const badges = document.querySelectorAll('.badge-warning');
+    badges.forEach(badge => {
+        badge.textContent = vipNotifications.length;
+    });
+}
+
+function refreshDashboard() {
+    showNotification('Dashboard refreshed', 'success');
+    switchTab(currentTab);
+}
+
+function showLoading() {
+    const content = document.getElementById('mainContent');
+    if (content) {
+        content.innerHTML = `
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Loading data...</p>
+            </div>
+        `;
+    }
+}
+
+function hideLoading() {
+    // Loading is hidden when content is rendered
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-message">${message}</span>
+            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function toggleLanguage() {
+    isAdminArabic = !isAdminArabic;
+    showNotification(`Language switched to ${isAdminArabic ? 'Arabic' : 'English'}`, 'info');
+}
+
+// Filter and search functions
+function filterUsers() {
+    const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+    const users = Object.values(realTimeData.users || {});
+    const filteredUsers = users.filter(user => 
+        (user.first_name && user.first_name.toLowerCase().includes(searchTerm)) ||
+        (user.username && user.username.toLowerCase().includes(searchTerm)) ||
+        user.id.toString().includes(searchTerm)
+    );
+    
+    const tbody = document.querySelector('.users-table tbody');
+    if (tbody) {
+        tbody.innerHTML = renderUsersTable(filteredUsers);
+    }
+}
+
+function filterActivities() {
+    const filterType = document.getElementById('activityFilter').value;
+    const activities = Object.values(realTimeData.activities || {})
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    const filteredActivities = filterType === 'all' ? 
+        activities : 
+        activities.filter(activity => activity.type === filterType);
+    
+    const container = document.querySelector('.activities-container');
+    if (container) {
+        container.innerHTML = renderActivitiesList(filteredActivities);
+    }
+}
+
+// Export functions
+function exportUsers() {
+    const users = Object.values(realTimeData.users || {});
+    const csvContent = "data:text/csv;charset=utf-8," + 
+        "ID,Name,Username,Points,Balance,VIP Status,Ads Watched,Referrals,Join Date\n" +
+        users.map(user => 
+            `${user.id},"${user.first_name || ''}","${user.username || ''}",${user.points || 0},${user.balance || 0},${user.vip_status || 'FREE'},${user.ads_watched || 0},${user.referrals || 0},"${new Date(user.join_date).toLocaleDateString()}"`
+        ).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `navigi_users_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Users exported successfully', 'success');
+}
+
+// Initialize dashboard
+console.log('🚀 NAVIGI SBARO Admin Dashboard Script Loaded');
+console.log('🔥 Firebase Config Ready');
+console.log('📊 Real-time Integration Active');
