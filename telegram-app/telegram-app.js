@@ -15,6 +15,23 @@ class TelegramSbaroApp {
         this.currentTab = 'home';
         this.isArabic = localStorage.getItem('isArabic') === 'true';
         
+        // Daily login and tasks
+        this.dailyLoginClaimed = false;
+        this.lastDailyLogin = localStorage.getItem('lastDailyLogin') || '0';
+        this.tasks = {
+            channelSubscription: localStorage.getItem('task_channel') === 'true',
+            visitBot1: localStorage.getItem('task_bot1') === 'true',
+            visitBot2: localStorage.getItem('task_bot2') === 'true',
+            visitWebsite: localStorage.getItem('task_website') === 'true'
+        };
+        
+        // VIP Mining System
+        this.vipMining = {
+            king: { dailyPoints: 10, minedToday: parseInt(localStorage.getItem('vip_king_mined') || '0'), lastClaim: localStorage.getItem('vip_king_last_claim') || '0' },
+            emperor: { dailyPoints: 15, minedToday: parseInt(localStorage.getItem('vip_emperor_mined') || '0'), lastClaim: localStorage.getItem('vip_emperor_last_claim') || '0' },
+            lord: { dailyPoints: 20, minedToday: parseInt(localStorage.getItem('vip_lord_mined') || '0'), lastClaim: localStorage.getItem('vip_lord_last_claim') || '0' }
+        };
+        
         this.init();
     }
 
@@ -202,9 +219,17 @@ class TelegramSbaroApp {
             this.initContestTimers();
             this.updateContestEligibility();
             
+            // Initialize task and VIP mining UI
+            this.updateDailyLoginUI();
+            this.updateVipMiningUI();
+            this.initTasksUI();
+            
             // Start cooldown timers if needed
             this.startCooldownTimer('earn');
             this.startCooldownTimer('contest');
+            
+            // Reset referral leaderboard to zero
+            this.resetReferralLeaderboard();
             
         } catch (error) {
             console.error('Failed to load user data:', error);
@@ -267,31 +292,53 @@ class TelegramSbaroApp {
         }
     }
 
-    // Show Monetag In-App Interstitial (2 ads automatically)
-    async showMontagInAppAds() {
+    // Show Monetag Rewarded Interstitial (2x15s ads OR 1x30s ad)
+    async showMontagRewardedAds() {
         return new Promise((resolve, reject) => {
             try {
-                console.log('Starting Monetag In-App Interstitial ads...');
+                console.log('Starting Monetag Rewarded Interstitial ads...');
                 
-                // Show 2 ads automatically with 30s interval between them
-                show_9656288({
-                    type: 'inApp',
-                    inAppSettings: {
-                        frequency: 2,        // Show 2 ads
-                        capping: 0.1,        // Within 6 minutes (0.1 hours)
-                        interval: 30,        // 30 seconds between ads
-                        timeout: 5,          // 5 second delay before first ad
-                        everyPage: false     // Save session on page navigation
-                    }
-                }).then(() => {
-                    console.log('Both Monetag In-App ads completed successfully');
-                    resolve(true);
-                }).catch(error => {
-                    console.error('Monetag In-App ads error:', error);
-                    reject(error);
-                });
+                // Random choice: 2x15s ads OR 1x30s ad
+                const adChoice = Math.random() < 0.7 ? 'double' : 'single';
+                
+                if (adChoice === 'double') {
+                    // Show 2x15s Rewarded Interstitial ads with 1s interval
+                    this.showDoubleRewardedAds().then(() => {
+                        console.log('Both 15s Rewarded ads completed');
+                        resolve(true);
+                    }).catch(reject);
+                } else {
+                    // Show single 30s Rewarded Interstitial
+                    show_9656288().then(() => {
+                        console.log('30s Rewarded ad completed');
+                        resolve(true);
+                    }).catch(reject);
+                }
             } catch (error) {
-                console.error('Failed to show Monetag In-App ads:', error);
+                console.error('Failed to show Monetag Rewarded ads:', error);
+                reject(error);
+            }
+        });
+    }
+
+    // Show 2x15s Rewarded Interstitial ads with 1s interval
+    async showDoubleRewardedAds() {
+        return new Promise((resolve, reject) => {
+            try {
+                // First 15s ad
+                show_9656288().then(() => {
+                    console.log('First 15s ad completed, waiting 1s...');
+                    
+                    // Wait 1 second between ads
+                    setTimeout(() => {
+                        // Second 15s ad
+                        show_9656288().then(() => {
+                            console.log('Second 15s ad completed');
+                            resolve(true);
+                        }).catch(reject);
+                    }, 1000); // 1 second interval
+                }).catch(reject);
+            } catch (error) {
                 reject(error);
             }
         });
@@ -384,19 +431,21 @@ class TelegramSbaroApp {
             // Show Monetag In-App Interstitial (2 ads automatically)
             if (typeof show_9656288 === 'function') {
                 try {
-                    // Show ad progress for 2 ads (15s each = 30s total + 30s interval = ~60s total)
+                                         // Show ad progress (2x15s OR 1x30s)
                     let adWatchTime = 0;
-                    const totalAdDuration = 60; // 2x15s ads + 30s interval
+                    const totalAdDuration = 32; // 2x15s + 1s interval OR 1x30s
                     
                     // Show ad progress
                     const progressInterval = setInterval(() => {
                         adWatchTime++;
                         if (adWatchTime <= 15) {
-                            watchBtn.innerHTML = `<i class="fas fa-eye"></i> Ad 1/2: ${adWatchTime}/15s`;
-                        } else if (adWatchTime <= 45) {
-                            watchBtn.innerHTML = `<i class="fas fa-clock"></i> Waiting for Ad 2/2... ${45 - adWatchTime}s`;
+                            watchBtn.innerHTML = `<i class="fas fa-eye"></i> Ad 1: ${adWatchTime}/15s`;
+                        } else if (adWatchTime <= 16) {
+                            watchBtn.innerHTML = `<i class="fas fa-clock"></i> Next ad in 1s...`;
+                        } else if (adWatchTime <= 31) {
+                            watchBtn.innerHTML = `<i class="fas fa-eye"></i> Ad 2: ${adWatchTime - 16}/15s`;
                         } else {
-                            watchBtn.innerHTML = `<i class="fas fa-eye"></i> Ad 2/2: ${adWatchTime - 45}/15s`;
+                            watchBtn.innerHTML = `<i class="fas fa-check"></i> Ads completed!`;
                         }
                         
                         if (adWatchTime >= totalAdDuration) {
@@ -404,10 +453,10 @@ class TelegramSbaroApp {
                         }
                     }, 1000);
                     
-                    // Show Monetag In-App Interstitial (2 ads with 30s interval)
-                    await this.showMontagInAppAds();
+                    // Show Monetag Rewarded Interstitial (2x15s OR 1x30s)
+                    await this.showMontagRewardedAds();
                     
-                    // Ensure minimum watch time (60 seconds for 2 ads + interval)
+                                         // Ensure minimum watch time (32 seconds for 2x15s + 1s interval)
                     if (adWatchTime < totalAdDuration) {
                         const remainingTime = totalAdDuration - adWatchTime;
                         await new Promise(resolve => setTimeout(resolve, remainingTime * 1000));
@@ -561,9 +610,9 @@ class TelegramSbaroApp {
     }
     
     async watchContestAd(contestType) {
-        // Check contest ad cooldown (7 minutes - same as earning ads)
+        // Check contest ad cooldown (5 minutes for contest ads)
         const lastContestAdTime = localStorage.getItem('lastContestAdTime');
-        const contestCooldown = 7 * 60 * 1000; // 7 minutes
+        const contestCooldown = 5 * 60 * 1000; // 5 minutes
         
         if (lastContestAdTime && Date.now() - parseInt(lastContestAdTime) < contestCooldown) {
             const remainingMs = contestCooldown - (Date.now() - parseInt(lastContestAdTime));
@@ -577,60 +626,54 @@ class TelegramSbaroApp {
         }
 
         try {
-            // Show Monetag In-App Interstitial for contest participation (no points earned)
+            // Show single 15s Monetag Rewarded Interstitial for contest participation (no points earned)
             if (typeof show_9656288 === 'function') {
                 const contestBtn = document.getElementById(`${contestType}JoinBtn`);
                 const originalText = contestBtn.textContent;
                 
-                // Show progress for 2x15s contest ads
+                // Show progress for single 15s contest ad
                 let contestAdTime = 0;
-                const totalContestDuration = 60; // 2x15s ads + 30s interval
+                const contestAdDuration = 15; // Single 15s ad
                 
                 const contestInterval = setInterval(() => {
                     contestAdTime++;
-                    if (contestAdTime <= 15) {
-                        contestBtn.textContent = `Contest Ad 1/2: ${contestAdTime}/15s`;
-                    } else if (contestAdTime <= 45) {
-                        contestBtn.textContent = `Waiting for Contest Ad 2/2... ${45 - contestAdTime}s`;
-                    } else {
-                        contestBtn.textContent = `Contest Ad 2/2: ${contestAdTime - 45}/15s`;
-                    }
+                    contestBtn.textContent = `Contest Ad: ${contestAdTime}/15s`;
                     
-                    if (contestAdTime >= totalContestDuration) {
+                    if (contestAdTime >= contestAdDuration) {
                         clearInterval(contestInterval);
                     }
                 }, 1000);
                 
-                // Show Monetag In-App Interstitial (2 ads for contest)
-                await this.showMontagInAppAds();
+                // Show single Monetag Rewarded Interstitial (15s for contest)
+                await show_9656288();
                 
-                // Ensure user watched full duration (60 seconds for 2 ads + interval)
-                if (contestAdTime < totalContestDuration) {
-                    const remainingTime = totalContestDuration - contestAdTime;
+                // Ensure user watched full 15 seconds
+                if (contestAdTime < contestAdDuration) {
+                    const remainingTime = contestAdDuration - contestAdTime;
                     await new Promise(resolve => setTimeout(resolve, remainingTime * 1000));
                 }
                 
                 clearInterval(contestInterval);
                 
-                // Only count if watched both ads completely
+                // Only count if watched full 15s ad
                 this.incrementContestAds(contestType);
                 
                 // Update contest eligibility
                 this.updateContestEligibility();
                 
-                // Set contest ad cooldown
+                // Set contest ad cooldown (5 minutes)
                 localStorage.setItem('lastContestAdTime', Date.now().toString());
                 
                 // Save user progress
                 this.saveUserProgress();
                 
-                this.showToast('📺 Contest 2x15s ads watched! Contest progress +1', 'info');
+                this.showToast('📺 Contest 15s ad watched! Contest progress +1', 'info');
                 this.tg.HapticFeedback.impactOccurred('light');
                 
                 // Send to backend
                 await this.sendContestAdToBackend(contestType);
                 
-                // Start cooldown timer
+                // Start cooldown timer (5 minutes)
                 this.startCooldownTimer('contest');
                 
                 // Reset button text
@@ -721,31 +764,70 @@ class TelegramSbaroApp {
     }
     
     claimDailyLogin() {
-        const lastLogin = localStorage.getItem('lastDailyLogin');
-        const today = new Date().toDateString();
+        // Check if already claimed (24h timer)
+        const lastClaim = parseInt(this.lastDailyLogin);
+        const now = Date.now();
+        const timeSinceLastClaim = now - lastClaim;
+        const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
         
-        if (lastLogin === today) {
-            this.showToast('✅ Daily login already claimed today!', 'info');
+        if (timeSinceLastClaim < twentyFourHours) {
+            const remainingTime = twentyFourHours - timeSinceLastClaim;
+            const hoursLeft = Math.floor(remainingTime / (60 * 60 * 1000));
+            const minutesLeft = Math.floor((remainingTime % (60 * 60 * 1000)) / (60 * 1000));
+            this.showToast(`⏰ Next daily login in: ${hoursLeft}h ${minutesLeft}m`, 'info');
             return;
         }
         
+        // Add daily login reward
         this.userStats.totalPoints += 1;
         this.userStats.totalBalance += 0.01;
+        
+        // Update last claim time
+        this.lastDailyLogin = now.toString();
+        localStorage.setItem('lastDailyLogin', this.lastDailyLogin);
+        this.dailyLoginClaimed = true;
+        
+        // Update display
         this.updateStatsDisplay();
+        this.updateDailyLoginUI();
         
-        localStorage.setItem('lastDailyLogin', today);
+        // Show success message
+        this.showToast('🎉 Daily login reward claimed! +1 point', 'success');
+        this.addActivity('Daily Login', '+1 point', 'daily');
         
-        this.showToast('🎉 Daily login claimed! +1 point', 'success');
-        this.addActivity('Daily Login', '+1 point', 'earn');
-        
-        // Update task button
-        const taskBtn = document.querySelector('#dailyLoginTask .task-btn');
-        taskBtn.textContent = 'Claimed';
-        taskBtn.disabled = true;
-        taskBtn.style.opacity = '0.5';
+        // Save progress
+        this.saveUserProgress();
         
         // Send to backend
         this.sendDailyLoginToBackend();
+    }
+
+    // Update daily login UI with timer
+    updateDailyLoginUI() {
+        const lastClaim = parseInt(this.lastDailyLogin);
+        const now = Date.now();
+        const timeSinceLastClaim = now - lastClaim;
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        
+        const taskBtn = document.querySelector('#dailyLoginTask .task-btn');
+        if (!taskBtn) return;
+        
+        if (timeSinceLastClaim < twentyFourHours) {
+            const remainingTime = twentyFourHours - timeSinceLastClaim;
+            const hoursLeft = Math.floor(remainingTime / (60 * 60 * 1000));
+            const minutesLeft = Math.floor((remainingTime % (60 * 60 * 1000)) / (60 * 1000));
+            
+            taskBtn.innerHTML = `<i class="fas fa-clock"></i> ${hoursLeft}h ${minutesLeft}m`;
+            taskBtn.disabled = true;
+            taskBtn.style.opacity = '0.6';
+            
+            // Update timer every minute
+            setTimeout(() => this.updateDailyLoginUI(), 60000);
+        } else {
+            taskBtn.innerHTML = '<i class="fas fa-gift"></i> Claim';
+            taskBtn.disabled = false;
+            taskBtn.style.opacity = '1';
+        }
     }
     
     async sendDailyLoginToBackend() {
@@ -1731,7 +1813,7 @@ class TelegramSbaroApp {
 
     // Start cooldown timer display
     startCooldownTimer(type = 'earn') {
-        const cooldownTime = 7 * 60 * 1000; // 7 minutes
+        const cooldownTime = type === 'earn' ? 7 * 60 * 1000 : 5 * 60 * 1000; // 7min for earn, 5min for contest
         const lastTimeKey = type === 'earn' ? 'lastAdTime' : 'lastContestAdTime';
         const lastTime = localStorage.getItem(lastTimeKey);
         
@@ -1745,7 +1827,7 @@ class TelegramSbaroApp {
                 if (type === 'earn') {
                     const watchBtn = document.getElementById('watchAdBtn');
                     if (watchBtn) {
-                        watchBtn.innerHTML = '<i class="fas fa-play"></i> Watch 2x15s Ads';
+                        watchBtn.innerHTML = '<i class="fas fa-play"></i> Watch Ads';
                         watchBtn.disabled = false;
                     }
                 }
@@ -1769,6 +1851,241 @@ class TelegramSbaroApp {
         };
         
         updateTimer();
+    }
+
+    // Task system functions
+    async completeChannelTask() {
+        if (this.tasks.channelSubscription) {
+            this.showToast('✅ Channel subscription task already completed!', 'info');
+            return;
+        }
+        
+        // Open Telegram channel
+        this.tg.openTelegramLink('https://t.me/NAVIGI_E');
+        
+        // Wait a bit then mark as completed
+        setTimeout(() => {
+            this.tasks.channelSubscription = true;
+            localStorage.setItem('task_channel', 'true');
+            
+            // Award points
+            this.userStats.totalPoints += 1;
+            this.userStats.totalBalance += 0.01;
+            this.updateStatsDisplay();
+            
+            this.showToast('🎉 Channel subscription completed! +1 point', 'success');
+            this.addActivity('Channel Subscription', '+1 point', 'task');
+            this.saveUserProgress();
+            
+            // Update UI
+            this.updateTaskUI('channel');
+        }, 3000);
+    }
+
+    async completeBot1Task() {
+        if (this.tasks.visitBot1) {
+            this.showToast('✅ Bot 1 visit task already completed!', 'info');
+            return;
+        }
+        
+        // Open bot 1
+        this.tg.openTelegramLink('https://t.me/steamgiftcard_robot?start=_tgr_ZXq4pyM4ZmI0');
+        
+        // Wait a bit then mark as completed
+        setTimeout(() => {
+            this.tasks.visitBot1 = true;
+            localStorage.setItem('task_bot1', 'true');
+            
+            // Award points
+            this.userStats.totalPoints += 1;
+            this.userStats.totalBalance += 0.01;
+            this.updateStatsDisplay();
+            
+            this.showToast('🎉 Bot 1 visit completed! +1 point', 'success');
+            this.addActivity('Bot Visit 1', '+1 point', 'task');
+            this.saveUserProgress();
+            
+            // Update UI
+            this.updateTaskUI('bot1');
+        }, 3000);
+    }
+
+    async completeBot2Task() {
+        if (this.tasks.visitBot2) {
+            this.showToast('✅ Bot 2 visit task already completed!', 'info');
+            return;
+        }
+        
+        // Open bot 2
+        this.tg.openTelegramLink('https://t.me/rollszvazdbot?start=_tgr_8dXyXXVhZDA0');
+        
+        // Wait a bit then mark as completed
+        setTimeout(() => {
+            this.tasks.visitBot2 = true;
+            localStorage.setItem('task_bot2', 'true');
+            
+            // Award points
+            this.userStats.totalPoints += 1;
+            this.userStats.totalBalance += 0.01;
+            this.updateStatsDisplay();
+            
+            this.showToast('🎉 Bot 2 visit completed! +1 point', 'success');
+            this.addActivity('Bot Visit 2', '+1 point', 'task');
+            this.saveUserProgress();
+            
+            // Update UI
+            this.updateTaskUI('bot2');
+        }, 3000);
+    }
+
+    async completeWebsiteTask() {
+        if (this.tasks.visitWebsite) {
+            this.showToast('✅ Website visit task already completed!', 'info');
+            return;
+        }
+        
+        // Open website
+        this.tg.openLink('https://www.profitableratecpm.com/wzun0hab?key=d618b444e85c92f5cff5b3be66d62941');
+        
+        // Wait a bit then mark as completed
+        setTimeout(() => {
+            this.tasks.visitWebsite = true;
+            localStorage.setItem('task_website', 'true');
+            
+            // Award points
+            this.userStats.totalPoints += 1;
+            this.userStats.totalBalance += 0.01;
+            this.updateStatsDisplay();
+            
+            this.showToast('🎉 Website visit completed! +1 point', 'success');
+            this.addActivity('Website Visit', '+1 point', 'task');
+            this.saveUserProgress();
+            
+            // Update UI
+            this.updateTaskUI('website');
+        }, 3000);
+    }
+
+    // Update task UI
+    updateTaskUI(taskType) {
+        const taskMap = {
+            'channel': '#channelTask',
+            'bot1': '#bot1Task', 
+            'bot2': '#bot2Task',
+            'website': '#websiteTask'
+        };
+        
+        const taskElement = document.querySelector(taskMap[taskType]);
+        if (taskElement) {
+            const taskBtn = taskElement.querySelector('.task-btn');
+            if (taskBtn) {
+                taskBtn.innerHTML = '<i class="fas fa-check"></i> Completed';
+                taskBtn.disabled = true;
+                taskBtn.style.opacity = '0.6';
+                taskBtn.style.background = '#28a745';
+            }
+        }
+    }
+
+    // VIP Mining System
+    async claimVipMining() {
+        const vipLevel = this.userStats.vipStatus.toLowerCase();
+        if (vipLevel === 'free') {
+            this.showToast('❌ VIP Mining is only for VIP members!', 'error');
+            return;
+        }
+        
+        const miningData = this.vipMining[vipLevel];
+        if (!miningData) return;
+        
+        const now = Date.now();
+        const lastClaim = parseInt(miningData.lastClaim);
+        const timeSinceClaim = now - lastClaim;
+        const oneDay = 24 * 60 * 60 * 1000;
+        
+        // Reset daily mining if new day
+        if (timeSinceClaim >= oneDay) {
+            miningData.minedToday = 0;
+            localStorage.setItem(`vip_${vipLevel}_mined`, '0');
+        }
+        
+        // Check if can mine more
+        if (miningData.minedToday >= miningData.dailyPoints) {
+            const timeUntilReset = oneDay - (timeSinceClaim % oneDay);
+            const hoursLeft = Math.floor(timeUntilReset / (60 * 60 * 1000));
+            this.showToast(`⏰ VIP mining resets in ${hoursLeft}h`, 'info');
+            return;
+        }
+        
+        // Mine points (can claim 1-10 points at a time)
+        const pointsToMine = Math.min(
+            miningData.dailyPoints - miningData.minedToday,
+            Math.floor(Math.random() * 10) + 1
+        );
+        
+        // Award mined points
+        this.userStats.totalPoints += pointsToMine;
+        this.userStats.totalBalance += pointsToMine * 0.01;
+        
+        // Update mining data
+        miningData.minedToday += pointsToMine;
+        miningData.lastClaim = now.toString();
+        
+        // Save to localStorage
+        localStorage.setItem(`vip_${vipLevel}_mined`, miningData.minedToday.toString());
+        localStorage.setItem(`vip_${vipLevel}_last_claim`, miningData.lastClaim);
+        
+        // Update display
+        this.updateStatsDisplay();
+        this.updateVipMiningUI();
+        
+        this.showToast(`⛏️ VIP Mining: +${pointsToMine} points! (${miningData.minedToday}/${miningData.dailyPoints} today)`, 'success');
+        this.addActivity('VIP Mining', `+${pointsToMine} points`, 'vip');
+        this.saveUserProgress();
+    }
+
+    // Update VIP mining UI
+    updateVipMiningUI() {
+        const vipLevel = this.userStats.vipStatus.toLowerCase();
+        if (vipLevel === 'free') return;
+        
+        const miningData = this.vipMining[vipLevel];
+        const miningBtn = document.getElementById('vipMiningBtn');
+        
+        if (miningBtn && miningData) {
+            const remaining = miningData.dailyPoints - miningData.minedToday;
+            if (remaining > 0) {
+                miningBtn.innerHTML = `<i class="fas fa-pickaxe"></i> Mine Points (${remaining} left)`;
+                miningBtn.disabled = false;
+                miningBtn.style.opacity = '1';
+            } else {
+                miningBtn.innerHTML = `<i class="fas fa-clock"></i> Mining Reset in 24h`;
+                miningBtn.disabled = true;
+                miningBtn.style.opacity = '0.6';
+            }
+                 }
+     }
+
+    // Initialize tasks UI
+    initTasksUI() {
+        // Update task buttons based on completion status
+        if (this.tasks.channelSubscription) this.updateTaskUI('channel');
+        if (this.tasks.visitBot1) this.updateTaskUI('bot1');
+        if (this.tasks.visitBot2) this.updateTaskUI('bot2');
+        if (this.tasks.visitWebsite) this.updateTaskUI('website');
+    }
+
+    // Reset referral leaderboard to zero
+    resetReferralLeaderboard() {
+        // Clear all referral data
+        localStorage.removeItem('referralLeaderboard');
+        localStorage.removeItem('weeklyReferrals');
+        localStorage.removeItem('totalReferrals');
+        
+        // Reset user referral count
+        this.userStats.referrals = 0;
+        
+        console.log('Referral leaderboard reset to zero');
     }
 
 }
@@ -1830,6 +2147,28 @@ function claimDailyLogin() {
 
 function sendTONStars() {
     telegramApp.sendTONStars();
+}
+
+// New task functions
+function completeChannelTask() {
+    telegramApp.completeChannelTask();
+}
+
+function completeBot1Task() {
+    telegramApp.completeBot1Task();
+}
+
+function completeBot2Task() {
+    telegramApp.completeBot2Task();
+}
+
+function completeWebsiteTask() {
+    telegramApp.completeWebsiteTask();
+}
+
+// VIP Mining function
+function claimVipMining() {
+    telegramApp.claimVipMining();
 }
 
 // Initialize app when DOM is loaded
