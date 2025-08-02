@@ -4,7 +4,7 @@ const { FirebaseManager } = require('./firebase-config');
 // Bot configuration
 const BOT_TOKEN = '8185239716:AAGwRpHQH3pEoMLVTzWpLnE3hHTNc35AleY';
 const WEBAPP_URL = 'https://navigiu.netlify.app/';
-const ADMIN_DASHBOARD_URL = 'https://navigiu.netlify.app/admin-dashboard.html';
+const ADMIN_DASHBOARD_URL = 'https://navigiu.netlify.app/admin-dashboard';
 
 // Initialize bot
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
@@ -120,7 +120,7 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
     const referralCode = match[1] ? match[1].trim() : null;
     
     // Initialize user
-    const user = initUser(userId, {
+    const user = await initUser(userId, {
         username: msg.from.username,
         first_name: msg.from.first_name
     });
@@ -189,7 +189,7 @@ bot.on('callback_query', async (query) => {
     const data = query.data;
     
     // Initialize user if not exists
-    const user = initUser(userId, {
+    const user = await initUser(userId, {
         username: query.from.username,
         first_name: query.from.first_name
     });
@@ -780,8 +780,8 @@ bot.onText(/\/admin/, (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
     
-    // Simple admin check (replace with proper authentication)
-    const adminIds = ['YOUR_ADMIN_USER_ID']; // Replace with actual admin user IDs
+    // Simple admin check (UPDATE WITH YOUR ACTUAL TELEGRAM USER ID)
+    const adminIds = ['YOUR_TELEGRAM_USER_ID_HERE']; // Replace with your actual Telegram user ID
     
     if (adminIds.includes(userId.toString())) {
         const message = `🔧 *Admin Panel*\n\nDashboard: ${ADMIN_DASHBOARD_URL}\n\n📊 Bot Stats:\n• Total Users: ${users.size}\n• Active Today: ${Array.from(users.values()).filter(u => u.last_ad_reset === new Date().toDateString()).length}`;

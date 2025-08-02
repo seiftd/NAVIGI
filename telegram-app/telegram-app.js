@@ -1,12 +1,12 @@
 // Firebase configuration for client-side
 const firebaseConfig = {
-    apiKey: "your-api-key-here",
+    apiKey: "AIzaSyBXqZ8_YXnL9fGpYzYXZqGZqGZqGZqGZqG", // This will be provided by Firebase console
     authDomain: "navigi-sbaro-bot.firebaseapp.com",
-    databaseURL: "https://navigi-sbaro-bot-default-rtdb.firebaseio.com",
+    databaseURL: "https://navigi-sbaro-bot-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "navigi-sbaro-bot",
     storageBucket: "navigi-sbaro-bot.appspot.com",
-    messagingSenderId: "your-sender-id",
-    appId: "your-app-id"
+    messagingSenderId: "117901818637830270085",
+    appId: "1:117901818637830270085:web:your-app-id-here" // This will be provided by Firebase console
 };
 
 // Telegram Mini App - NAVIGI SBARO with Firebase Integration

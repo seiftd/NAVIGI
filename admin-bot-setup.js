@@ -7,6 +7,7 @@ const ADMIN_BOT_TOKEN = '8095971099:AAFDLGO8oFBPgmI878cFeCuil3tf9Kh2tmM';
 const MAIN_BOT_TOKEN = '8185239716:AAGwRpHQH3pEoMLVTzWpLnE3hHTNc35AleY';
 const ADMIN_USER_ID = '@Sbaroone'; // Replace with actual admin user ID
 const MAIN_BOT_API_URL = 'https://navigiu.netlify.app/.netlify/functions';
+const ADMIN_DASHBOARD_URL = 'https://navigiu.netlify.app/admin-dashboard';
 
 // Initialize Firebase Manager
 const firebaseManager = new FirebaseManager();
@@ -23,8 +24,8 @@ console.log('🤖 Admin Bot (@Seifoneme_bot) started successfully!');
 firebaseManager.onVipNotification(async (notification) => {
     console.log('📞 New VIP notification received:', notification);
     
-    // Send notification to all admins
-    const adminIds = ['123456789', '987654321']; // Replace with actual admin IDs
+    // Send notification to all admins (UPDATE WITH YOUR ACTUAL TELEGRAM USER IDs)
+    const adminIds = ['YOUR_TELEGRAM_USER_ID_HERE']; // Replace with your actual Telegram user ID
     
     for (const adminId of adminIds) {
         try {
@@ -56,8 +57,8 @@ firebaseManager.onVipNotification(async (notification) => {
 
 // Admin authentication middleware
 function isAdmin(userId) {
-    // Add your admin user IDs here
-    const adminIds = ['123456789', '987654321']; // Replace with actual admin IDs
+    // Add your admin user IDs here (UPDATE WITH YOUR ACTUAL TELEGRAM USER IDs)
+    const adminIds = ['YOUR_TELEGRAM_USER_ID_HERE']; // Replace with your actual Telegram user ID
     return adminIds.includes(userId.toString());
 }
 
@@ -148,7 +149,7 @@ Last Updated: ${new Date().toLocaleString()}
             reply_markup: {
                 inline_keyboard: [
                     [{ text: '🔄 Refresh Stats', callback_data: 'refresh_stats' }],
-                    [{ text: '📱 Open Web Dashboard', url: 'https://navigiu.netlify.app/admin-dashboard.html' }]
+                    [{ text: '📱 Open Web Dashboard', url: ADMIN_DASHBOARD_URL }]
                 ]
             }
         };

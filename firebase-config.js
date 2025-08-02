@@ -1,18 +1,19 @@
 const admin = require('firebase-admin');
 const { v4: uuidv4 } = require('uuid');
 
-// Firebase configuration
+// Firebase configuration with actual credentials
 const firebaseConfig = {
     type: "service_account",
     project_id: "navigi-sbaro-bot",
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID || "your-private-key-id",
-    private_key: (process.env.FIREBASE_PRIVATE_KEY || "your-private-key").replace(/\\n/g, '\n'),
-    client_email: process.env.FIREBASE_CLIENT_EMAIL || "firebase-adminsdk@navigi-sbaro-bot.iam.gserviceaccount.com",
-    client_id: process.env.FIREBASE_CLIENT_ID || "your-client-id",
+    private_key_id: "2cd76e607b9ac1e25adb85950d1cd8d0aa3838ff",
+    private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCqN0JXFFz7FgaS\nCAro/hyX1xdVoDz8Lqzpb+xhXFAuotkixzqG0IEKc4YCniNhxnRR8YIF+561UQEh\ng6/GSz3unuPqYEvsA91vvvjFjNSYKq53Zd4myL6AfHSef01mljdHXSMB1uDekSB5\nr81XiI6FbS+ca3i6tXkcVkxPy2xfnDJZSeQOaxgfFX2WeKkt0hRoa7KWETI9Co0G\nbIx//bmKB9P5wcc6jvUQmVT9qkBn0cyYZfGSx3sFLGOUcCUR/InZqAb4V25PuV/Z\nnlKvUywd85chpBvPrhSDulQNI0oSWK61jhiwUHckC8BTath4uQNG+yEMOAA7zZ0w\nGlEd0T4RAgMBAAECggEAAT6mtErQlEB4u1QmOkZzcJPQ1p41m/V+a7WXEa4yYujr\ndBLnZWl8bBZkrju4UAR6wMemlwMcScCmJLfZDvbpZMeSLJpYK8lqcuD/YjhxrIwx\nWuuqiHeS1w8x7h/Jsdya2mF+ukp3OgFvLpyfwIpd2nFuNfNePmVJ1bB23eWDrR5M\n9my4fIoSrxiGZnbQpLuIbuhc0RZjVb0fXcCri3QVlryoWonhIRRezaX3wN3os6WW\nN5ROPCJNGrldlQwfZZ24a81MUHmJncKUl3ZEPK1dIGncZ1OMyhCh/BTYbmQU3dYG\nZeK4DrcrJ7l66O8IBkkPUR5J/BdRXgM5h9u8D9QbbQKBgQDugtUk6yV/rvtDG13j\nl+nJokzqhvkh8Jzn3wSRXp7MFAf2liDBNw7Aj7cXpMZk0UYowFt+CNI80vsDCe0I\nHQYYp9TAx+JoRWN9zf6WwoZyEOnOOXFXukWslm7ZzLYuNf5rEhoUYOH4D6I/kT62\nO30BrsHTWvWGarJPfTqHtgw75QKBgQC2sm9z0JPdhcIXxAl8x5/S4opL5EBNID+m\njlj/vQMHMkurEpP685wLXNDugyLaWzt0NtfwKnTIIaZUb21gInAUPMrMhTOsRlMG\nNm7ijHZL3Tyg4L6n+nlW2koAd/kOjPP6xbYEWGRIYnZATcFSi7ZGrJlmD6VRthUB\nAFIB/lCOvQKBgH+YVlZtxZ3NCnYYCd5bwqIvxV4h3t2dTxNsZ5EtQV6DyM7N+a/j\nuGyjdZucdtYwbowWe9us9Gu9orM5eCjC/iPqhRKs3B5UIKmIrg4Q+sPC8JF2gYAh\nEm0F/T9fGIcYM4csI++K9Ngz5OSE2zu6D2H7D432Nys1oTaNE+bOKTVRAoGAbA0M\nLYrmaNV6/WNL2SiXNboV4NyVywePnYoCyP2YlOECL6NFMd5yI6Y5S1bzfgEHIKxu\n+fOiLdr47GcaYQj9EHsD1gHRlcnhwILhAcvhCu1FtkA1glN5AA0KR0ytWBW1FlNo\nWxmL9eOF3HIgLBnFK/dYoiwOskzmDzmJRvSJ4GECgYEAgn93FQKP6smVxd7iO61X\nhCst4R9nhMMJNRs9ybOQyGFfClxJChsIggY8oroS8PixiDpVkHqT/BkQtTHWO9EB\nU+82sQNllrTrWFGAwKavmFzziZYdhq3JmWvIkdfEVnXFxk1caQmEnRQQeVl81Geg\n9RuZuXk9GJUWev4Kl+rJBWY=\n-----END PRIVATE KEY-----\n",
+    client_email: "firebase-adminsdk-fbsvc@navigi-sbaro-bot.iam.gserviceaccount.com",
+    client_id: "117901818637830270085",
     auth_uri: "https://accounts.google.com/o/oauth2/auth",
     token_uri: "https://oauth2.googleapis.com/token",
     auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL || "your-cert-url"
+    client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40navigi-sbaro-bot.iam.gserviceaccount.com",
+    universe_domain: "googleapis.com"
 };
 
 // Initialize Firebase Admin SDK
@@ -23,10 +24,11 @@ function initializeFirebase() {
         try {
             admin.initializeApp({
                 credential: admin.credential.cert(firebaseConfig),
-                databaseURL: process.env.FIREBASE_DATABASE_URL || "https://navigi-sbaro-bot-default-rtdb.firebaseio.com/"
+                databaseURL: "https://navigi-sbaro-bot-default-rtdb.europe-west1.firebasedatabase.app/"
             });
             isInitialized = true;
             console.log('🔥 Firebase Admin SDK initialized successfully!');
+            console.log('📍 Database URL: https://navigi-sbaro-bot-default-rtdb.europe-west1.firebasedatabase.app/');
         } catch (error) {
             console.error('❌ Firebase initialization error:', error);
             // For development, continue without Firebase
@@ -57,6 +59,7 @@ class FirebaseManager {
             this.db = getDatabase();
             this.isConnected = true;
             console.log('🔥 Firebase Manager initialized successfully!');
+            console.log('🌍 Region: Europe West 1');
         } catch (error) {
             console.error('❌ Firebase Manager initialization failed:', error);
             this.isConnected = false;
@@ -331,11 +334,14 @@ class FirebaseManager {
                 system: {
                     initialized: true,
                     last_reset: admin.database.ServerValue.TIMESTAMP,
-                    version: '1.0.0'
+                    version: '1.0.0',
+                    database_url: 'https://navigi-sbaro-bot-default-rtdb.europe-west1.firebasedatabase.app/',
+                    admin_dashboard: 'https://navigiu.netlify.app/admin-dashboard'
                 }
             });
             
             console.log('✅ Test data cleared successfully!');
+            console.log('🌐 Admin Dashboard: https://navigiu.netlify.app/admin-dashboard');
             return true;
         } catch (error) {
             console.error('❌ Error clearing test data:', error);
@@ -361,7 +367,8 @@ class FirebaseManager {
                     u.last_ad_reset === new Date().toDateString()
                 ).length,
                 total_points: Object.values(users).reduce((sum, u) => sum + (u.points || 0), 0),
-                total_ads: Object.values(users).reduce((sum, u) => sum + (u.ads_watched || 0), 0)
+                total_ads: Object.values(users).reduce((sum, u) => sum + (u.ads_watched || 0), 0),
+                admin_dashboard: 'https://navigiu.netlify.app/admin-dashboard'
             };
         } catch (error) {
             console.error('❌ Error getting system stats:', error);
