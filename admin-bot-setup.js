@@ -2,7 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 
 // Admin Bot Configuration
 const ADMIN_BOT_TOKEN = '8095971099:AAFDLGO8oFBPgmI878cFeCuil3tf9Kh2tmM';
-const ADMIN_USER_ID = '123456789'; // Replace with actual admin user ID
+const ADMIN_USER_ID = '@Sbaroone'; // Replace with actual admin user ID
 const MAIN_BOT_API_URL = 'https://navigiu.netlify.app/.netlify/functions';
 
 // Create admin bot instance
