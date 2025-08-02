@@ -1753,14 +1753,31 @@
          }
 
          async function loadPointsLeaderboard() {
-             // Mock data - replace with real API call
-             const topUsers = [
-                 { rank: 1, user_id: '123456789', username: '@cryptoking', points: 15420, balance: 154.20, vip: 'EMPEROR' },
-                 { rank: 2, user_id: '987654321', username: '@pointmaster', points: 12890, balance: 128.90, vip: 'KING' },
-                 { rank: 3, user_id: '456789123', username: '@adwatcher', points: 11250, balance: 112.50, vip: 'LORD' },
-                 { rank: 4, user_id: '789123456', username: '@earnpro', points: 9870, balance: 98.70, vip: 'EMPEROR' },
-                 { rank: 5, user_id: '321654987', username: '@vipuser', points: 8900, balance: 89.00, vip: 'FREE' }
-             ];
+             try {
+                 // Load real data from bot
+                 const response = await fetch(`${adminAPI.baseURL}/bot-leaderboard?type=points&platform=${currentPlatform}`);
+                 const topUsers = await response.json();
+                 
+                 if (!topUsers || topUsers.length === 0) {
+                     throw new Error('No users data');
+                 }
+                 
+                 displayPointsLeaderboard(topUsers);
+             } catch (error) {
+                 console.error('Failed to load points leaderboard:', error);
+                 // Show fresh start message
+                 const container = document.getElementById('pointsLeaderboard');
+                 container.innerHTML = `
+                     <div style="text-align: center; padding: 20px; color: #666;">
+                         <i class="fas fa-users" style="font-size: 48px; margin-bottom: 10px; opacity: 0.3;"></i>
+                         <p>No users yet. Start using the bot to see leaderboard!</p>
+                         <small>Users will appear here as they earn points</small>
+                     </div>
+                 `;
+             }
+         }
+         
+         function displayPointsLeaderboard(topUsers) {
 
              const container = document.getElementById('pointsLeaderboard');
              container.innerHTML = topUsers.map(user => `
@@ -1787,14 +1804,30 @@
          }
 
          async function loadVipUsers() {
-             // Mock VIP users data
-             const vipUsers = [
-                 { user_id: '123456789', username: '@cryptoking', tier: 'EMPEROR', expires: '2024-02-15', days_left: 25 },
-                 { user_id: '456789123', username: '@adwatcher', tier: 'LORD', expires: '2024-02-20', days_left: 30 },
-                 { user_id: '789123456', username: '@earnpro', tier: 'EMPEROR', expires: '2024-02-10', days_left: 20 },
-                 { user_id: '987654321', username: '@pointmaster', tier: 'KING', expires: '2024-02-05', days_left: 15 }
-             ];
-
+             try {
+                 // Load real VIP users from bot
+                 const response = await fetch(`${adminAPI.baseURL}/bot-vip-users?platform=${currentPlatform}`);
+                 const vipUsers = await response.json();
+                 
+                 if (!vipUsers || vipUsers.length === 0) {
+                     throw new Error('No VIP users');
+                 }
+                 
+                 displayVipUsers(vipUsers);
+             } catch (error) {
+                 console.error('Failed to load VIP users:', error);
+                 const container = document.getElementById('vipUsersContainer');
+                 container.innerHTML = `
+                     <div style="text-align: center; padding: 20px; color: #666;">
+                         <i class="fas fa-crown" style="font-size: 48px; margin-bottom: 10px; opacity: 0.3;"></i>
+                         <p>No VIP users yet. Promote users or approve VIP requests!</p>
+                         <small>VIP users will appear here</small>
+                     </div>
+                 `;
+             }
+         }
+         
+         function displayVipUsers(vipUsers) {
              const container = document.getElementById('vipUsersContainer');
              container.innerHTML = vipUsers.map(user => `
                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee;">
