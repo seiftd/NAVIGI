@@ -476,6 +476,10 @@ bot.on('callback_query', async (query) => {
     
     try {
         switch (data) {
+            case 'earn_zone':
+                await handleEarnZone(chatId, userId, user);
+                break;
+                
             case 'watch_ads':
                 await handleWatchAd(chatId, userId, user);
                 break;
@@ -504,8 +508,28 @@ bot.on('callback_query', async (query) => {
                 await handleVipUpgrade(chatId, userId, user);
                 break;
                 
+            case 'vip_center':
+                await handleVipCenter(chatId, userId, user);
+                break;
+                
             case 'profile':
                 await handleProfile(chatId, userId, user);
+                break;
+                
+            case 'wallet':
+                await handleWallet(chatId, userId, user);
+                break;
+                
+            case 'settings':
+                await handleSettings(chatId, userId, user);
+                break;
+                
+            case 'support':
+                await handleSupport(chatId, userId, user);
+                break;
+                
+            case 'refresh_stats':
+                await handleRefreshStats(chatId, userId, user);
                 break;
                 
             case 'back_main':
@@ -551,25 +575,46 @@ bot.on('callback_query', async (query) => {
 
 // Show main menu
 async function showMainMenu(chatId, userId, user) {
-    const message = `🚀 *NAVIGI SBARO - Main Menu*
+    const vipStatus = user?.vip_status || 'FREE';
+    const vipEmoji = {
+        'FREE': '🆓',
+        'KING': '👑',
+        'EMPEROR': '💎',
+        'LORD': '🏆'
+    };
+    
+    const message = `🚀 *NAVIGI SBARO - Navigation Hub*
 
-📊 **Your Stats:**
+📊 **Your Dashboard:**
 • 💎 Points: ${user?.points || 0}
 • 💰 Balance: $${(user?.balance || 0).toFixed(2)}
-• 👑 VIP Status: ${user?.vip_status || 'FREE'}
-• 📺 Daily Ads: ${user?.daily_ads_watched || 0}/${VIP_LIMITS[user?.vip_status || 'FREE']}
+• ${vipEmoji[vipStatus]} VIP Status: ${vipStatus}
+• 📺 Daily Ads: ${user?.daily_ads_watched || 0}/${VIP_LIMITS[vipStatus]}
+• 🎯 Total Ads: ${user?.ads_watched || 0}
 
-Choose an option:`;
+🎮 **Navigation Menu:**`;
     
     bot.sendMessage(chatId, message, {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [
-                [{ text: '📺 Watch Ads & Earn', callback_data: 'watch_ads' }],
-                [{ text: '🏆 Join Contests', callback_data: 'contests' }],
-                [{ text: '👥 Referral Program', callback_data: 'referrals' }],
-                [{ text: '👑 VIP Upgrade', callback_data: 'vip_upgrade' }],
-                [{ text: '📊 My Profile', callback_data: 'profile' }]
+                [
+                    { text: '📺 Earn Zone', callback_data: 'earn_zone' },
+                    { text: '🏆 Contests', callback_data: 'contests' }
+                ],
+                [
+                    { text: '👥 Referrals', callback_data: 'referrals' },
+                    { text: '👑 VIP Center', callback_data: 'vip_center' }
+                ],
+                [
+                    { text: '📊 My Profile', callback_data: 'profile' },
+                    { text: '💰 Wallet', callback_data: 'wallet' }
+                ],
+                [
+                    { text: '⚙️ Settings', callback_data: 'settings' },
+                    { text: '📞 Support', callback_data: 'support' }
+                ],
+                [{ text: '🔄 Refresh Stats', callback_data: 'refresh_stats' }]
             ]
         }
     });
@@ -1276,6 +1321,183 @@ This action has been logged.`, {
     } catch (error) {
         console.error('❌ Error resetting contests:', error);
         bot.sendMessage(chatId, '❌ Error resetting contests. Please try again.');
+    }
+}
+
+// ================================
+// NEW NAVIGATION HANDLERS
+// ================================
+
+// Handle Earn Zone
+async function handleEarnZone(chatId, userId, user) {
+    const vipStatus = user.vip_status || 'FREE';
+    const dailyLimit = VIP_LIMITS[vipStatus];
+    const dailyWatched = user.daily_ads_watched || 0;
+    const remainingAds = Math.max(0, dailyLimit - dailyWatched);
+    
+    const message = `💰 *Earn Zone - Your Money Hub*
+
+📊 **Today's Progress:**
+• 📺 Watched: ${dailyWatched}/${dailyLimit} ads
+• 🎯 Remaining: ${remainingAds} ads
+• 💎 Points Per Ad: 1.1 points
+• 💰 Money Per Ad: $0.01
+
+${remainingAds > 0 ? '✅ Ready to earn!' : '❌ Daily limit reached!'}
+
+Choose your earning method:`;
+    
+    const buttons = [];
+    if (remainingAds > 0) {
+        buttons.push([{ text: '📺 Watch Ad & Earn', callback_data: 'watch_ads' }]);
+    }
+    buttons.push(
+        [{ text: '🏆 Contest Earnings', callback_data: 'contests' }],
+        [{ text: '👥 Referral Earnings', callback_data: 'referrals' }],
+        [{ text: '🔙 Main Menu', callback_data: 'back_main' }]
+    );
+    
+    bot.sendMessage(chatId, message, {
+        parse_mode: 'Markdown',
+        reply_markup: { inline_keyboard: buttons }
+    });
+}
+
+// Handle VIP Center
+async function handleVipCenter(chatId, userId, user) {
+    const currentVip = user.vip_status || 'FREE';
+    const vipBenefits = {
+        'FREE': { ads: 20, bonus: '0%', priority: 'Low' },
+        'KING': { ads: 50, bonus: '25%', priority: 'Medium' },
+        'EMPEROR': { ads: 100, bonus: '50%', priority: 'High' },
+        'LORD': { ads: 200, bonus: '100%', priority: 'Highest' }
+    };
+    
+    const message = `👑 *VIP Center - Premium Experience*
+
+🌟 **Current Status:** ${currentVip}
+• 📺 Daily Ads: ${vipBenefits[currentVip].ads}
+• 💰 Bonus: ${vipBenefits[currentVip].bonus}
+• ⭐ Priority: ${vipBenefits[currentVip].priority}
+
+💎 **VIP Packages:**
+• 👑 King VIP: 50 ads/day + 25% bonus
+• 💎 Emperor VIP: 100 ads/day + 50% bonus  
+• 🏆 Lord VIP: 200 ads/day + 100% bonus
+
+${currentVip === 'FREE' ? '🚀 Upgrade now for premium benefits!' : '✨ Enjoying your VIP experience!'}`;
+    
+    const buttons = currentVip === 'FREE' 
+        ? [[{ text: '👑 Upgrade to VIP', callback_data: 'vip_upgrade' }]]
+        : [[{ text: '📊 VIP Stats', callback_data: 'profile' }]];
+        
+    buttons.push([{ text: '🔙 Main Menu', callback_data: 'back_main' }]);
+    
+    bot.sendMessage(chatId, message, {
+        parse_mode: 'Markdown',
+        reply_markup: { inline_keyboard: buttons }
+    });
+}
+
+// Handle Wallet
+async function handleWallet(chatId, userId, user) {
+    const message = `💰 *Digital Wallet - Your Earnings*
+
+💎 **Current Balance:**
+• 💰 Available: $${(user.balance || 0).toFixed(2)}
+• 💎 Points: ${user.points || 0}
+• 🎯 Total Earned: $${((user.ads_watched || 0) * 0.01).toFixed(2)}
+
+💳 **Earning History:**
+• 📺 Ads Watched: ${user.ads_watched || 0}
+• 🏆 Contests Won: ${user.contests_joined || 0}
+• 👥 Referrals: ${user.referrals || 0}
+
+🔄 **Quick Actions:**`;
+    
+    bot.sendMessage(chatId, message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: '📺 Earn More', callback_data: 'earn_zone' }],
+                [{ text: '📊 Full Stats', callback_data: 'profile' }],
+                [{ text: '🔙 Main Menu', callback_data: 'back_main' }]
+            ]
+        }
+    });
+}
+
+// Handle Settings
+async function handleSettings(chatId, userId, user) {
+    const message = `⚙️ *Settings & Preferences*
+
+🔧 **Account Settings:**
+• 🆔 User ID: ${userId}
+• 👤 Username: @${user.username || 'Not set'}
+• 📅 Joined: ${new Date(user.join_date || Date.now()).toLocaleDateString()}
+• 🌟 Status: ${user.vip_status || 'FREE'}
+
+📱 **Bot Preferences:**
+• 🔔 Notifications: Enabled
+• 🌍 Language: English
+• 🎨 Theme: Default
+
+🔧 **Available Actions:**`;
+    
+    bot.sendMessage(chatId, message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: '🔄 Refresh Data', callback_data: 'refresh_stats' }],
+                [{ text: '📞 Contact Support', callback_data: 'support' }],
+                [{ text: '🔙 Main Menu', callback_data: 'back_main' }]
+            ]
+        }
+    });
+}
+
+// Handle Support
+async function handleSupport(chatId, userId, user) {
+    const message = `📞 *Support Center - We're Here to Help*
+
+🆘 **Need Help?**
+• 💬 Live Support: @Sbaroone
+• 📧 Email: support@navigi.com
+• 🌐 Website: https://navigiu.netlify.app
+
+❓ **Common Questions:**
+• How to earn more points?
+• VIP membership benefits?
+• Referral program details?
+• Payment and withdrawals?
+
+🚀 **Quick Links:**`;
+    
+    bot.sendMessage(chatId, message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: '💬 Contact Admin', url: 'https://t.me/Sbaroone' }],
+                [{ text: '🌐 Visit Website', url: 'https://navigiu.netlify.app' }],
+                [{ text: '📊 Check Status', callback_data: 'profile' }],
+                [{ text: '🔙 Main Menu', callback_data: 'back_main' }]
+            ]
+        }
+    });
+}
+
+// Handle Refresh Stats
+async function handleRefreshStats(chatId, userId, user) {
+    // Get fresh user data from Firebase
+    const freshUser = await getUser(userId);
+    
+    if (freshUser) {
+        await showMainMenu(chatId, userId, freshUser);
+        bot.sendMessage(chatId, '🔄 *Stats Refreshed!*\n\nYour latest data has been loaded.', {
+            parse_mode: 'Markdown'
+        });
+    } else {
+        bot.sendMessage(chatId, '❌ Unable to refresh stats. Please try again later.');
     }
 }
 

@@ -107,6 +107,10 @@
             margin-bottom: 2rem;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 2rem;
         }
 
         .header h1 {
@@ -725,15 +729,68 @@
                 <li><a href="#" class="nav-item" data-tab="payments">
                     <i>💳</i> Payment Management
                 </a></li>
+                <li><a href="#" class="nav-item" data-tab="analytics">
+                    <i>📈</i> Analytics & Reports
+                </a></li>
+                <li><a href="#" class="nav-item" data-tab="bot-controls">
+                    <i>🤖</i> Bot Controls
+                </a></li>
+                <li><a href="#" class="nav-item" data-tab="system">
+                    <i>⚙️</i> System Settings
+                </a></li>
             </ul>
+            
+            <!-- Quick Actions -->
+            <div style="padding: 1rem; margin-top: 2rem; border-top: 1px solid rgba(0,0,0,0.1);">
+                <h4 style="color: #667eea; margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase;">Quick Actions</h4>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button onclick="sendBotCommand('broadcast', {message: 'System maintenance in 5 minutes'})" 
+                            style="padding: 0.5rem; background: #667eea; color: white; border: none; border-radius: 5px; font-size: 0.8rem; cursor: pointer;">
+                        📢 Send Broadcast
+                    </button>
+                    <button onclick="exportDashboardData('users', 'csv')" 
+                            style="padding: 0.5rem; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 0.8rem; cursor: pointer;">
+                        📥 Export Users
+                    </button>
+                    <button onclick="refreshAllData()" 
+                            style="padding: 0.5rem; background: #17a2b8; color: white; border: none; border-radius: 5px; font-size: 0.8rem; cursor: pointer;">
+                        🔄 Refresh Data
+                    </button>
+                </div>
+            </div>
         </nav>
 
         <!-- Main Content -->
         <main class="main-content">
             <!-- Header -->
             <div class="header">
-                <h1>Admin Dashboard</h1>
-                <p>Real-time monitoring and management of NAVIGI SBARO system</p>
+                <div>
+                    <h1>Admin Dashboard</h1>
+                    <p>Real-time monitoring and management of NAVIGI SBARO system</p>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <!-- Time Range Selector -->
+                    <select id="timeRangeSelector" onchange="updateTimeRange(this.value)" 
+                            style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px; background: white;">
+                        <option value="1h">Last Hour</option>
+                        <option value="24h" selected>Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                    </select>
+                    
+                    <!-- Auto Refresh Toggle -->
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #666;">
+                        <input type="checkbox" id="autoRefreshToggle" checked onchange="toggleAutoRefresh(this.checked)"
+                               style="transform: scale(1.2);">
+                        Auto Refresh
+                    </label>
+                    
+                    <!-- Manual Refresh Button -->
+                    <button onclick="manualRefresh()" 
+                            style="padding: 0.5rem 1rem; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                        🔄 Refresh
+                    </button>
+                </div>
             </div>
 
             <!-- Connection Status -->
