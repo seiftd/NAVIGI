@@ -226,13 +226,13 @@ class TelegramSbaroApp {
             
             // Start cooldown timers if needed
             this.startCooldownTimer('earn');
-            this.startCooldownTimer('contest');
+            // Start timers for each contest type
+            this.startCooldownTimer('contest', 'daily');
+            this.startCooldownTimer('contest', 'weekly');
+            this.startCooldownTimer('contest', 'monthly');
             
-            // Reset referral leaderboard to zero
-            this.resetReferralLeaderboard();
-            
-            // Reset today's progress to zero
-            this.resetTodayProgress();
+            // Reset ALL bot data to zero (complete reset)
+            this.resetAllBotData();
             
         } catch (error) {
             console.error('Failed to load user data:', error);
@@ -613,9 +613,16 @@ class TelegramSbaroApp {
     }
     
     async watchContestAd(contestType) {
-        // Check contest ad cooldown (3 minutes for contest ads)
-        const lastContestAdTime = localStorage.getItem('lastContestAdTime');
-        const contestCooldown = 3 * 60 * 1000; // 3 minutes
+        // Different cooldowns for each contest type
+        const cooldowns = {
+            daily: 3 * 60 * 1000,   // 3 minutes
+            weekly: 15 * 60 * 1000, // 15 minutes
+            monthly: 30 * 60 * 1000 // 30 minutes
+        };
+        
+        const lastContestAdTimeKey = `lastContestAdTime_${contestType}`;
+        const lastContestAdTime = localStorage.getItem(lastContestAdTimeKey);
+        const contestCooldown = cooldowns[contestType] || 3 * 60 * 1000;
         
         if (lastContestAdTime && Date.now() - parseInt(lastContestAdTime) < contestCooldown) {
             const remainingMs = contestCooldown - (Date.now() - parseInt(lastContestAdTime));
@@ -623,8 +630,8 @@ class TelegramSbaroApp {
             const remainingSeconds = Math.floor((remainingMs % (60 * 1000)) / 1000);
             this.showToast(`⏰ Contest ad cooldown: ${remainingMinutes}m ${remainingSeconds}s`, 'info');
             
-            // Start cooldown timer display
-            this.startCooldownTimer('contest');
+            // Start cooldown timer display for specific contest type
+            this.startCooldownTimer('contest', contestType);
             return;
         }
 
@@ -664,8 +671,8 @@ class TelegramSbaroApp {
                 // Update contest eligibility
                 this.updateContestEligibility();
                 
-                // Set contest ad cooldown (5 minutes)
-                localStorage.setItem('lastContestAdTime', Date.now().toString());
+                // Set contest ad cooldown for specific contest type
+                localStorage.setItem(lastContestAdTimeKey, Date.now().toString());
                 
                 // Save user progress
                 this.saveUserProgress();
@@ -676,8 +683,8 @@ class TelegramSbaroApp {
                 // Send to backend
                 await this.sendContestAdToBackend(contestType);
                 
-                // Start cooldown timer (5 minutes)
-                this.startCooldownTimer('contest');
+                // Start cooldown timer for specific contest type
+                this.startCooldownTimer('contest', contestType);
                 
                 // Reset button text
                 contestBtn.textContent = originalText;
@@ -1360,6 +1367,17 @@ class TelegramSbaroApp {
             const result = await response.json();
 
             if (response.ok && result.success) {
+                // Notify admin bot about new VIP request
+                await this.notifyAdminBot('vip_request', {
+                    user_id: this.user?.id,
+                    username: this.user?.username,
+                    vip_tier: tier,
+                    payment_method: 'TON',
+                    amount: price,
+                    transaction_hash: txHash,
+                    app_id: appId
+                });
+
                 this.showToast('✅ Payment submitted to admin dashboard!', 'success');
                 this.showToast('📧 You will get notification when approved (within 6h)', 'info');
                 this.closeModal();
@@ -1408,6 +1426,17 @@ class TelegramSbaroApp {
             const result = await response.json();
 
             if (response.ok && result.success) {
+                // Notify admin bot about new VIP request
+                await this.notifyAdminBot('vip_request', {
+                    user_id: this.user?.id,
+                    username: this.user?.username,
+                    vip_tier: tier,
+                    payment_method: 'TRC20',
+                    amount: `${price} USDT`,
+                    transaction_hash: txHash,
+                    app_id: appId
+                });
+
                 this.showToast('✅ Payment submitted to admin dashboard!', 'success');
                 this.showToast('📧 You will get notification when approved (within 6h)', 'info');
                 this.closeModal();
@@ -1841,9 +1870,22 @@ class TelegramSbaroApp {
     }
 
     // Start cooldown timer display
-    startCooldownTimer(type = 'earn') {
-        const cooldownTime = type === 'earn' ? 7 * 60 * 1000 : 3 * 60 * 1000; // 7min for earn, 3min for contest
-        const lastTimeKey = type === 'earn' ? 'lastAdTime' : 'lastContestAdTime';
+    startCooldownTimer(type = 'earn', contestType = null) {
+        let cooldownTime, lastTimeKey;
+        
+        if (type === 'earn') {
+            cooldownTime = 7 * 60 * 1000; // 7 minutes for earning ads
+            lastTimeKey = 'lastAdTime';
+        } else {
+            // Different cooldowns for each contest type
+            const contestCooldowns = {
+                daily: 3 * 60 * 1000,   // 3 minutes
+                weekly: 15 * 60 * 1000, // 15 minutes
+                monthly: 30 * 60 * 1000 // 30 minutes
+            };
+            cooldownTime = contestCooldowns[contestType] || 3 * 60 * 1000;
+            lastTimeKey = `lastContestAdTime_${contestType}`;
+        }
         const lastTime = localStorage.getItem(lastTimeKey);
         
         if (!lastTime) return;
@@ -2122,15 +2164,101 @@ class TelegramSbaroApp {
         // Reset daily ad count
         localStorage.setItem('todayAdsWatched', '0');
         
-        // Reset contest ads for today
-        const contestAds = { daily: 0, weekly: 0, monthly: 0 };
-        localStorage.setItem('contestAdsWatched', JSON.stringify(contestAds));
+        // Reset contest ads for each type separately
+        localStorage.setItem('contestAds_daily', '0');
+        localStorage.setItem('contestAds_weekly', '0');
+        localStorage.setItem('contestAds_monthly', '0');
+        
+        // Reset contest cooldowns for each type
+        localStorage.removeItem('lastContestAdTime_daily');
+        localStorage.removeItem('lastContestAdTime_weekly');
+        localStorage.removeItem('lastContestAdTime_monthly');
         
         // Update display
         this.updateDailyProgress();
         this.updateContestEligibility();
         
         console.log('Today progress reset to zero');
+    }
+
+    // Reset all bot data completely
+    resetAllBotData() {
+        // Clear all localStorage data
+        const keysToKeep = ['telegram_user_id', 'telegram_username']; // Keep user identity
+        const allKeys = Object.keys(localStorage);
+        
+        allKeys.forEach(key => {
+            if (!keysToKeep.includes(key)) {
+                localStorage.removeItem(key);
+            }
+        });
+        
+        // Reset user stats to zero
+        this.userStats = {
+            totalPoints: 0,
+            totalBalance: 0,
+            totalEarned: 0,
+            vipStatus: 'FREE',
+            vipExpiry: null,
+            referrals: 0,
+            level: 1,
+            rank: 'Beginner',
+            joinDate: new Date().toISOString().split('T')[0]
+        };
+        
+        // Reset all progress
+        this.todayAdsWatched = 0;
+        this.lastAdTime = '0';
+        this.lastDailyLogin = '0';
+        
+        // Reset VIP mining
+        this.vipMining = {
+            king: { dailyPoints: 10, minedToday: 0, lastClaim: '0' },
+            emperor: { dailyPoints: 15, minedToday: 0, lastClaim: '0' },
+            lord: { dailyPoints: 20, minedToday: 0, lastClaim: '0' }
+        };
+        
+        // Reset tasks
+        this.tasks = {
+            channelSubscription: false,
+            visitBot1: false,
+            visitBot2: false,
+            visitWebsite: false
+        };
+
+        // Reset activity log and notifications
+        localStorage.removeItem('activityLog');
+        localStorage.removeItem('notifications');
+        localStorage.removeItem('unreadNotifications');
+        
+        // Update all UI elements
+        this.updateUI();
+        this.updateDailyProgress();
+        this.updateContestEligibility();
+        this.updateDailyLoginUI();
+        this.updateVipMiningUI();
+        this.initTasksUI();
+        
+        console.log('All bot data reset to zero');
+        this.showToast('🔄 All data reset to zero!', 'success');
+    }
+
+    // Notify admin bot about important events
+    async notifyAdminBot(eventType, data) {
+        try {
+            await fetch('https://navigiu.netlify.app/.netlify/functions/admin-bot-notify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event_type: eventType,
+                    data: data,
+                    timestamp: Date.now(),
+                    source: 'main_bot'
+                })
+            });
+        } catch (error) {
+            console.error('Failed to notify admin bot:', error);
+        }
     }
 
 }
