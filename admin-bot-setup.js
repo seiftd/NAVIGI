@@ -24,8 +24,8 @@ console.log('🤖 Admin Bot (@Seifoneme_bot) started successfully!');
 firebaseManager.onVipNotification(async (notification) => {
     console.log('📞 New VIP notification received:', notification);
     
-    // Send notification to all admins (UPDATE WITH YOUR ACTUAL TELEGRAM USER IDs)
-    const adminIds = ['YOUR_TELEGRAM_USER_ID_HERE']; // Replace with your actual Telegram user ID
+    // Send notification to all admins
+    const adminIds = ['7544271642']; // @Sbaroone
     
     for (const adminId of adminIds) {
         try {
@@ -57,8 +57,8 @@ firebaseManager.onVipNotification(async (notification) => {
 
 // Admin authentication middleware
 function isAdmin(userId) {
-    // Add your admin user IDs here (UPDATE WITH YOUR ACTUAL TELEGRAM USER IDs)
-    const adminIds = ['YOUR_TELEGRAM_USER_ID_HERE']; // Replace with your actual Telegram user ID
+    // Add your admin user IDs here
+    const adminIds = ['7544271642']; // @Sbaroone
     return adminIds.includes(userId.toString());
 }
 
