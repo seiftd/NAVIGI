@@ -344,6 +344,71 @@ body {
     font-size: 20px;
 }
 
+/* Earning Tips */
+.earning-tips {
+    margin-bottom: 2rem;
+}
+
+.earning-tips h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--tg-theme-text-color);
+}
+
+.tips-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--tg-theme-bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--tg-theme-secondary-bg-color);
+    transition: all 0.3s ease;
+}
+
+.tip-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
+    border-color: var(--primary-color);
+}
+
+.tip-icon {
+    font-size: 1.2rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    flex-shrink: 0;
+    color: white;
+}
+
+.tip-content {
+    flex: 1;
+}
+
+.tip-title {
+    font-weight: 600;
+    color: var(--tg-theme-text-color);
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.tip-description {
+    color: var(--tg-theme-hint-color);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
 /* Recent Activity */
 .recent-activity h3 {
     font-size: 18px;
@@ -409,6 +474,31 @@ body {
 .activity-points {
     font-weight: 600;
     color: var(--success-color);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--tg-theme-hint-color);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+}
+
+.empty-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--tg-theme-text-color);
+}
+
+.empty-subtext {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    opacity: 0.8;
 }
 
 /* Earn Tab */

@@ -60,11 +60,12 @@ function setupRealtimeListeners() {
         }
     });
 
-    // Listen to activities data
-    database.ref('activities').orderByChild('timestamp').limitToLast(100).on('value', (snapshot) => {
+    // Listen to activities data - get latest activities first
+    database.ref('activities').orderByChild('created_at').limitToLast(50).on('value', (snapshot) => {
         const activities = snapshot.val() || {};
         realTimeData.activities = activities;
         console.log('📊 Activities updated:', Object.keys(activities).length, 'activities');
+        updateDashboardStats();
         if (currentTab === 'activities') {
             renderActivitiesTab();
         }
@@ -492,14 +493,35 @@ function renderVipTab() {
 // Helper functions for rendering data
 function renderRecentActivities(activities) {
     if (!activities || activities.length === 0) {
-        return '<div class="empty-state">No recent activities</div>';
+        return '<div class="empty-state">📊 No recent activities found<br><small>Activities will appear here when users interact with the bot</small></div>';
     }
 
-    return activities.map(activity => {
+    // Sort activities by created_at timestamp (newest first)
+    const sortedActivities = activities.sort((a, b) => {
+        const dateA = new Date(a.created_at || a.timestamp);
+        const dateB = new Date(b.created_at || b.timestamp);
+        return dateB - dateA;
+    });
+
+    return sortedActivities.map(activity => {
         const icon = getActivityIcon(activity.type);
-        const time = formatTimeAgo(new Date(activity.created_at));
+        const time = formatTimeAgo(new Date(activity.created_at || activity.timestamp));
         const user = realTimeData.users[activity.user_id];
         const userName = user ? (user.first_name || user.username || `User ${activity.user_id}`) : `User ${activity.user_id}`;
+
+        // Get activity details
+        let activityDetails = '';
+        if (activity.data) {
+            if (activity.type === 'ad_watched') {
+                activityDetails = `+${activity.data.points_earned || 1.1} points`;
+            } else if (activity.type === 'contest_ad') {
+                activityDetails = `${activity.data.contest_type || 'contest'} (${activity.data.new_count || 0}/${activity.data.total_required || 10})`;
+            } else if (activity.type === 'referral_earned') {
+                activityDetails = `+${activity.data.bonus_points || 5} points`;
+            } else if (activity.type === 'vip_request') {
+                activityDetails = `Status: ${activity.data.current_status || 'FREE'}`;
+            }
+        }
 
         return `
             <div class="activity-item">
@@ -507,6 +529,7 @@ function renderRecentActivities(activities) {
                 <div class="activity-info">
                     <div class="activity-text">
                         <strong>${userName}</strong> ${getActivityText(activity)}
+                        ${activityDetails ? `<br><small class="activity-details">${activityDetails}</small>` : ''}
                     </div>
                     <div class="activity-time">${time}</div>
                 </div>
