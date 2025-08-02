@@ -2,8 +2,12 @@ const TelegramBot = require('node-telegram-bot-api');
 
 // Admin Bot Configuration
 const ADMIN_BOT_TOKEN = '8095971099:AAFDLGO8oFBPgmI878cFeCuil3tf9Kh2tmM';
+const MAIN_BOT_TOKEN = '8185239716:AAGwRpHQH3pEoMLVTzWpLnE3hHTNc35AleY';
 const ADMIN_USER_ID = '123456789'; // Replace with actual admin user ID
 const MAIN_BOT_API_URL = 'https://navigiu.netlify.app/.netlify/functions';
+
+// Create main bot instance for sending messages
+const mainBot = new TelegramBot(MAIN_BOT_TOKEN);
 
 // Create admin bot instance
 const adminBot = new TelegramBot(ADMIN_BOT_TOKEN, { polling: true });
@@ -285,7 +289,21 @@ adminBot.on('callback_query', async (callbackQuery) => {
         } else if (data === 'broadcast_all') {
             adminBot.answerCallbackQuery(callbackQuery.id, '📢 Enter broadcast message');
             adminBot.sendMessage(chatId, '📢 **BROADCAST MESSAGE**\n\nPlease enter the message you want to send to all users:');
-            // Set user state for next message
+            
+            // Set up message listener for broadcast
+            const messageHandler = (msg) => {
+                if (msg.chat.id === chatId && isAdmin(msg.from.id)) {
+                    const broadcastMessage = msg.text;
+                    
+                    // Remove this specific listener
+                    adminBot.removeListener('message', messageHandler);
+                    
+                    // Send broadcast
+                    sendBroadcastMessage(broadcastMessage, chatId);
+                }
+            };
+            
+            adminBot.on('message', messageHandler);
             
         } else if (data === 'reset_daily') {
             await resetDailyProgress();
@@ -331,7 +349,8 @@ async function fetchPendingVipRequests() {
 
 async function approveVipRequest(requestId) {
     try {
-        await fetch(`${MAIN_BOT_API_URL}/admin-approve-vip-request`, {
+        // Approve the request in backend
+        const response = await fetch(`${MAIN_BOT_API_URL}/admin-approve-vip-request`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -340,6 +359,31 @@ async function approveVipRequest(requestId) {
                 admin_id: 'admin_bot'
             })
         });
+
+        const result = await response.json();
+        
+        if (result.success && result.user_data) {
+            // Send approval message directly to user via main bot
+            const approvalMessage = `
+🎉 **VIP REQUEST APPROVED!** 🎉
+
+✅ Your VIP upgrade has been approved!
+💎 VIP Tier: ${result.user_data.vip_tier}
+⏰ Valid for: 30 days
+🚀 VIP benefits are now active!
+
+Welcome to VIP! 👑
+            `;
+
+            try {
+                await mainBot.sendMessage(result.user_data.telegram_id, approvalMessage, { 
+                    parse_mode: 'Markdown' 
+                });
+                console.log(`✅ Approval notification sent to user ${result.user_data.telegram_id}`);
+            } catch (msgError) {
+                console.error('Failed to send approval message to user:', msgError);
+            }
+        }
         
         console.log(`VIP request ${requestId} approved`);
     } catch (error) {
@@ -350,7 +394,8 @@ async function approveVipRequest(requestId) {
 
 async function rejectVipRequest(requestId) {
     try {
-        await fetch(`${MAIN_BOT_API_URL}/admin-approve-vip-request`, {
+        // Reject the request in backend
+        const response = await fetch(`${MAIN_BOT_API_URL}/admin-approve-vip-request`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -359,6 +404,34 @@ async function rejectVipRequest(requestId) {
                 admin_id: 'admin_bot'
             })
         });
+
+        const result = await response.json();
+        
+        if (result.success && result.user_data) {
+            // Send rejection message directly to user via main bot
+            const rejectionMessage = `
+❌ **VIP REQUEST REJECTED**
+
+Unfortunately, your VIP upgrade request has been rejected.
+
+**Possible reasons:**
+• Invalid transaction hash
+• Insufficient payment amount
+• Transaction not found
+
+Please contact support if you believe this is an error.
+Support: @NavigiSupport
+            `;
+
+            try {
+                await mainBot.sendMessage(result.user_data.telegram_id, rejectionMessage, { 
+                    parse_mode: 'Markdown' 
+                });
+                console.log(`❌ Rejection notification sent to user ${result.user_data.telegram_id}`);
+            } catch (msgError) {
+                console.error('Failed to send rejection message to user:', msgError);
+            }
+        }
         
         console.log(`VIP request ${requestId} rejected`);
     } catch (error) {
@@ -418,5 +491,48 @@ process.on('SIGINT', () => {
     adminBot.stopPolling();
     process.exit(0);
 });
+
+// Broadcast message to all users
+async function sendBroadcastMessage(message, adminChatId) {
+    try {
+        adminBot.sendMessage(adminChatId, '📤 Sending broadcast message to all users...');
+        
+        // Get all user IDs from backend
+        const response = await fetch(`${MAIN_BOT_API_URL}/admin-users?platform=telegram_bot`);
+        const data = await response.json();
+        
+        if (data.success && data.users) {
+            let successCount = 0;
+            let failCount = 0;
+            
+            for (const user of data.users) {
+                try {
+                    await mainBot.sendMessage(user.telegram_id, `📢 **ADMIN MESSAGE**\n\n${message}`, {
+                        parse_mode: 'Markdown'
+                    });
+                    successCount++;
+                    
+                    // Small delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (error) {
+                    console.error(`Failed to send message to user ${user.telegram_id}:`, error);
+                    failCount++;
+                }
+            }
+            
+            adminBot.sendMessage(adminChatId, 
+                `✅ **BROADCAST COMPLETE**\n\n` +
+                `📤 Messages sent: ${successCount}\n` +
+                `❌ Failed: ${failCount}\n` +
+                `👥 Total users: ${data.users.length}`
+            );
+        } else {
+            adminBot.sendMessage(adminChatId, '❌ No users found to send broadcast to.');
+        }
+    } catch (error) {
+        console.error('Broadcast error:', error);
+        adminBot.sendMessage(adminChatId, '❌ Failed to send broadcast message: ' + error.message);
+    }
+}
 
 console.log('🤖 Admin Bot is running and ready to manage NAVIGI!');
