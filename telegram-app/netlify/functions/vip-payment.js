@@ -26,10 +26,10 @@ exports.handler = async (event, context) => {
 
     try {
         const data = JSON.parse(event.body);
-        const { user_id, telegram_user, tier, price, payment_method, transaction_hash, timestamp } = data;
+        const { user_id, username, telegram_user, vip_tier, price, payment_method, transaction_hash, app_id, platform, status, timestamp } = data;
 
         // Validate required fields
-        if (!user_id || !telegram_user || !tier || !price || !payment_method || !transaction_hash) {
+        if (!user_id || !telegram_user || !vip_tier || !price || !payment_method || !transaction_hash) {
             return {
                 statusCode: 400,
                 headers,
@@ -47,7 +47,7 @@ exports.handler = async (event, context) => {
         }
 
         // Validate tier
-        if (!['king', 'emperor', 'lord'].includes(tier.toLowerCase())) {
+        if (!['KING', 'EMPEROR', 'LORD'].includes(vip_tier.toUpperCase())) {
             return {
                 statusCode: 400,
                 headers,
@@ -55,10 +55,11 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Prepare data for admin dashboard
-        const adminData = {
-            type: 'vip_payment_request',
+        // Store VIP request for admin dashboard
+        const vipRequest = {
+            id: `vip_req_${Date.now()}_${user_id}`,
             user_id: user_id,
+            username: username || `@user${user_id}`,
             telegram_user: {
                 id: telegram_user.id,
                 first_name: telegram_user.first_name,
@@ -66,16 +67,18 @@ exports.handler = async (event, context) => {
                 username: telegram_user.username,
                 language_code: telegram_user.language_code
             },
-            vip_tier: tier.toUpperCase(),
+            vip_tier: vip_tier.toUpperCase(),
             price: price,
+            amount: `$${price}`,
             payment_method: payment_method,
             transaction_hash: transaction_hash,
+            app_id: app_id,
             wallet_address: payment_method === 'TON' 
-                ? 'UQDXq-8B3TNYV8kv5j5-rq9B5-7W8WqVZQwQ4L8-8qV5-5Kj'
+                ? 'UQBVeJflae5yTTgS6wczgpDkDcyEAnmA88bZyaiB3lYGqWw9'
                 : 'TLDsutnxpdLZaRxhGWBJismwsjY3WITHWX',
-            status: 'pending',
-            submitted_at: timestamp || Date.now(),
-            platform: 'telegram_mini_app',
+            status: status || 'pending',
+            submitted_at: new Date().toISOString(),
+            platform: platform || 'telegram_bot',
             estimated_processing_time: '6 hours'
         };
 
@@ -86,7 +89,10 @@ exports.handler = async (event, context) => {
         // 4. Create notification for admin
         // 5. Send confirmation to user
 
-        console.log('VIP payment request:', adminData);
+        // In real implementation, save to database:
+        // await db.collection('vip_requests').add(vipRequest);
+        
+        console.log('VIP Payment Request Stored for Admin:', vipRequest);
 
         // Simulate sending to admin dashboard
         // Replace with your actual admin dashboard API endpoint

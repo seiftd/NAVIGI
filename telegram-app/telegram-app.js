@@ -358,8 +358,17 @@ class TelegramSbaroApp {
                         }
                     }, 1000);
                     
-                    // Show the actual Monetag Rewarded Popup ad (30s guaranteed)
-                    await show_9656288('pop');
+                    // Show Monetag ads - either 1x30s rewarded OR 2x15s ads
+                    const adChoice = Math.random() < 0.5 ? 'rewarded' : 'double';
+                    
+                    if (adChoice === 'rewarded') {
+                        // Single 30-second rewarded ad
+                        await show_9656288('pop');
+                        this.showToast('📺 30-second rewarded ad completed!', 'info');
+                    } else {
+                        // Two 15-second ads
+                        await this.showDoubleAds();
+                    }
                     
                     // Ensure user watched for full 30 seconds
                     if (adWatchTime < adDuration) {
@@ -408,7 +417,7 @@ class TelegramSbaroApp {
             
             // Reset button after cooldown
             setTimeout(() => {
-                watchBtn.innerHTML = '<i class="fas fa-play"></i> Watch 30s Ad';
+                watchBtn.innerHTML = '<i class="fas fa-play"></i> Watch Ads';
                 watchBtn.disabled = false;
             }, cooldownTime);
             
@@ -418,7 +427,7 @@ class TelegramSbaroApp {
             
             // Reset button
             const watchBtn = document.getElementById('watchAdBtn');
-            watchBtn.innerHTML = '<i class="fas fa-play"></i> Watch 30s Ad';
+            watchBtn.innerHTML = '<i class="fas fa-play"></i> Watch Ads';
             watchBtn.disabled = false;
         }
     }
@@ -808,6 +817,28 @@ class TelegramSbaroApp {
         }
     }
     
+    // Double Ads System (2x15s ads)
+    async showDoubleAds() {
+        try {
+            // First 15-second ad
+            this.showToast('📺 First ad (15s) starting...', 'info');
+            await show_9656288(); // Regular interstitial (15s)
+            
+            // Wait 2 seconds between ads
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Second 15-second ad
+            this.showToast('📺 Second ad (15s) starting...', 'info');
+            await show_9656288(); // Regular interstitial (15s)
+            
+            this.showToast('✅ Both 15-second ads completed!', 'success');
+            
+        } catch (error) {
+            console.error('Double ads error:', error);
+            throw error; // Re-throw to be handled by main watchAd function
+        }
+    }
+    
     // Daily Ad Limit System
     getDailyAdLimit() {
         const vipLimits = {
@@ -1125,6 +1156,8 @@ class TelegramSbaroApp {
 
     async submitTONPayment(tier, price) {
         const txHash = document.getElementById('tonTxHash').value.trim();
+        const appId = document.getElementById('appId')?.value.trim() || this.user?.id;
+        
         if (!txHash) {
             this.showToast('❌ Please enter transaction hash', 'error');
             return;
@@ -1138,18 +1171,28 @@ class TelegramSbaroApp {
                 },
                 body: JSON.stringify({
                     user_id: this.user?.id,
+                    username: this.user?.username || `@user${this.user?.id}`,
                     telegram_user: this.user,
-                    tier: tier,
+                    vip_tier: tier,
                     price: price,
                     payment_method: 'TON',
                     transaction_hash: txHash,
+                    app_id: appId,
+                    platform: 'telegram_bot',
+                    status: 'pending',
                     timestamp: Date.now()
                 })
             });
 
-            if (response.ok) {
-                this.showToast('✅ Payment submitted! Processing within 6 hours.', 'success');
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                this.showToast('✅ Payment submitted to admin dashboard!', 'success');
+                this.showToast('📧 You will get notification when approved (within 6h)', 'info');
                 this.closeModal();
+                
+                // Add to activity log
+                this.addActivity('VIP Payment', `${tier} - Pending approval`, 'vip');
             } else {
                 this.showToast('❌ Failed to submit payment. Try again.', 'error');
             }
@@ -1161,6 +1204,8 @@ class TelegramSbaroApp {
 
     async submitTRC20Payment(tier, price) {
         const txHash = document.getElementById('usdtTxHash').value.trim();
+        const appId = document.getElementById('appId')?.value.trim() || this.user?.id;
+        
         if (!txHash) {
             this.showToast('❌ Please enter transaction hash', 'error');
             return;
@@ -1174,18 +1219,28 @@ class TelegramSbaroApp {
                 },
                 body: JSON.stringify({
                     user_id: this.user?.id,
+                    username: this.user?.username || `@user${this.user?.id}`,
                     telegram_user: this.user,
-                    tier: tier,
+                    vip_tier: tier,
                     price: price,
                     payment_method: 'TRC20_USDT',
                     transaction_hash: txHash,
+                    app_id: appId,
+                    platform: 'telegram_bot',
+                    status: 'pending',
                     timestamp: Date.now()
                 })
             });
 
-            if (response.ok) {
-                this.showToast('✅ Payment submitted! Processing within 6 hours.', 'success');
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                this.showToast('✅ Payment submitted to admin dashboard!', 'success');
+                this.showToast('📧 You will get notification when approved (within 6h)', 'info');
                 this.closeModal();
+                
+                // Add to activity log
+                this.addActivity('VIP Payment', `${tier} - Pending approval`, 'vip');
             } else {
                 this.showToast('❌ Failed to submit payment. Try again.', 'error');
             }
