@@ -352,7 +352,7 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
                 
                 // Update referrer with bonus
                 const newReferralCount = (referrer.referrals || 0) + 1;
-                const bonusPoints = 5; // 5 points per referral
+                const bonusPoints = 1; // 1 point per referral (base reward)
                 const newReferrerPoints = (referrer.points || 0) + bonusPoints;
                 
                 await updateUser(referrerId, {
@@ -501,6 +501,12 @@ bot.on('callback_query', async (query) => {
         case 'admin_reset_contests':
             if (userId === ADMIN_USER_ID) {
                 await resetAllContests(chatId);
+            }
+            break;
+        case 'test_vip_purchase':
+            if (userId === ADMIN_USER_ID) {
+                // Test VIP purchase for admin
+                await handleVipPurchase(userId, 'KING', 2.99, 'test_payment');
             }
             break;
     }
@@ -763,15 +769,34 @@ async function handleContestAd(chatId, userId, user, contestType) {
     
     const newWatched = newContestAds[contestType];
     let message = `✅ *Contest Ad Completed!*\n\n`;
-    message += `📊 ${contestType.toUpperCase()} Progress: ${newWatched}/${required}\n`;
+    message += `📊 **${contestType.toUpperCase()} Contest Progress:** ${newWatched}/${required}\n`;
+    message += `🎯 **Total Contests Joined:** ${newContestsJoined}\n\n`;
+    
+    // Progress bar visualization
+    const progressPercentage = Math.round((newWatched / required) * 100);
+    const progressBar = '█'.repeat(Math.floor(progressPercentage / 10)) + '░'.repeat(10 - Math.floor(progressPercentage / 10));
+    message += `📈 **Progress:** ${progressBar} ${progressPercentage}%\n\n`;
     
     if (newWatched >= required) {
-        message += `🎉 Contest requirements met! You're entered in the ${contestType} contest!\n`;
+        message += `🎉 **QUALIFIED for ${contestType.toUpperCase()} Contest!**\n`;
+        message += `💰 **Prize Pool:** ${contestType === 'daily' ? '220' : contestType === 'weekly' ? '1,500' : '10,000'} points\n`;
+        message += `⏰ **Contest ends:** at midnight!\n\n`;
+        message += `Good luck! 🍀`;
     } else {
-        message += `📺 ${required - newWatched} more ads needed for ${contestType} contest\n`;
+        const remaining = required - newWatched;
+        message += `📺 **Need ${remaining} more contest ads** to qualify\n`;
+        message += `⏰ Keep watching to enter the contest!\n\n`;
+        message += `💡 **Tip:** Contest ads don't give points but qualify you for big prizes!`;
     }
     
-    message += `⏰ Next contest ad in 5 minutes`;
+    message += `\n\n⏰ Next contest ad available in 5 minutes`;
+    
+    console.log(`📊 Contest display updated: ${contestType} ${newWatched}/${required} (${progressPercentage}%)`);
+    
+    // Update user's local cache to reflect the change immediately
+    user.contest_ads = newContestAds;
+    user.contests_joined = newContestsJoined;
+    users.set(userId, user);
     
     bot.sendMessage(chatId, message, {
         parse_mode: 'Markdown',
@@ -859,11 +884,144 @@ Unable to send VIP request. Please contact admin directly: @Sbaroone`, {
     }
 }
 
+// Handle VIP purchase (when user completes payment)
+async function handleVipPurchase(userId, vipTier, paymentAmount, paymentMethod = 'unknown') {
+    console.log(`💳 Processing VIP purchase: ${userId} → ${vipTier} → $${paymentAmount}`);
+    
+    const user = await getUser(userId);
+    if (!user) return;
+    
+    // VIP tier mapping
+    const vipTiers = {
+        'KING': { price: 2.99, referral_bonus: 5 },
+        'EMPEROR': { price: 4.99, referral_bonus: 10 },
+        'LORD': { price: 9.99, referral_bonus: 20 }
+    };
+    
+    const tierInfo = vipTiers[vipTier.toUpperCase()];
+    if (!tierInfo) return;
+    
+    // Update user VIP status
+    const vipExpires = new Date();
+    vipExpires.setMonth(vipExpires.getMonth() + 1); // 1 month from now
+    
+    await updateUser(userId, {
+        vip_status: vipTier.toUpperCase(),
+        vip_expires: vipExpires.toISOString(),
+        updated_at: admin.database.ServerValue.TIMESTAMP
+    });
+    
+    // Log payment activity
+    await logActivity(userId, 'vip_purchased', {
+        vip_tier: vipTier.toUpperCase(),
+        amount: paymentAmount,
+        payment_method: paymentMethod,
+        expires: vipExpires.toISOString(),
+        timestamp: new Date().toISOString()
+    });
+    
+    // Log payment data for admin dashboard
+    await logPayment(userId, {
+        type: 'vip_purchase',
+        tier: vipTier.toUpperCase(),
+        amount: paymentAmount,
+        currency: 'USD',
+        payment_method: paymentMethod,
+        status: 'completed',
+        user_info: {
+            id: userId,
+            username: user.username,
+            first_name: user.first_name
+        },
+        timestamp: new Date().toISOString()
+    });
+    
+    // Give referral bonus to referrer if exists
+    if (user.referred_by) {
+        const referrer = await getUser(user.referred_by);
+        if (referrer) {
+            const bonusPoints = tierInfo.referral_bonus;
+            const newReferrerPoints = (referrer.points || 0) + bonusPoints;
+            
+            await updateUser(user.referred_by, {
+                points: newReferrerPoints,
+                updated_at: admin.database.ServerValue.TIMESTAMP
+            });
+            
+            // Log referral bonus
+            await logActivity(user.referred_by, 'referral_vip_bonus', {
+                referred_user: userId,
+                vip_tier: vipTier.toUpperCase(),
+                bonus_points: bonusPoints,
+                new_total_points: newReferrerPoints,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Notify referrer
+            try {
+                bot.sendMessage(user.referred_by, `🎉 *VIP Referral Bonus!*
+
+Your referral **${user.first_name || user.username}** upgraded to **${vipTier.toUpperCase()} VIP**!
+
+💰 **Bonus Earned:** +${bonusPoints} points
+💎 **Your Total Points:** ${newReferrerPoints}
+
+Keep referring friends for more bonuses! 🚀`, {
+                    parse_mode: 'Markdown'
+                });
+            } catch (error) {
+                console.error('❌ Error sending referral bonus notification:', error);
+            }
+        }
+    }
+    
+    // Notify user of successful purchase
+    try {
+        bot.sendMessage(userId, `✅ *VIP Purchase Successful!*
+
+🎉 Welcome to **${vipTier.toUpperCase()} VIP**!
+
+📅 **Valid Until:** ${vipExpires.toLocaleDateString()}
+💰 **Amount Paid:** $${paymentAmount}
+🎁 **Benefits Activated:** All ${vipTier.toLowerCase()} VIP features unlocked!
+
+Enjoy your premium experience! 👑`, {
+            parse_mode: 'Markdown'
+        });
+    } catch (error) {
+        console.error('❌ Error sending purchase confirmation:', error);
+    }
+    
+    console.log(`✅ VIP purchase completed: ${userId} → ${vipTier} → $${paymentAmount}`);
+}
+
+// Log payment data for admin dashboard
+async function logPayment(userId, paymentData) {
+    if (!isFirebaseInitialized) return;
+    
+    try {
+        const paymentId = uuidv4();
+        const paymentRef = database.ref(`payments/${paymentId}`);
+        
+        const payment = {
+            id: paymentId,
+            user_id: userId.toString(),
+            ...paymentData,
+            created_at: admin.database.ServerValue.TIMESTAMP
+        };
+        
+        await paymentRef.set(payment);
+        console.log(`💳 Payment logged: ${paymentId} - $${paymentData.amount}`);
+    } catch (error) {
+        console.error('❌ Error logging payment:', error);
+    }
+}
+
 // Handle referrals with proper tracking
 async function handleReferrals(chatId, userId, user) {
     const referralLink = `https://t.me/navigi_sbaro_bot?start=_ref_${userId}`;
     const totalReferrals = user.referrals || 0;
-    const pointsFromReferrals = totalReferrals * 5; // 5 points per referral
+    const pointsFromReferrals = totalReferrals * 1; // 1 point per referral (base)
     
     const message = `👥 *Referral Program*
 
@@ -876,10 +1034,10 @@ async function handleReferrals(chatId, userId, user) {
 • 🎯 Rank: ${getReferralRank(totalReferrals)}
 
 💰 **Rewards Per Referral:**
-• 🎁 Instant: +5 points
+• 🎁 Instant: +1 point (when they join)
 • 👑 If they get King VIP: +5 bonus points
 • 💎 If they get Emperor VIP: +10 bonus points  
-• 🏆 If they get Lord VIP: +15 bonus points
+• 🏆 If they get Lord VIP: +20 bonus points
 
 🎯 **Next Milestone:**
 ${getNextMilestone(totalReferrals)}
@@ -1030,7 +1188,8 @@ Dashboard: ${ADMIN_DASHBOARD_URL}
                 inline_keyboard: [
                     [{ text: '🌐 Open Dashboard', url: ADMIN_DASHBOARD_URL }],
                     [{ text: '🔄 Reset Leaderboards', callback_data: 'admin_reset_leaderboards' }],
-                    [{ text: '🏆 Reset Contests', callback_data: 'admin_reset_contests' }]
+                    [{ text: '🏆 Reset Contests', callback_data: 'admin_reset_contests' }],
+                    [{ text: '💳 Test VIP Purchase', callback_data: 'test_vip_purchase' }]
                 ]
             }
         });
@@ -1366,5 +1525,68 @@ All users can now start fresh with contests!`, {
     }
 }
 
+// Fresh restart referral leaderboard (call this function to reset everything)
+async function freshRestartReferralLeaderboard() {
+    if (!isFirebaseInitialized) {
+        console.log('⚠️ Firebase not initialized');
+        return;
+    }
+    
+    try {
+        console.log('🔄 FRESH RESTART: Clearing all referral data...');
+        
+        const usersSnapshot = await database.ref('users').once('value');
+        const users = usersSnapshot.val() || {};
+        
+        let resetCount = 0;
+        
+        for (const userId in users) {
+            // Reset all referral data
+            await updateUser(userId, {
+                referrals: 0,
+                referred_by: null,
+                updated_at: admin.database.ServerValue.TIMESTAMP
+            });
+            
+            // Log the reset
+            await logActivity(userId, 'referral_leaderboard_reset', {
+                reset_type: 'fresh_restart',
+                admin_id: ADMIN_USER_ID,
+                timestamp: new Date().toISOString()
+            });
+            
+            resetCount++;
+        }
+        
+        console.log(`✅ FRESH RESTART COMPLETE: Reset referral data for ${resetCount} users`);
+        
+        // Notify admin
+        try {
+            bot.sendMessage(ADMIN_USER_ID, `✅ *Fresh Referral Reset Complete!*
+
+🔄 **Action:** Complete referral leaderboard restart
+📊 **Users Reset:** ${resetCount}
+🗑️ **Data Cleared:**
+• All referral counts → 0
+• All referral relationships → removed
+• Fresh start for all users
+
+The referral leaderboard is now completely fresh! 🚀`, {
+                parse_mode: 'Markdown'
+            });
+        } catch (error) {
+            console.error('❌ Error sending reset notification:', error);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error in fresh restart:', error);
+    }
+}
+
 // Start the bot
 startBot();
+
+// Execute fresh restart on startup (comment out after first run)
+setTimeout(() => {
+    freshRestartReferralLeaderboard();
+}, 5000); // Wait 5 seconds after startup
