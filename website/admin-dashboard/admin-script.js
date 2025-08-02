@@ -82,6 +82,17 @@ function setupRealtimeListeners() {
         }
     });
 
+    // Listen to payments data
+    database.ref('payments').orderByChild('created_at').limitToLast(100).on('value', (snapshot) => {
+        const payments = snapshot.val() || {};
+        realTimeData.payments = payments;
+        console.log('💳 Payments updated:', Object.keys(payments).length, 'payments');
+        updateDashboardStats();
+        if (currentTab === 'payments') {
+            renderPaymentsTab();
+        }
+    });
+
     // Listen to system stats
     database.ref('system').on('value', (snapshot) => {
         const system = snapshot.val() || {};
@@ -166,7 +177,12 @@ function switchTab(tabName) {
                 renderActivitiesTab();
                 break;
             case 'vip':
+            case 'vip-management':
                 renderVipTab();
+                break;
+            case 'vip-payments':
+            case 'payments':
+                renderPaymentsTab();
                 break;
             case 'contests':
                 renderContestsTab();
@@ -975,6 +991,170 @@ function exportUsers() {
     document.body.removeChild(link);
     
     showNotification('Users exported successfully', 'success');
+}
+
+// Render Payments Tab
+function renderPaymentsTab() {
+    const content = document.getElementById('mainContent');
+    const payments = Object.values(realTimeData.payments || {})
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    const totalRevenue = payments
+        .filter(p => p.status === 'completed')
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+    
+    const paymentsThisMonth = payments.filter(p => {
+        const paymentDate = new Date(p.timestamp);
+        const now = new Date();
+        return paymentDate.getMonth() === now.getMonth() && 
+               paymentDate.getFullYear() === now.getFullYear();
+    });
+    
+    const monthlyRevenue = paymentsThisMonth
+        .filter(p => p.status === 'completed')
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+    
+    content.innerHTML = `
+        <div class="tab-content">
+            <div class="section-header">
+                <h2><i class="fas fa-credit-card"></i> Payment Management</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="exportPayments()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Payment Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <div class="stat-value">$${totalRevenue.toFixed(2)}</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-info">
+                        <div class="stat-value">$${monthlyRevenue.toFixed(2)}</div>
+                        <div class="stat-label">This Month</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <div class="stat-value">${payments.length}</div>
+                        <div class="stat-label">Total Payments</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <div class="stat-value">${payments.filter(p => p.status === 'completed').length}</div>
+                        <div class="stat-label">Successful</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payments List -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h3>Recent Payments</h3>
+                    <input type="text" id="paymentSearch" placeholder="Search payments..." onkeyup="filterPayments()">
+                </div>
+                <div class="payments-list">
+                    ${renderPaymentsList(payments)}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Render payments list
+function renderPaymentsList(payments) {
+    if (payments.length === 0) {
+        return '<div class="empty-state">💳 No payments found<br><small>Payments will appear here when users make VIP purchases</small></div>';
+    }
+    
+    return payments.map(payment => {
+        const date = new Date(payment.timestamp).toLocaleDateString();
+        const time = new Date(payment.timestamp).toLocaleTimeString();
+        const user = payment.user_info || {};
+        const userName = user.first_name || user.username || `User ${payment.user_id}`;
+        
+        const statusClass = payment.status === 'completed' ? 'success' : 
+                           payment.status === 'pending' ? 'warning' : 'danger';
+        
+        const typeIcon = payment.type === 'vip_purchase' ? '👑' : '💰';
+        
+        return `
+            <div class="payment-item">
+                <div class="payment-icon">${typeIcon}</div>
+                <div class="payment-info">
+                    <div class="payment-header">
+                        <div class="payment-user">${userName}</div>
+                        <div class="payment-amount">$${payment.amount.toFixed(2)}</div>
+                    </div>
+                    <div class="payment-details">
+                        <span class="payment-type">${payment.tier || payment.type}</span>
+                        <span class="payment-method">${payment.payment_method || 'Unknown'}</span>
+                        <span class="payment-date">${date} ${time}</span>
+                    </div>
+                </div>
+                <div class="payment-status">
+                    <span class="status ${statusClass}">${payment.status}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Filter payments
+function filterPayments() {
+    const searchTerm = document.getElementById('paymentSearch').value.toLowerCase();
+    const payments = Object.values(realTimeData.payments || {});
+    
+    const filteredPayments = payments.filter(payment => {
+        const user = payment.user_info || {};
+        const userName = (user.first_name || user.username || '').toLowerCase();
+        const paymentType = (payment.type || '').toLowerCase();
+        const amount = payment.amount.toString();
+        
+        return userName.includes(searchTerm) || 
+               paymentType.includes(searchTerm) || 
+               amount.includes(searchTerm) ||
+               payment.user_id.toString().includes(searchTerm);
+    });
+    
+    document.querySelector('.payments-list').innerHTML = renderPaymentsList(filteredPayments);
+}
+
+// Export payments
+function exportPayments() {
+    const payments = Object.values(realTimeData.payments || {});
+    
+    if (payments.length === 0) {
+        showNotification('No payments to export', 'warning');
+        return;
+    }
+    
+    const csvContent = "data:text/csv;charset=utf-8," +
+        "Date,User ID,User Name,Type,Tier,Amount,Currency,Method,Status\n" +
+        payments.map(payment => {
+            const user = payment.user_info || {};
+            return `"${payment.timestamp}","${payment.user_id}","${user.first_name || user.username || ''}","${payment.type || ''}","${payment.tier || ''}",${payment.amount || 0},"${payment.currency || 'USD'}","${payment.payment_method || ''}","${payment.status || ''}"`;
+        }).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `navigi_payments_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Payments exported successfully', 'success');
 }
 
 // Initialize dashboard
