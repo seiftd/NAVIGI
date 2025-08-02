@@ -1,0 +1,27 @@
+{
+  "name": "navigi-sbaro-bot",
+  "version": "1.0.0",
+  "description": "NAVIGI SBARO Telegram Bot with Firebase Real-time Integration",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "nodemon bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0",
+    "firebase-admin": "^12.0.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "firebase",
+    "navigi",
+    "sbaro"
+  ],
+  "author": "NAVIGI Team",
+  "license": "MIT"
+}
