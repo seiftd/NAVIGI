@@ -1,0 +1,35 @@
+{
+  "name": "navigi-admin-dashboard",
+  "version": "1.0.0",
+  "description": "NAVIGI SBARO Admin Dashboard with Bot Control Integration",
+  "main": "api-server.js",
+  "scripts": {
+    "start": "node api-server.js",
+    "dev": "nodemon api-server.js",
+    "dashboard": "python -m http.server 8000",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "admin",
+    "dashboard",
+    "firebase",
+    "navigi",
+    "management"
+  ],
+  "author": "NAVIGI Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.0.0",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

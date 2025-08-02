@@ -1,6 +1,6 @@
 // ================================
 // NAVIGI SBARO ADMIN DASHBOARD
-// Real-time Firebase Integration
+// Real-time Firebase Integration + Bot Control
 // ================================
 
 // Firebase Configuration - Your Credentials
@@ -14,10 +14,20 @@ const firebaseConfig = {
     appId: "1:22015997314:web:6b19b809bfb996a2ea8b9b"
 };
 
+// Bot Configuration
+const BOT_CONFIG = {
+    token: '8185239716:AAGwRpHQH3pEoMLVTzWpLnE3hHTNc35AleY',
+    adminUserId: 7544271642,
+    webhookUrl: 'https://navigiu.netlify.app/admin-dashboard',
+    statusEndpoint: '/api/bot-status'
+};
+
 // Global Variables
 let database = null;
 let isFirebaseInitialized = false;
 let currentTab = 'overview';
+let botStatus = 'unknown';
+let botConnection = false;
 
 // Real-time data storage
 let realTimeData = {
@@ -26,8 +36,82 @@ let realTimeData = {
     vipNotifications: {},
     payments: {},
     systemStats: {},
+    botMetrics: {
+        totalUsers: 0,
+        activeUsers: 0,
+        messagesToday: 0,
+        commandsExecuted: 0,
+        lastActivity: null
+    },
     lastUpdate: new Date()
 };
+
+// ================================
+// BOT INTEGRATION FUNCTIONS
+// ================================
+
+// Check bot status
+async function checkBotStatus() {
+    try {
+        const response = await fetch('/api/bot-status');
+        const data = await response.json();
+        botStatus = data.status;
+        botConnection = data.connected;
+        updateBotStatusDisplay();
+        return data;
+    } catch (error) {
+        console.error('❌ Bot status check failed:', error);
+        botStatus = 'offline';
+        botConnection = false;
+        updateBotStatusDisplay();
+        return { status: 'offline', connected: false };
+    }
+}
+
+// Send bot command
+async function sendBotCommand(command, params = {}) {
+    try {
+        const response = await fetch('/api/bot-command', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                command: command,
+                params: params
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showNotification(`Bot command executed: ${command}`, 'success');
+            return result;
+        } else {
+            showNotification(`Bot command failed: ${result.error}`, 'error');
+            return result;
+        }
+    } catch (error) {
+        console.error('❌ Bot command failed:', error);
+        showNotification('Bot command failed: Network error', 'error');
+        return { success: false, error: error.message };
+    }
+}
+
+// Update bot status display
+function updateBotStatusDisplay() {
+    const statusElement = document.getElementById('bot-status');
+    const connectionElement = document.getElementById('bot-connection');
+    
+    if (statusElement) {
+        statusElement.textContent = botStatus;
+        statusElement.className = `status-badge ${botStatus}`;
+    }
+    
+    if (connectionElement) {
+        connectionElement.textContent = botConnection ? 'Connected' : 'Disconnected';
+        connectionElement.className = `connection-badge ${botConnection ? 'connected' : 'disconnected'}`;
+    }
+}
 
 // ================================
 // FIREBASE INITIALIZATION
@@ -61,6 +145,9 @@ function initializeFirebase() {
             
             // Setup real-time listeners
             setupRealtimeListeners();
+            
+            // Check bot status
+            checkBotStatus();
             
             // Show success notification
             showNotification('Firebase connected successfully!', 'success');
@@ -361,6 +448,9 @@ function renderCurrentTab() {
             case 'payments':
                 renderPaymentsTab();
                 break;
+            case 'bot-control':
+                renderBotControlTab();
+                break;
             default:
                 renderOverviewTab();
         }
@@ -615,6 +705,144 @@ function renderPaymentsTab() {
             
             <div class="content-list" id="paymentsContainer">
                 ${renderPaymentsList(payments)}
+            </div>
+        </div>
+    `;
+}
+
+// Render Bot Control Tab
+function renderBotControlTab() {
+    const content = document.getElementById('mainContent');
+    const metrics = realTimeData.botMetrics;
+    
+    content.innerHTML = `
+        <!-- Bot Status Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Bot Status</span>
+                    <span class="stat-icon">🤖</span>
+                </div>
+                <div class="stat-value" id="bot-status">${botStatus}</div>
+                <div class="stat-change" id="bot-connection">${botConnection ? 'Connected' : 'Disconnected'}</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Total Users</span>
+                    <span class="stat-icon">👥</span>
+                </div>
+                <div class="stat-value" id="total-users">${metrics.totalUsers || 0}</div>
+                <div class="stat-change">Registered users</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Active Users</span>
+                    <span class="stat-icon">🟢</span>
+                </div>
+                <div class="stat-value" id="active-users">${metrics.activeUsers || 0}</div>
+                <div class="stat-change">Today's activity</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Messages Today</span>
+                    <span class="stat-icon">💬</span>
+                </div>
+                <div class="stat-value" id="messages-today">${metrics.messagesToday || 0}</div>
+                <div class="stat-change">Total interactions</div>
+            </div>
+        </div>
+
+        <!-- Bot Control Panel -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">🤖 Bot Control Panel</h2>
+                <div class="section-actions">
+                    <button class="btn btn-success" id="start-btn">
+                        ▶️ Start Bot
+                    </button>
+                    <button class="btn btn-warning" id="stop-btn">
+                        ⏹️ Stop Bot
+                    </button>
+                    <button class="btn btn-info" id="restart-btn">
+                        🔄 Restart Bot
+                    </button>
+                    <button class="btn btn-primary" id="stats-btn">
+                        📊 Refresh Stats
+                    </button>
+                </div>
+            </div>
+            
+            <div class="control-grid">
+                <!-- Broadcast Message -->
+                <div class="control-card">
+                    <h3>📢 Broadcast Message</h3>
+                    <div class="input-group">
+                        <textarea id="broadcastMessage" placeholder="Enter message to send to all users..." rows="3"></textarea>
+                        <button class="btn btn-primary" id="broadcast-btn">Send Broadcast</button>
+                    </div>
+                </div>
+                
+                <!-- VIP Notification -->
+                <div class="control-card">
+                    <h3>👑 VIP Notification</h3>
+                    <div class="input-group">
+                        <input type="text" id="vipUserId" placeholder="User ID" />
+                        <textarea id="vipMessage" placeholder="VIP message..." rows="3"></textarea>
+                        <button class="btn btn-warning" id="vip-notify-btn">Send VIP Message</button>
+                    </div>
+                </div>
+                
+                <!-- User Management -->
+                <div class="control-card">
+                    <h3>👤 User Management</h3>
+                    <div class="input-group">
+                        <input type="text" id="resetUserId" placeholder="User ID to reset" />
+                        <button class="btn btn-danger" id="reset-user-btn">Reset User Data</button>
+                    </div>
+                </div>
+                
+                <!-- Bot Configuration -->
+                <div class="control-card">
+                    <h3>⚙️ Bot Configuration</h3>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label>VIP FREE Limit:</label>
+                            <input type="number" id="vipFree" value="20" />
+                        </div>
+                        <div class="config-item">
+                            <label>VIP KING Limit:</label>
+                            <input type="number" id="vipKing" value="50" />
+                        </div>
+                        <div class="config-item">
+                            <label>VIP EMPEROR Limit:</label>
+                            <input type="number" id="vipEmperor" value="100" />
+                        </div>
+                        <div class="config-item">
+                            <label>VIP LORD Limit:</label>
+                            <input type="number" id="vipLord" value="200" />
+                        </div>
+                        <div class="config-item">
+                            <label>Ad Cooldown (seconds):</label>
+                            <input type="number" id="adCooldown" value="300" />
+                        </div>
+                        <div class="config-item">
+                            <label>Contest Cooldown (seconds):</label>
+                            <input type="number" id="contestCooldown" value="300" />
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="update-config-btn">Update Configuration</button>
+                </div>
+                
+                <!-- Export Logs -->
+                <div class="control-card">
+                    <h3>📋 System Logs</h3>
+                    <div class="input-group">
+                        <button class="btn btn-info" id="export-logs-btn">Export Bot Logs</button>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -1163,43 +1391,232 @@ function filterPayments() {
 }
 
 // ================================
-// INITIALIZATION
+// BOT CONTROL FUNCTIONS
 // ================================
 
-// Initialize dashboard when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initializing NAVIGI SBARO Admin Dashboard...');
+// Send broadcast message to all users
+async function sendBroadcastMessage() {
+    const message = document.getElementById('broadcastMessage').value.trim();
+    if (!message) {
+        showNotification('Please enter a message to broadcast', 'warning');
+        return;
+    }
     
-    // Add initial status
-    addStatusMessage('Dashboard initializing...', 'info');
+    const result = await sendBotCommand('broadcast', { message: message });
+    if (result.success) {
+        document.getElementById('broadcastMessage').value = '';
+        showNotification('Broadcast message sent successfully', 'success');
+    }
+}
+
+// Restart bot
+async function restartBot() {
+    if (confirm('Are you sure you want to restart the bot? This will temporarily disconnect all users.')) {
+        const result = await sendBotCommand('restart', {});
+        if (result.success) {
+            showNotification('Bot restart initiated', 'info');
+            setTimeout(() => checkBotStatus(), 5000);
+        }
+    }
+}
+
+// Stop bot
+async function stopBot() {
+    if (confirm('Are you sure you want to stop the bot? This will disconnect all users.')) {
+        const result = await sendBotCommand('stop', {});
+        if (result.success) {
+            showNotification('Bot stopped successfully', 'warning');
+            setTimeout(() => checkBotStatus(), 2000);
+        }
+    }
+}
+
+// Start bot
+async function startBot() {
+    const result = await sendBotCommand('start', {});
+    if (result.success) {
+        showNotification('Bot started successfully', 'success');
+        setTimeout(() => checkBotStatus(), 2000);
+    }
+}
+
+// Get bot statistics
+async function getBotStats() {
+    const result = await sendBotCommand('stats', {});
+    if (result.success) {
+        realTimeData.botMetrics = result.data;
+        updateBotMetricsDisplay();
+        showNotification('Bot statistics updated', 'success');
+    }
+}
+
+// Update bot metrics display
+function updateBotMetricsDisplay() {
+    const metrics = realTimeData.botMetrics;
     
-    // Initialize Firebase
-    initializeFirebase();
+    const elements = {
+        'total-users': metrics.totalUsers || 0,
+        'active-users': metrics.activeUsers || 0,
+        'messages-today': metrics.messagesToday || 0,
+        'commands-executed': metrics.commandsExecuted || 0,
+        'last-activity': metrics.lastActivity ? formatTimeAgo(new Date(metrics.lastActivity)) : 'Never'
+    };
     
-    // Setup navigation
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            const tab = this.getAttribute('data-tab');
-            if (tab) {
-                switchTab(tab);
-            }
-        });
+    Object.keys(elements).forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = elements[id];
+        }
+    });
+}
+
+// Send VIP notification
+async function sendVipNotification() {
+    const userId = document.getElementById('vipUserId').value.trim();
+    const message = document.getElementById('vipMessage').value.trim();
+    
+    if (!userId || !message) {
+        showNotification('Please enter both user ID and message', 'warning');
+        return;
+    }
+    
+    const result = await sendBotCommand('sendVipNotification', { 
+        userId: userId, 
+        message: message 
     });
     
-    // Render initial tab
-    renderCurrentTab();
+    if (result.success) {
+        document.getElementById('vipUserId').value = '';
+        document.getElementById('vipMessage').value = '';
+        showNotification('VIP notification sent successfully', 'success');
+    }
+}
+
+// Reset user data
+async function resetUserData() {
+    const userId = document.getElementById('resetUserId').value.trim();
     
-    console.log('✅ Dashboard initialization complete');
-    addStatusMessage('Dashboard ready for real-time monitoring', 'success');
+    if (!userId) {
+        showNotification('Please enter a user ID', 'warning');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to reset all data for user ${userId}?`)) {
+        const result = await sendBotCommand('resetUser', { userId: userId });
+        if (result.success) {
+            document.getElementById('resetUserId').value = '';
+            showNotification('User data reset successfully', 'success');
+        }
+    }
+}
+
+// Export bot logs
+async function exportBotLogs() {
+    const result = await sendBotCommand('exportLogs', {});
+    if (result.success) {
+        const logs = result.data;
+        const csvContent = "data:text/csv;charset=utf-8," +
+            "Timestamp,Level,Message,User ID\n" +
+            logs.map(log => `"${log.timestamp}","${log.level}","${log.message}","${log.userId || ''}"`).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `navigi_bot_logs_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showNotification('Bot logs exported successfully', 'success');
+    }
+}
+
+// Update bot configuration
+async function updateBotConfig() {
+    const config = {
+        vipLimits: {
+            FREE: parseInt(document.getElementById('vipFree').value) || 20,
+            KING: parseInt(document.getElementById('vipKing').value) || 50,
+            EMPEROR: parseInt(document.getElementById('vipEmperor').value) || 100,
+            LORD: parseInt(document.getElementById('vipLord').value) || 200
+        },
+        cooldowns: {
+            ad: parseInt(document.getElementById('adCooldown').value) || 300,
+            contest: parseInt(document.getElementById('contestCooldown').value) || 300
+        }
+    };
+    
+    const result = await sendBotCommand('updateConfig', config);
+    if (result.success) {
+        showNotification('Bot configuration updated successfully', 'success');
+    }
+}
+
+// ================================
+// DASHBOARD INITIALIZATION
+// ================================
+
+// Initialize dashboard
+function initializeDashboard() {
+    console.log('🚀 Initializing NAVIGI Admin Dashboard...');
+    
+    // Initialize Firebase
+    if (initializeFirebase()) {
+        // Setup periodic updates
+        setInterval(() => {
+            checkBotStatus();
+            getBotStats();
+        }, 30000); // Every 30 seconds
+        
+        // Setup real-time updates
+        setInterval(() => {
+            updateBotMetricsDisplay();
+        }, 10000); // Every 10 seconds
+    }
+    
+    // Setup event listeners
+    setupEventListeners();
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Bot control buttons
+    const botControls = {
+        'broadcast-btn': sendBroadcastMessage,
+        'restart-btn': restartBot,
+        'stop-btn': stopBot,
+        'start-btn': startBot,
+        'stats-btn': getBotStats,
+        'vip-notify-btn': sendVipNotification,
+        'reset-user-btn': resetUserData,
+        'export-logs-btn': exportBotLogs,
+        'update-config-btn': updateBotConfig
+    };
+    
+    Object.keys(botControls).forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('click', botControls[id]);
+        }
+    });
+    
+    // Auto-refresh bot status
+    setInterval(checkBotStatus, 60000); // Every minute
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📱 NAVIGI Admin Dashboard Loading...');
+    initializeDashboard();
 });
 
-// Auto-refresh connection status every 30 seconds
-setInterval(() => {
-    if (isFirebaseInitialized) {
-        realTimeData.lastUpdate = new Date();
-        addStatusMessage('System status: All connections active', 'info');
-    } else {
-        addStatusMessage('System status: Firebase disconnected', 'error');
-    }
-}, 30000);
+// Export functions for global access
+window.sendBroadcastMessage = sendBroadcastMessage;
+window.restartBot = restartBot;
+window.stopBot = stopBot;
+window.startBot = startBot;
+window.getBotStats = getBotStats;
+window.sendVipNotification = sendVipNotification;
+window.resetUserData = resetUserData;
+window.exportBotLogs = exportBotLogs;
+window.updateBotConfig = updateBotConfig;
