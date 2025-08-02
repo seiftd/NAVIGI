@@ -552,6 +552,10 @@
                         <i class="fas fa-bell"></i>
                         Notifications
                     </a>
+                    <a href="#contests" class="nav-link" data-section="contests">
+                        <i class="fas fa-trophy"></i>
+                        Contest Management
+                    </a>
                     <a href="#restart" class="nav-link" data-section="restart">
                         <i class="fas fa-sync-alt"></i>
                         System Control
@@ -870,6 +874,134 @@
                     </div>
                 </section>
 
+                <!-- Contest Management Section -->
+                <section id="contestsSection" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Contest Management</h2>
+                        <p>Manage contest prize pools and distribute rewards to winners</p>
+                    </div>
+
+                    <!-- Prize Pool Management -->
+                    <div class="prize-pool-management">
+                        <h3>🏆 Prize Pool Settings</h3>
+                        <div class="contest-cards">
+                            <div class="contest-card">
+                                <h4>Daily Contest</h4>
+                                <div class="prize-info">
+                                    <span>Current Prize: <span id="dailyCurrentPrize">X Points</span></span>
+                                    <span>Winners: <span id="dailyWinners">1</span></span>
+                                </div>
+                                <div class="prize-controls">
+                                    <input type="number" id="dailyPrizeAmount" placeholder="Prize Amount" value="1000">
+                                    <select id="dailyPrizeType">
+                                        <option value="points">Points</option>
+                                        <option value="vip">VIP Subscription</option>
+                                    </select>
+                                    <input type="number" id="dailyWinnersCount" placeholder="Winners" value="1" min="1">
+                                    <button class="btn-primary" onclick="updatePrizePool('daily')">Update</button>
+                                </div>
+                            </div>
+
+                            <div class="contest-card">
+                                <h4>Weekly Contest</h4>
+                                <div class="prize-info">
+                                    <span>Current Prize: <span id="weeklyCurrentPrize">X Points</span></span>
+                                    <span>Winners: <span id="weeklyWinners">3</span></span>
+                                </div>
+                                <div class="prize-controls">
+                                    <input type="number" id="weeklyPrizeAmount" placeholder="Prize Amount" value="5000">
+                                    <select id="weeklyPrizeType">
+                                        <option value="points">Points</option>
+                                        <option value="vip">VIP Subscription</option>
+                                    </select>
+                                    <input type="number" id="weeklyWinnersCount" placeholder="Winners" value="3" min="1">
+                                    <button class="btn-primary" onclick="updatePrizePool('weekly')">Update</button>
+                                </div>
+                            </div>
+
+                            <div class="contest-card">
+                                <h4>Monthly Contest</h4>
+                                <div class="prize-info">
+                                    <span>Current Prize: <span id="monthlyCurrentPrize">VIP King (5 winners)</span></span>
+                                    <span>Winners: <span id="monthlyWinners">5</span></span>
+                                </div>
+                                <div class="prize-controls">
+                                    <input type="number" id="monthlyPrizeAmount" placeholder="Prize Amount" value="5">
+                                    <select id="monthlyPrizeType">
+                                        <option value="vip" selected>VIP Subscription</option>
+                                        <option value="points">Points</option>
+                                    </select>
+                                    <input type="number" id="monthlyWinnersCount" placeholder="Winners" value="5" min="1">
+                                    <button class="btn-primary" onclick="updatePrizePool('monthly')">Update</button>
+                                </div>
+                            </div>
+
+                            <div class="contest-card">
+                                <h4>VIP Contest</h4>
+                                <div class="prize-info">
+                                    <span>Current Prize: <span id="vipCurrentPrize">X Points</span></span>
+                                    <span>Winners: <span id="vipWinners">1</span></span>
+                                </div>
+                                <div class="prize-controls">
+                                    <input type="number" id="vipPrizeAmount" placeholder="Prize Amount" value="10000">
+                                    <select id="vipPrizeType">
+                                        <option value="points">Points</option>
+                                        <option value="vip">VIP Subscription</option>
+                                    </select>
+                                    <input type="number" id="vipWinnersCount" placeholder="Winners" value="1" min="1">
+                                    <button class="btn-primary" onclick="updatePrizePool('vip')">Update</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Winner Selection & Distribution -->
+                    <div class="winner-management">
+                        <h3>🎁 Distribute Prizes</h3>
+                        <div class="winner-selection">
+                            <select id="contestTypeSelect">
+                                <option value="daily">Daily Contest</option>
+                                <option value="weekly">Weekly Contest</option>
+                                <option value="monthly">Monthly Contest</option>
+                                <option value="vip">VIP Contest</option>
+                            </select>
+                            <button class="btn-primary" onclick="selectWinners()">Auto-Select Winners</button>
+                            <button class="btn-success" onclick="distributePrizes()">Distribute Prizes</button>
+                        </div>
+                        
+                        <div id="winnersDisplay" class="winners-list">
+                            <!-- Winners will be displayed here -->
+                        </div>
+                    </div>
+
+                    <!-- Contest Statistics -->
+                    <div class="contest-stats">
+                        <h3>📊 Contest Statistics</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h4>Daily Contest</h4>
+                                <p>Participants: <span id="dailyParticipantsCount">0</span></p>
+                                <p>Eligible: <span id="dailyEligibleCount">0</span></p>
+                            </div>
+                            <div class="stat-card">
+                                <h4>Weekly Contest</h4>
+                                <p>Participants: <span id="weeklyParticipantsCount">0</span></p>
+                                <p>Eligible: <span id="weeklyEligibleCount">0</span></p>
+                            </div>
+                            <div class="stat-card">
+                                <h4>Monthly Contest</h4>
+                                <p>Participants: <span id="monthlyParticipantsCount">0</span></p>
+                                <p>Eligible: <span id="monthlyEligibleCount">0</span></p>
+                            </div>
+                            <div class="stat-card">
+                                <h4>VIP Contest</h4>
+                                <p>Participants: <span id="vipParticipantsCount">0</span></p>
+                                <p>Eligible: <span id="vipEligibleCount">0</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- System Control Section -->
                 <section id="restartSection" class="dashboard-section">
                     <div class="section-header">
@@ -1131,9 +1263,12 @@
                  case 'leaderboard':
                      await loadLeaderboards();
                      break;
-                 case 'notifications':
-                     // No initial data needed
-                     break;
+                                 case 'notifications':
+                    // No initial data needed
+                    break;
+                case 'contests':
+                    await loadContestData();
+                    break;
              }
          }
 
@@ -2034,10 +2169,184 @@
 
                  showToast(`VIP extended by ${days} days for user ${userId}!`, 'success');
                  await loadVipUsers();
-             } catch (error) {
-                 showToast('Failed to extend VIP: ' + error.message, 'error');
-             }
-         }
+                         } catch (error) {
+                showToast('Failed to extend VIP: ' + error.message, 'error');
+            }
+        }
+
+        // Contest Management Functions
+        async function loadContestData() {
+            try {
+                const response = await fetch(`${adminAPI.baseURL}/admin-contest-prizes`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateContestDisplay(data.prize_pools);
+                }
+            } catch (error) {
+                console.error('Failed to load contest data:', error);
+                // Show default values
+                updateContestDisplay({
+                    daily: { description: 'X Points', winners: 1 },
+                    weekly: { description: 'X Points', winners: 3 },
+                    monthly: { description: 'VIP King (5 winners)', winners: 5 },
+                    vip: { description: 'X Points', winners: 1 }
+                });
+            }
+        }
+
+        function updateContestDisplay(prizePools) {
+            // Update current prize displays
+            document.getElementById('dailyCurrentPrize').textContent = prizePools.daily.description;
+            document.getElementById('weeklyCurrentPrize').textContent = prizePools.weekly.description;
+            document.getElementById('monthlyCurrentPrize').textContent = prizePools.monthly.description;
+            document.getElementById('vipCurrentPrize').textContent = prizePools.vip.description;
+
+            // Update winners count
+            document.getElementById('dailyWinners').textContent = prizePools.daily.winners;
+            document.getElementById('weeklyWinners').textContent = prizePools.weekly.winners;
+            document.getElementById('monthlyWinners').textContent = prizePools.monthly.winners;
+            document.getElementById('vipWinners').textContent = prizePools.vip.winners;
+
+            // Update prize pool displays in telegram app
+            updateTelegramPrizePools(prizePools);
+        }
+
+        async function updatePrizePool(contestType) {
+            try {
+                const prizeAmount = document.getElementById(`${contestType}PrizeAmount`).value;
+                const prizeType = document.getElementById(`${contestType}PrizeType`).value;
+                const winnersCount = document.getElementById(`${contestType}WinnersCount`).value;
+
+                const response = await fetch(`${adminAPI.baseURL}/admin-contest-prizes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contest_type: contestType,
+                        prize_type: prizeType,
+                        amount: parseInt(prizeAmount),
+                        winners: parseInt(winnersCount),
+                        admin_token: 'navigi2024'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(`${contestType} contest prize pool updated!`, 'success');
+                    
+                    // Update display
+                    document.getElementById(`${contestType}CurrentPrize`).textContent = result.description;
+                    document.getElementById(`${contestType}Winners`).textContent = result.winners;
+                    
+                    // Update telegram app display
+                    updateTelegramPrizePool(contestType, result.description);
+                } else {
+                    showToast('Failed to update prize pool: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showToast('Failed to update prize pool: ' + error.message, 'error');
+            }
+        }
+
+        function updateTelegramPrizePools(prizePools) {
+            // This would send updates to the telegram app
+            console.log('Updating Telegram app prize pools:', prizePools);
+            
+            // In real implementation, send to telegram app via WebSocket or API
+            // to update the prize pool displays in real-time
+        }
+
+        function updateTelegramPrizePool(contestType, description) {
+            console.log(`Updating ${contestType} prize pool to: ${description}`);
+            
+            // In real implementation, send real-time update to telegram app
+        }
+
+        async function selectWinners() {
+            const contestType = document.getElementById('contestTypeSelect').value;
+            
+            try {
+                // In real implementation, fetch eligible participants
+                const mockWinners = [
+                    { user_id: '123456', username: '@winner1', ads_watched: 15 },
+                    { user_id: '789012', username: '@winner2', ads_watched: 12 },
+                    { user_id: '345678', username: '@winner3', ads_watched: 11 }
+                ];
+
+                displayWinners(contestType, mockWinners);
+                showToast(`Selected ${mockWinners.length} winners for ${contestType} contest!`, 'success');
+            } catch (error) {
+                showToast('Failed to select winners: ' + error.message, 'error');
+            }
+        }
+
+        function displayWinners(contestType, winners) {
+            const winnersDisplay = document.getElementById('winnersDisplay');
+            winnersDisplay.innerHTML = `
+                <h4>${contestType.toUpperCase()} Contest Winners</h4>
+                <div class="winners-grid">
+                    ${winners.map((winner, index) => `
+                        <div class="winner-card">
+                            <div class="winner-rank">#${index + 1}</div>
+                            <div class="winner-info">
+                                <strong>${winner.username}</strong>
+                                <small>ID: ${winner.user_id}</small>
+                                <small>Ads: ${winner.ads_watched}</small>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function distributePrizes() {
+            const contestType = document.getElementById('contestTypeSelect').value;
+            const winnersCards = document.querySelectorAll('.winner-card');
+            
+            if (winnersCards.length === 0) {
+                showToast('Please select winners first!', 'warning');
+                return;
+            }
+
+            try {
+                const winners = Array.from(winnersCards).map((card, index) => {
+                    const userId = card.querySelector('small').textContent.replace('ID: ', '');
+                    return {
+                        user_id: userId,
+                        rank: index + 1,
+                        prize_type: 'points',
+                        amount: 1000 // This would be calculated based on contest settings
+                    };
+                });
+
+                const response = await fetch(`${adminAPI.baseURL}/admin-contest-prizes`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contest_type: contestType,
+                        winners_list: winners,
+                        admin_token: 'navigi2024'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(`Prizes distributed to ${winners.length} winners!`, 'success');
+                    
+                    // Clear winners display
+                    document.getElementById('winnersDisplay').innerHTML = '';
+                    
+                    // Send notifications to winners (in real implementation)
+                    console.log('Sending notifications to winners:', winners);
+                } else {
+                    showToast('Failed to distribute prizes: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showToast('Failed to distribute prizes: ' + error.message, 'error');
+            }
+        }
     </script>
 </body>
 </html>
