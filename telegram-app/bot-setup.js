@@ -167,27 +167,54 @@ async function logActivity(userId, activityType, data = {}) {
 }
 
 async function sendVipNotification(userId, userData, requestType = 'request') {
-    if (!isFirebaseInitialized) return false;
+    if (!isFirebaseInitialized) {
+        console.log('⚠️ Firebase not initialized, cannot send VIP notification');
+        return false;
+    }
+    
     try {
         const notificationId = uuidv4();
         const notificationRef = database.ref(`vip_notifications/${notificationId}`);
         
+        console.log(`📞 Sending VIP notification for user ${userId}...`);
+        console.log(`📞 User data:`, userData);
+        
         const notification = {
             id: notificationId,
-            user_id: userId,
-            username: userData.username,
-            first_name: userData.first_name,
+            user_id: userId.toString(),
+            username: userData.username || null,
+            first_name: userData.first_name || null,
             type: requestType,
             status: 'pending',
-            timestamp: admin.database.ServerValue.TIMESTAMP,
-            created_at: new Date().toISOString()
+            user_stats: {
+                points: userData.points || 0,
+                ads_watched: userData.ads_watched || 0,
+                balance: userData.balance || 0,
+                current_vip_status: userData.vip_status || 'FREE',
+                referrals: userData.referrals || 0
+            },
+            request_timestamp: new Date().toISOString(),
+            created_at: admin.database.ServerValue.TIMESTAMP
         };
         
         await notificationRef.set(notification);
-        console.log(`✅ VIP notification sent for user ${userId}`);
+        console.log(`✅ VIP notification sent to Firebase: ${notificationId}`);
+        console.log(`✅ Notification path: vip_notifications/${notificationId}`);
+        console.log(`✅ Notification data:`, notification);
+        
+        // Test if notification was actually written
+        const testRead = await notificationRef.once('value');
+        if (testRead.exists()) {
+            console.log(`✅ Notification confirmed in Firebase:`, testRead.val());
+        } else {
+            console.log(`❌ Notification not found in Firebase after write`);
+        }
+        
         return notificationId;
     } catch (error) {
-        console.error('❌ Error sending VIP notification:', error);
+        console.error('❌ Error sending VIP notification to Firebase:', error);
+        console.error('❌ Error details:', error.message);
+        console.error('❌ Error stack:', error.stack);
         return false;
     }
 }
@@ -507,6 +534,11 @@ bot.on('callback_query', async (query) => {
             if (userId === ADMIN_USER_ID) {
                 // Test VIP purchase for admin
                 await handleVipPurchase(userId, 'KING', 2.99, 'test_payment');
+            }
+            break;
+        case 'test_dashboard_connection':
+            if (userId === ADMIN_USER_ID) {
+                await testDashboardConnection(chatId, userId);
             }
             break;
     }
@@ -838,10 +870,18 @@ ${WEBAPP_URL}payment.html
 
 // Handle VIP request
 async function handleVipRequest(chatId, userId, user) {
+    console.log(`🔔 Processing VIP request for user ${userId}`);
+    console.log(`🔔 User data:`, user);
+    
     // Send VIP notification to Firebase for admin
     const notificationId = await sendVipNotification(userId, {
         username: user.username,
-        first_name: user.first_name
+        first_name: user.first_name,
+        points: user.points,
+        ads_watched: user.ads_watched,
+        balance: user.balance,
+        vip_status: user.vip_status,
+        referrals: user.referrals
     }, 'request');
     
     if (notificationId) {
@@ -1187,6 +1227,7 @@ Dashboard: ${ADMIN_DASHBOARD_URL}
             reply_markup: {
                 inline_keyboard: [
                     [{ text: '🌐 Open Dashboard', url: ADMIN_DASHBOARD_URL }],
+                    [{ text: '🧪 Test Dashboard Connection', callback_data: 'test_dashboard_connection' }],
                     [{ text: '🔄 Reset Leaderboards', callback_data: 'admin_reset_leaderboards' }],
                     [{ text: '🏆 Reset Contests', callback_data: 'admin_reset_contests' }],
                     [{ text: '💳 Test VIP Purchase', callback_data: 'test_vip_purchase' }]
@@ -1580,6 +1621,89 @@ The referral leaderboard is now completely fresh! 🚀`, {
         
     } catch (error) {
         console.error('❌ Error in fresh restart:', error);
+    }
+}
+
+// Test dashboard connection
+async function testDashboardConnection(chatId, userId) {
+    console.log('🧪 Testing dashboard connection...');
+    
+    try {
+        // Test 1: Write test data
+        const testId = uuidv4();
+        const testRef = database.ref(`dashboard_connection_test/${testId}`);
+        
+        await testRef.set({
+            test_id: testId,
+            source: 'telegram_bot',
+            admin_id: userId,
+            timestamp: new Date().toISOString(),
+            created_at: admin.database.ServerValue.TIMESTAMP
+        });
+        
+        console.log('✅ Test data written to Firebase');
+        
+        // Test 2: Send VIP notification
+        const user = await getUser(userId);
+        const vipNotificationId = await sendVipNotification(userId, user, 'test_request');
+        
+        // Test 3: Log activity
+        await logActivity(userId, 'dashboard_connection_test', {
+            test_id: testId,
+            vip_notification_id: vipNotificationId,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Test 4: Log payment
+        await logPayment(userId, {
+            type: 'test_payment',
+            tier: 'TEST',
+            amount: 0.01,
+            currency: 'USD',
+            payment_method: 'test',
+            status: 'completed',
+            user_info: {
+                id: userId,
+                username: user?.username,
+                first_name: user?.first_name
+            },
+            timestamp: new Date().toISOString()
+        });
+        
+        bot.sendMessage(chatId, `✅ *Dashboard Connection Test*
+
+🧪 **Test Results:**
+• ✅ Firebase Write: Success
+• ✅ VIP Notification: ${vipNotificationId ? 'Sent' : 'Failed'}
+• ✅ Activity Log: Success  
+• ✅ Payment Log: Success
+
+📊 **Check Admin Dashboard:**
+${ADMIN_DASHBOARD_URL}
+
+All test data should appear in real-time!`, {
+            parse_mode: 'Markdown'
+        });
+        
+        // Clean up test data after 30 seconds
+        setTimeout(async () => {
+            try {
+                await testRef.remove();
+                console.log('🗑️ Test data cleaned up');
+            } catch (error) {
+                console.error('❌ Error cleaning up test data:', error);
+            }
+        }, 30000);
+        
+    } catch (error) {
+        console.error('❌ Dashboard connection test failed:', error);
+        bot.sendMessage(chatId, `❌ *Dashboard Connection Test Failed*
+
+Error: ${error.message}
+
+Please check Firebase configuration and try again.`, {
+            parse_mode: 'Markdown'
+        });
     }
 }
 
