@@ -698,6 +698,157 @@
         .notification.info {
             background: linear-gradient(135deg, #17a2b8, #6c5ce7);
         }
+
+        /* Bot Control Styles */
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .control-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-card h3 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            padding: 1rem;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .config-item label {
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .config-item input {
+            padding: 0.75rem;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.online {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .status-badge.offline {
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+            color: white;
+        }
+
+        .status-badge.unknown {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        .connection-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .connection-badge.connected {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+
+        .connection-badge.disconnected {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+
+        /* Button Styles for Bot Control */
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #f39c12);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #6c5ce7);
+            color: white;
+        }
+
+        /* Responsive Design for Bot Control */
+        @media (max-width: 768px) {
+            .control-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-actions {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -724,6 +875,9 @@
                 </a></li>
                 <li><a href="#" class="nav-item" data-tab="payments">
                     <i>💳</i> Payment Management
+                </a></li>
+                <li><a href="#" class="nav-item" data-tab="bot-control">
+                    <i>🤖</i> Bot Control
                 </a></li>
             </ul>
         </nav>
