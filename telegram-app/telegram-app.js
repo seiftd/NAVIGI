@@ -267,31 +267,53 @@ class TelegramSbaroApp {
         }
     }
 
-    // Show Monetag In-App Interstitial (2 ads automatically)
-    async showMontagInAppAds() {
+    // Show Monetag Rewarded Interstitial (2x15s ads OR 1x30s ad)
+    async showMontagRewardedAds() {
         return new Promise((resolve, reject) => {
             try {
-                console.log('Starting Monetag In-App Interstitial ads...');
+                console.log('Starting Monetag Rewarded Interstitial ads...');
                 
-                // Show 2 ads automatically with 30s interval between them
-                show_9656288({
-                    type: 'inApp',
-                    inAppSettings: {
-                        frequency: 2,        // Show 2 ads
-                        capping: 0.1,        // Within 6 minutes (0.1 hours)
-                        interval: 30,        // 30 seconds between ads
-                        timeout: 5,          // 5 second delay before first ad
-                        everyPage: false     // Save session on page navigation
-                    }
-                }).then(() => {
-                    console.log('Both Monetag In-App ads completed successfully');
-                    resolve(true);
-                }).catch(error => {
-                    console.error('Monetag In-App ads error:', error);
-                    reject(error);
-                });
+                // Random choice: 2x15s ads OR 1x30s ad
+                const adChoice = Math.random() < 0.7 ? 'double' : 'single';
+                
+                if (adChoice === 'double') {
+                    // Show 2x15s Rewarded Interstitial ads with 1s interval
+                    this.showDoubleRewardedAds().then(() => {
+                        console.log('Both 15s Rewarded ads completed');
+                        resolve(true);
+                    }).catch(reject);
+                } else {
+                    // Show single 30s Rewarded Interstitial
+                    show_9656288().then(() => {
+                        console.log('30s Rewarded ad completed');
+                        resolve(true);
+                    }).catch(reject);
+                }
             } catch (error) {
-                console.error('Failed to show Monetag In-App ads:', error);
+                console.error('Failed to show Monetag Rewarded ads:', error);
+                reject(error);
+            }
+        });
+    }
+
+    // Show 2x15s Rewarded Interstitial ads with 1s interval
+    async showDoubleRewardedAds() {
+        return new Promise((resolve, reject) => {
+            try {
+                // First 15s ad
+                show_9656288().then(() => {
+                    console.log('First 15s ad completed, waiting 1s...');
+                    
+                    // Wait 1 second between ads
+                    setTimeout(() => {
+                        // Second 15s ad
+                        show_9656288().then(() => {
+                            console.log('Second 15s ad completed');
+                            resolve(true);
+                        }).catch(reject);
+                    }, 1000); // 1 second interval
+                }).catch(reject);
+            } catch (error) {
                 reject(error);
             }
         });
