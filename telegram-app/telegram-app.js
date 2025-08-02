@@ -168,6 +168,9 @@ class TelegramSbaroApp {
 
     async loadUserData() {
         try {
+            // Load saved user progress first
+            this.loadUserProgress();
+            
             // Load real user data from backend
             if (this.user) {
                 // Update profile information
@@ -198,6 +201,10 @@ class TelegramSbaroApp {
             // Initialize contest timers and eligibility
             this.initContestTimers();
             this.updateContestEligibility();
+            
+            // Start cooldown timers if needed
+            this.startCooldownTimer('earn');
+            this.startCooldownTimer('contest');
             
         } catch (error) {
             console.error('Failed to load user data:', error);
@@ -258,6 +265,36 @@ class TelegramSbaroApp {
         } catch (error) {
             console.error('Failed to initialize Monetag:', error);
         }
+    }
+
+    // Show Monetag In-App Interstitial (2 ads automatically)
+    async showMontagInAppAds() {
+        return new Promise((resolve, reject) => {
+            try {
+                console.log('Starting Monetag In-App Interstitial ads...');
+                
+                // Show 2 ads automatically with 30s interval between them
+                show_9656288({
+                    type: 'inApp',
+                    inAppSettings: {
+                        frequency: 2,        // Show 2 ads
+                        capping: 0.1,        // Within 6 minutes (0.1 hours)
+                        interval: 30,        // 30 seconds between ads
+                        timeout: 5,          // 5 second delay before first ad
+                        everyPage: false     // Save session on page navigation
+                    }
+                }).then(() => {
+                    console.log('Both Monetag In-App ads completed successfully');
+                    resolve(true);
+                }).catch(error => {
+                    console.error('Monetag In-App ads error:', error);
+                    reject(error);
+                });
+            } catch (error) {
+                console.error('Failed to show Monetag In-App ads:', error);
+                reject(error);
+            }
+        });
     }
 
     hideLoadingScreen() {
@@ -323,84 +360,93 @@ class TelegramSbaroApp {
             return;
         }
         
-        // Check cooldown - 3 minutes for free users, 1 minute for VIP
-        const isVIP = this.userStats.vipStatus !== 'FREE';
-        const cooldownTime = isVIP ? 1 * 60 * 1000 : 3 * 60 * 1000; // 1 or 3 minutes
-        
+        // Check cooldown - 7 minutes for ALL users (earning ads)
+        const cooldownTime = 7 * 60 * 1000; // 7 minutes in milliseconds
         const lastAdTime = localStorage.getItem('lastAdTime');
         
         if (lastAdTime && Date.now() - parseInt(lastAdTime) < cooldownTime) {
-            const remainingTime = Math.ceil((cooldownTime - (Date.now() - parseInt(lastAdTime))) / (60 * 1000));
-            this.showToast(`⏰ Please wait ${remainingTime} minute${remainingTime > 1 ? 's' : ''} before watching another ad`, 'info');
+            const remainingMs = cooldownTime - (Date.now() - parseInt(lastAdTime));
+            const remainingMinutes = Math.floor(remainingMs / (60 * 1000));
+            const remainingSeconds = Math.floor((remainingMs % (60 * 1000)) / 1000);
+            this.showToast(`⏰ Next ad in: ${remainingMinutes}m ${remainingSeconds}s`, 'info');
+            
+            // Start cooldown timer display
+            this.startCooldownTimer('earn');
             return;
         }
 
         try {
             // Show loading state
             const watchBtn = document.getElementById('watchAdBtn');
-            watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading 30s Ad...';
+            watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading 2x15s Ads...';
             watchBtn.disabled = true;
             
-            // Show Monetag rewarded ad for 30 seconds
+            // Show Monetag In-App Interstitial (2 ads automatically)
             if (typeof show_9656288 === 'function') {
                 try {
-                    // Start ad timer
+                    // Show ad progress for 2 ads (15s each = 30s total + 30s interval = ~60s total)
                     let adWatchTime = 0;
-                    const adDuration = 30; // 30 seconds
+                    const totalAdDuration = 60; // 2x15s ads + 30s interval
                     
                     // Show ad progress
                     const progressInterval = setInterval(() => {
                         adWatchTime++;
-                        watchBtn.innerHTML = `<i class="fas fa-eye"></i> Watching... ${adWatchTime}/${adDuration}s`;
+                        if (adWatchTime <= 15) {
+                            watchBtn.innerHTML = `<i class="fas fa-eye"></i> Ad 1/2: ${adWatchTime}/15s`;
+                        } else if (adWatchTime <= 45) {
+                            watchBtn.innerHTML = `<i class="fas fa-clock"></i> Waiting for Ad 2/2... ${45 - adWatchTime}s`;
+                        } else {
+                            watchBtn.innerHTML = `<i class="fas fa-eye"></i> Ad 2/2: ${adWatchTime - 45}/15s`;
+                        }
                         
-                        if (adWatchTime >= adDuration) {
+                        if (adWatchTime >= totalAdDuration) {
                             clearInterval(progressInterval);
                         }
                     }, 1000);
                     
-                    // Show Monetag ads - either 1x30s rewarded OR 2x15s ads
-                    const adChoice = Math.random() < 0.5 ? 'rewarded' : 'double';
+                    // Show Monetag In-App Interstitial (2 ads with 30s interval)
+                    await this.showMontagInAppAds();
                     
-                    if (adChoice === 'rewarded') {
-                        // Single 30-second rewarded ad
-                        await show_9656288('pop');
-                        this.showToast('📺 30-second rewarded ad completed!', 'info');
-                    } else {
-                        // Two 15-second ads
-                        await this.showDoubleAds();
-                    }
-                    
-                    // Ensure user watched for full 30 seconds
-                    if (adWatchTime < adDuration) {
-                        const remainingTime = adDuration - adWatchTime;
+                    // Ensure minimum watch time (60 seconds for 2 ads + interval)
+                    if (adWatchTime < totalAdDuration) {
+                        const remainingTime = totalAdDuration - adWatchTime;
                         await new Promise(resolve => setTimeout(resolve, remainingTime * 1000));
                     }
                     
                     clearInterval(progressInterval);
                     
-                    // Award points after successful 30s ad view - 1.1 points per ad
+                    // Award points after successful completion of BOTH ads - 1.1 points total
                     this.userStats.totalPoints += 1.1;
                     this.userStats.totalBalance += 0.011;
                     this.userStats.adsWatched += 1;
                     
+                    // Update today's ads count
+                    this.incrementTodayAdsWatched();
+                    
                     // Update display
                     this.updateStatsDisplay();
+                    this.updateDailyProgress();
                     
                     // Show success message
-                    this.showToast('🎉 You earned 1.1 points for watching 30s ad!', 'success');
+                    this.showToast('🎉 You earned 1.1 points for watching 2x15s ads!', 'success');
                     
                     // Send haptic feedback
                     this.tg.HapticFeedback.notificationOccurred('success');
                     
                     // Add to activity log
-                    this.addActivity('Watched Ad', '+1.1 points', 'earn');
+                    this.addActivity('Watched 2x15s Ads', '+1.1 points', 'earn');
+                    
+                    // Save user progress
+                    this.saveUserProgress();
                     
                     // Send data to backend
                     await this.sendAdWatchToBackend();
                     
-                    // Set cooldown and increment daily counter
+                    // Set cooldown
                     localStorage.setItem('lastAdTime', Date.now().toString());
-                    this.incrementTodayAdsWatched();
+                    
+                    // Start cooldown timer
+                    this.startCooldownTimer('earn');
                     
                 } catch (adError) {
                     console.error('Ad watch error:', adError);
@@ -515,48 +561,58 @@ class TelegramSbaroApp {
     }
     
     async watchContestAd(contestType) {
-        // Check contest ad cooldown (1 minute)
+        // Check contest ad cooldown (7 minutes - same as earning ads)
         const lastContestAdTime = localStorage.getItem('lastContestAdTime');
-        const contestCooldown = 1 * 60 * 1000; // 1 minute
+        const contestCooldown = 7 * 60 * 1000; // 7 minutes
         
         if (lastContestAdTime && Date.now() - parseInt(lastContestAdTime) < contestCooldown) {
-            const remainingTime = Math.ceil((contestCooldown - (Date.now() - parseInt(lastContestAdTime))) / (60 * 1000));
-            this.showToast(`⏰ Please wait ${remainingTime} minute before watching another contest ad`, 'info');
+            const remainingMs = contestCooldown - (Date.now() - parseInt(lastContestAdTime));
+            const remainingMinutes = Math.floor(remainingMs / (60 * 1000));
+            const remainingSeconds = Math.floor((remainingMs % (60 * 1000)) / 1000);
+            this.showToast(`⏰ Contest ad cooldown: ${remainingMinutes}m ${remainingSeconds}s`, 'info');
+            
+            // Start cooldown timer display
+            this.startCooldownTimer('contest');
             return;
         }
 
         try {
-            // Show Monetag ad for contest participation (no points earned)
+            // Show Monetag In-App Interstitial for contest participation (no points earned)
             if (typeof show_9656288 === 'function') {
-                // Start 30-second timer for contest ad
-                let contestAdTime = 0;
-                const contestAdDuration = 30; // 30 seconds
-                
                 const contestBtn = document.getElementById(`${contestType}JoinBtn`);
                 const originalText = contestBtn.textContent;
                 
-                // Show progress
+                // Show progress for 2x15s contest ads
+                let contestAdTime = 0;
+                const totalContestDuration = 60; // 2x15s ads + 30s interval
+                
                 const contestInterval = setInterval(() => {
                     contestAdTime++;
-                    contestBtn.textContent = `Watching Contest Ad... ${contestAdTime}/${contestAdDuration}s`;
+                    if (contestAdTime <= 15) {
+                        contestBtn.textContent = `Contest Ad 1/2: ${contestAdTime}/15s`;
+                    } else if (contestAdTime <= 45) {
+                        contestBtn.textContent = `Waiting for Contest Ad 2/2... ${45 - contestAdTime}s`;
+                    } else {
+                        contestBtn.textContent = `Contest Ad 2/2: ${contestAdTime - 45}/15s`;
+                    }
                     
-                    if (contestAdTime >= contestAdDuration) {
+                    if (contestAdTime >= totalContestDuration) {
                         clearInterval(contestInterval);
                     }
                 }, 1000);
                 
-                // Show the actual Monetag Rewarded Popup ad (30s guaranteed)
-                await show_9656288('pop');
+                // Show Monetag In-App Interstitial (2 ads for contest)
+                await this.showMontagInAppAds();
                 
-                // Ensure user watched for full 30 seconds
-                if (contestAdTime < contestAdDuration) {
-                    const remainingTime = contestAdDuration - contestAdTime;
+                // Ensure user watched full duration (60 seconds for 2 ads + interval)
+                if (contestAdTime < totalContestDuration) {
+                    const remainingTime = totalContestDuration - contestAdTime;
                     await new Promise(resolve => setTimeout(resolve, remainingTime * 1000));
                 }
                 
                 clearInterval(contestInterval);
                 
-                // Only count if watched full 30 seconds
+                // Only count if watched both ads completely
                 this.incrementContestAds(contestType);
                 
                 // Update contest eligibility
@@ -565,11 +621,17 @@ class TelegramSbaroApp {
                 // Set contest ad cooldown
                 localStorage.setItem('lastContestAdTime', Date.now().toString());
                 
-                this.showToast('📺 Contest ad watched for 30s! No points earned.', 'info');
+                // Save user progress
+                this.saveUserProgress();
+                
+                this.showToast('📺 Contest 2x15s ads watched! Contest progress +1', 'info');
                 this.tg.HapticFeedback.impactOccurred('light');
                 
                 // Send to backend
                 await this.sendContestAdToBackend(contestType);
+                
+                // Start cooldown timer
+                this.startCooldownTimer('contest');
                 
                 // Reset button text
                 contestBtn.textContent = originalText;
@@ -1633,6 +1695,82 @@ class TelegramSbaroApp {
     showError(message) {
         this.showToast(`❌ ${message}`, 'error');
     }
+    // Save user progress to localStorage
+    saveUserProgress() {
+        const progressData = {
+            userStats: this.userStats,
+            lastSaved: Date.now(),
+            todayAdsWatched: localStorage.getItem('todayAdsWatched') || '0',
+            lastAdTime: localStorage.getItem('lastAdTime') || '0',
+            contestAdsWatched: localStorage.getItem('contestAdsWatched') || JSON.stringify({daily: 0, weekly: 0, monthly: 0}),
+            lastContestAdTime: localStorage.getItem('lastContestAdTime') || '0'
+        };
+        
+        localStorage.setItem('userProgress', JSON.stringify(progressData));
+        console.log('User progress saved:', progressData);
+    }
+
+    // Load user progress from localStorage
+    loadUserProgress() {
+        try {
+            const savedProgress = localStorage.getItem('userProgress');
+            if (savedProgress) {
+                const progressData = JSON.parse(savedProgress);
+                
+                // Restore user stats
+                this.userStats = { ...this.userStats, ...progressData.userStats };
+                
+                console.log('User progress loaded:', progressData);
+                return true;
+            }
+        } catch (error) {
+            console.error('Failed to load user progress:', error);
+        }
+        return false;
+    }
+
+    // Start cooldown timer display
+    startCooldownTimer(type = 'earn') {
+        const cooldownTime = 7 * 60 * 1000; // 7 minutes
+        const lastTimeKey = type === 'earn' ? 'lastAdTime' : 'lastContestAdTime';
+        const lastTime = localStorage.getItem(lastTimeKey);
+        
+        if (!lastTime) return;
+        
+        const updateTimer = () => {
+            const remainingMs = cooldownTime - (Date.now() - parseInt(lastTime));
+            
+            if (remainingMs <= 0) {
+                // Cooldown finished
+                if (type === 'earn') {
+                    const watchBtn = document.getElementById('watchAdBtn');
+                    if (watchBtn) {
+                        watchBtn.innerHTML = '<i class="fas fa-play"></i> Watch 2x15s Ads';
+                        watchBtn.disabled = false;
+                    }
+                }
+                return;
+            }
+            
+            const minutes = Math.floor(remainingMs / (60 * 1000));
+            const seconds = Math.floor((remainingMs % (60 * 1000)) / 1000);
+            
+            // Update button text with countdown
+            if (type === 'earn') {
+                const watchBtn = document.getElementById('watchAdBtn');
+                if (watchBtn) {
+                    watchBtn.innerHTML = `<i class="fas fa-clock"></i> Next ad in ${minutes}m ${seconds}s`;
+                    watchBtn.disabled = true;
+                }
+            }
+            
+            // Continue timer
+            setTimeout(updateTimer, 1000);
+        };
+        
+        updateTimer();
+    }
+
 }
 
 // Global functions for HTML onclick handlers
