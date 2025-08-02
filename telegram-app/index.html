@@ -155,6 +155,38 @@
                             </div>
                             <button class="task-btn" onclick="shareReferral()">Share</button>
                         </div>
+                        <div class="task-item" id="channelTask">
+                            <div class="task-icon">📢</div>
+                            <div class="task-info">
+                                <div class="task-title">Join Channel</div>
+                                <div class="task-reward">+1 point</div>
+                            </div>
+                            <button class="task-btn" onclick="completeChannelTask()">Join</button>
+                        </div>
+                        <div class="task-item" id="bot1Task">
+                            <div class="task-icon">🤖</div>
+                            <div class="task-info">
+                                <div class="task-title">Visit Bot 1</div>
+                                <div class="task-reward">+1 point</div>
+                            </div>
+                            <button class="task-btn" onclick="completeBot1Task()">Visit</button>
+                        </div>
+                        <div class="task-item" id="bot2Task">
+                            <div class="task-icon">🎮</div>
+                            <div class="task-info">
+                                <div class="task-title">Visit Bot 2</div>
+                                <div class="task-reward">+1 point</div>
+                            </div>
+                            <button class="task-btn" onclick="completeBot2Task()">Visit</button>
+                        </div>
+                        <div class="task-item" id="websiteTask">
+                            <div class="task-icon">🌐</div>
+                            <div class="task-info">
+                                <div class="task-title">Visit Website</div>
+                                <div class="task-reward">+1 point</div>
+                            </div>
+                            <button class="task-btn" onclick="completeWebsiteTask()">Visit</button>
+                        </div>
                     </div>
                 </div>
 
@@ -479,6 +511,24 @@
                 </div>
 
                 <div class="profile-sections">
+                    <!-- VIP Mining Section -->
+                    <div class="profile-section" id="vipMiningSection">
+                        <h3>⛏️ VIP Mining</h3>
+                        <div class="vip-mining-card">
+                            <div class="mining-info">
+                                <p>VIP members can mine points daily!</p>
+                                <div class="mining-stats">
+                                    <span>King: 10 points/day</span>
+                                    <span>Emperor: 15 points/day</span>
+                                    <span>Lord: 20 points/day</span>
+                                </div>
+                            </div>
+                            <button class="mining-btn" id="vipMiningBtn" onclick="claimVipMining()">
+                                <i class="fas fa-pickaxe"></i> Mine Points
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="profile-section">
                         <h3>📊 Statistics</h3>
                         <div class="stats-list">

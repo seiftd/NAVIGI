@@ -965,6 +965,117 @@ body {
     color: var(--tg-theme-text-color);
 }
 
+/* VIP Mining Styles */
+.vip-mining-card {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    border-radius: 12px;
+    padding: 20px;
+    color: #333;
+}
+
+.mining-info p {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+}
+
+.mining-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.mining-stats span {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.mining-btn {
+    width: 100%;
+    background: #333;
+    color: #ffd700;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mining-btn:hover {
+    background: #555;
+    transform: translateY(-2px);
+}
+
+.mining-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Enhanced Task Styles */
+.task-item {
+    display: flex;
+    align-items: center;
+    background: var(--tg-theme-bg-color);
+    border: 1px solid var(--tg-theme-secondary-bg-color);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+}
+
+.task-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.task-icon {
+    font-size: 24px;
+    margin-right: 15px;
+    width: 40px;
+    text-align: center;
+}
+
+.task-info {
+    flex: 1;
+}
+
+.task-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--tg-theme-text-color);
+}
+
+.task-reward {
+    font-size: 14px;
+    color: #4CAF50;
+    font-weight: 500;
+}
+
+.task-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+}
+
+.task-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.task-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .stats-list, .settings-list {
     display: flex;
     flex-direction: column;
