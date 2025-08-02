@@ -1,6 +1,6 @@
 // ================================
 // NAVIGI SBARO ADMIN DASHBOARD
-// Real-time Firebase Integration
+// Enhanced Real-time Firebase Integration
 // ================================
 
 // Firebase Configuration - Your Credentials
@@ -19,14 +19,37 @@ let database = null;
 let isFirebaseInitialized = false;
 let currentTab = 'overview';
 
-// Real-time data storage
+// Real-time data storage with enhanced structure
 let realTimeData = {
     users: {},
     activities: {},
     vipNotifications: {},
     payments: {},
-    systemStats: {},
+    systemStats: {
+        totalUsers: 0,
+        activeUsers: 0,
+        totalEarnings: 0,
+        todayAds: 0,
+        vipUsers: 0
+    },
+    botStatus: {
+        online: false,
+        lastSeen: null,
+        uptime: 0
+    },
     lastUpdate: new Date()
+};
+
+// Dashboard state management
+let dashboardState = {
+    autoRefresh: true,
+    refreshInterval: 30000, // 30 seconds
+    selectedTimeRange: '24h',
+    filterOptions: {
+        userType: 'all',
+        vipStatus: 'all',
+        activityType: 'all'
+    }
 };
 
 // ================================
@@ -237,6 +260,272 @@ function setupRealtimeListeners() {
         addStatusMessage('Failed to setup listeners: ' + error.message, 'error');
         showNotification('Failed to setup real-time listeners', 'error');
     }
+}
+
+// ================================
+// ENHANCED DASHBOARD CONTROLS
+// ================================
+
+// Enhanced bot control functions
+async function sendBotCommand(command, parameters = {}) {
+    try {
+        console.log(`🤖 Sending bot command: ${command}`, parameters);
+        addStatusMessage(`Sending command: ${command}`, 'info');
+        
+        const commandData = {
+            command: command,
+            parameters: parameters,
+            timestamp: new Date().toISOString(),
+            admin_id: 'dashboard'
+        };
+        
+        // Send command to bot through Firebase
+        await database.ref('bot_commands').push(commandData);
+        
+        addStatusMessage(`Command sent: ${command}`, 'success');
+        showNotification(`Bot command "${command}" sent successfully`, 'success');
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Error sending bot command:', error);
+        addStatusMessage(`Failed to send command: ${command}`, 'error');
+        showNotification('Failed to send bot command', 'error');
+        return false;
+    }
+}
+
+// Bulk user operations
+async function bulkUserOperation(operation, userIds = [], parameters = {}) {
+    try {
+        console.log(`📊 Bulk operation: ${operation} for ${userIds.length} users`);
+        addStatusMessage(`Starting bulk operation: ${operation}`, 'info');
+        
+        let successCount = 0;
+        let errorCount = 0;
+        
+        for (const userId of userIds) {
+            try {
+                switch (operation) {
+                    case 'reset_daily_ads':
+                        await database.ref(`users/${userId}/daily_ads_watched`).set(0);
+                        break;
+                    case 'add_points':
+                        const currentPoints = (await database.ref(`users/${userId}/points`).once('value')).val() || 0;
+                        await database.ref(`users/${userId}/points`).set(currentPoints + parameters.amount);
+                        break;
+                    case 'set_vip':
+                        await database.ref(`users/${userId}/vip_status`).set(parameters.vipLevel);
+                        break;
+                    case 'add_balance':
+                        const currentBalance = (await database.ref(`users/${userId}/balance`).once('value')).val() || 0;
+                        await database.ref(`users/${userId}/balance`).set(currentBalance + parameters.amount);
+                        break;
+                }
+                successCount++;
+            } catch (error) {
+                console.error(`❌ Error processing user ${userId}:`, error);
+                errorCount++;
+            }
+        }
+        
+        const message = `Bulk operation completed: ${successCount} success, ${errorCount} errors`;
+        addStatusMessage(message, errorCount === 0 ? 'success' : 'warning');
+        showNotification(message, errorCount === 0 ? 'success' : 'warning');
+        
+        return { success: successCount, errors: errorCount };
+    } catch (error) {
+        console.error('❌ Bulk operation error:', error);
+        addStatusMessage(`Bulk operation failed: ${error.message}`, 'error');
+        showNotification('Bulk operation failed', 'error');
+        return { success: 0, errors: userIds.length };
+    }
+}
+
+// Advanced user filtering
+function filterUsers(users, filters) {
+    return Object.entries(users).filter(([userId, user]) => {
+        // Filter by VIP status
+        if (filters.vipStatus !== 'all') {
+            const userVip = user.vip_status || 'FREE';
+            if (userVip !== filters.vipStatus) return false;
+        }
+        
+        // Filter by user type (active/inactive)
+        if (filters.userType !== 'all') {
+            const lastActivity = new Date(user.last_activity || 0);
+            const daysSinceActivity = (Date.now() - lastActivity.getTime()) / (1000 * 60 * 60 * 24);
+            
+            if (filters.userType === 'active' && daysSinceActivity > 7) return false;
+            if (filters.userType === 'inactive' && daysSinceActivity <= 7) return false;
+        }
+        
+        // Filter by earnings range
+        if (filters.minEarnings) {
+            if ((user.balance || 0) < filters.minEarnings) return false;
+        }
+        
+        if (filters.maxEarnings) {
+            if ((user.balance || 0) > filters.maxEarnings) return false;
+        }
+        
+        return true;
+    });
+}
+
+// Real-time statistics calculator
+function calculateRealTimeStats(users, activities, timeRange = '24h') {
+    const now = Date.now();
+    const timeRanges = {
+        '1h': 60 * 60 * 1000,
+        '24h': 24 * 60 * 60 * 1000,
+        '7d': 7 * 24 * 60 * 60 * 1000,
+        '30d': 30 * 24 * 60 * 60 * 1000
+    };
+    
+    const rangeMs = timeRanges[timeRange] || timeRanges['24h'];
+    const cutoffTime = now - rangeMs;
+    
+    const stats = {
+        totalUsers: Object.keys(users).length,
+        activeUsers: 0,
+        vipUsers: 0,
+        totalEarnings: 0,
+        adsWatchedInRange: 0,
+        newUsersInRange: 0,
+        totalPoints: 0,
+        avgEarningsPerUser: 0
+    };
+    
+    // Calculate user stats
+    Object.values(users).forEach(user => {
+        stats.totalEarnings += user.balance || 0;
+        stats.totalPoints += user.points || 0;
+        
+        if (user.vip_status && user.vip_status !== 'FREE') {
+            stats.vipUsers++;
+        }
+        
+        const lastActivity = new Date(user.last_activity || 0).getTime();
+        if (lastActivity > cutoffTime) {
+            stats.activeUsers++;
+        }
+        
+        const joinDate = new Date(user.join_date || 0).getTime();
+        if (joinDate > cutoffTime) {
+            stats.newUsersInRange++;
+        }
+    });
+    
+    // Calculate activity stats
+    Object.values(activities).forEach(activity => {
+        const activityTime = new Date(activity.timestamp || 0).getTime();
+        if (activityTime > cutoffTime && activity.type === 'ad_watched') {
+            stats.adsWatchedInRange++;
+        }
+    });
+    
+    stats.avgEarningsPerUser = stats.totalUsers > 0 
+        ? (stats.totalEarnings / stats.totalUsers).toFixed(2)
+        : 0;
+    
+    return stats;
+}
+
+// Dashboard performance optimization
+function optimizeDashboardPerformance() {
+    // Limit real-time updates frequency
+    if (window.updateThrottle) {
+        clearTimeout(window.updateThrottle);
+    }
+    
+    window.updateThrottle = setTimeout(() => {
+        if (currentTab === 'overview') {
+            renderOverviewTab();
+        }
+    }, 1000); // Maximum 1 update per second
+}
+
+// Enhanced export functionality
+async function exportDashboardData(dataType, format = 'json') {
+    try {
+        console.log(`📥 Exporting ${dataType} data in ${format} format`);
+        addStatusMessage(`Exporting ${dataType} data...`, 'info');
+        
+        let data = {};
+        
+        switch (dataType) {
+            case 'users':
+                data = realTimeData.users;
+                break;
+            case 'activities':
+                data = realTimeData.activities;
+                break;
+            case 'vip_requests':
+                data = realTimeData.vipNotifications;
+                break;
+            case 'complete':
+                data = {
+                    users: realTimeData.users,
+                    activities: realTimeData.activities,
+                    vip_requests: realTimeData.vipNotifications,
+                    payments: realTimeData.payments,
+                    export_timestamp: new Date().toISOString()
+                };
+                break;
+        }
+        
+        const filename = `navigi_${dataType}_${new Date().toISOString().split('T')[0]}.${format}`;
+        
+        if (format === 'json') {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            downloadFile(blob, filename);
+        } else if (format === 'csv' && dataType === 'users') {
+            const csv = convertUsersToCSV(data);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            downloadFile(blob, filename.replace('.json', '.csv'));
+        }
+        
+        addStatusMessage(`${dataType} data exported successfully`, 'success');
+        showNotification(`Data exported as ${filename}`, 'success');
+        
+    } catch (error) {
+        console.error('❌ Export error:', error);
+        addStatusMessage(`Export failed: ${error.message}`, 'error');
+        showNotification('Export failed', 'error');
+    }
+}
+
+// Helper function to download file
+function downloadFile(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Convert users data to CSV
+function convertUsersToCSV(users) {
+    const headers = ['User ID', 'Username', 'First Name', 'VIP Status', 'Points', 'Balance', 'Ads Watched', 'Join Date'];
+    const rows = [headers];
+    
+    Object.entries(users).forEach(([userId, user]) => {
+        rows.push([
+            userId,
+            user.username || '',
+            user.first_name || '',
+            user.vip_status || 'FREE',
+            user.points || 0,
+            user.balance || 0,
+            user.ads_watched || 0,
+            new Date(user.join_date || 0).toLocaleDateString()
+        ]);
+    });
+    
+    return rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
 }
 
 // ================================
@@ -1194,6 +1483,269 @@ document.addEventListener('DOMContentLoaded', function() {
     addStatusMessage('Dashboard ready for real-time monitoring', 'success');
 });
 
+// ================================
+// ENHANCED DASHBOARD CONTROL FUNCTIONS
+// ================================
+
+// Manual refresh function
+function manualRefresh() {
+    console.log('🔄 Manual refresh triggered');
+    addStatusMessage('Manual refresh initiated...', 'info');
+    
+    if (isFirebaseInitialized) {
+        // Force refresh of current tab data
+        renderCurrentTab();
+        
+        // Update statistics
+        const stats = calculateRealTimeStats(realTimeData.users, realTimeData.activities, dashboardState.selectedTimeRange);
+        realTimeData.systemStats = stats;
+        
+        addStatusMessage('Manual refresh completed', 'success');
+        showNotification('Dashboard data refreshed', 'success');
+    } else {
+        addStatusMessage('Manual refresh failed: No Firebase connection', 'error');
+        showNotification('Refresh failed: No connection', 'error');
+    }
+}
+
+// Toggle auto refresh
+function toggleAutoRefresh(enabled) {
+    dashboardState.autoRefresh = enabled;
+    console.log(`🔄 Auto refresh ${enabled ? 'enabled' : 'disabled'}`);
+    addStatusMessage(`Auto refresh ${enabled ? 'enabled' : 'disabled'}`, 'info');
+    
+    if (enabled) {
+        startAutoRefresh();
+    } else {
+        stopAutoRefresh();
+    }
+}
+
+// Start auto refresh
+function startAutoRefresh() {
+    if (window.autoRefreshInterval) {
+        clearInterval(window.autoRefreshInterval);
+    }
+    
+    window.autoRefreshInterval = setInterval(() => {
+        if (dashboardState.autoRefresh && isFirebaseInitialized) {
+            optimizeDashboardPerformance();
+        }
+    }, dashboardState.refreshInterval);
+}
+
+// Stop auto refresh
+function stopAutoRefresh() {
+    if (window.autoRefreshInterval) {
+        clearInterval(window.autoRefreshInterval);
+        window.autoRefreshInterval = null;
+    }
+}
+
+// Update time range
+function updateTimeRange(range) {
+    dashboardState.selectedTimeRange = range;
+    console.log(`📊 Time range updated to: ${range}`);
+    addStatusMessage(`Time range: ${range}`, 'info');
+    
+    // Recalculate statistics with new time range
+    const stats = calculateRealTimeStats(realTimeData.users, realTimeData.activities, range);
+    realTimeData.systemStats = stats;
+    
+    // Refresh current tab if it's statistics-dependent
+    if (['overview', 'analytics'].includes(currentTab)) {
+        renderCurrentTab();
+    }
+}
+
+// Refresh all data from Firebase
+async function refreshAllData() {
+    try {
+        console.log('🔄 Refreshing all data from Firebase...');
+        addStatusMessage('Refreshing all data from Firebase...', 'info');
+        
+        if (!isFirebaseInitialized) {
+            throw new Error('Firebase not initialized');
+        }
+        
+        // Get fresh data from Firebase
+        const [usersSnapshot, activitiesSnapshot, vipSnapshot, paymentsSnapshot] = await Promise.all([
+            database.ref('users').once('value'),
+            database.ref('activities').orderByChild('timestamp').limitToLast(500).once('value'),
+            database.ref('vip_notifications').once('value'),
+            database.ref('payments').orderByChild('created_at').limitToLast(200).once('value')
+        ]);
+        
+        // Update real-time data
+        realTimeData.users = usersSnapshot.val() || {};
+        realTimeData.activities = activitiesSnapshot.val() || {};
+        realTimeData.vipNotifications = vipSnapshot.val() || {};
+        realTimeData.payments = paymentsSnapshot.val() || {};
+        realTimeData.lastUpdate = new Date();
+        
+        // Recalculate statistics
+        const stats = calculateRealTimeStats(realTimeData.users, realTimeData.activities, dashboardState.selectedTimeRange);
+        realTimeData.systemStats = stats;
+        
+        // Refresh current tab
+        renderCurrentTab();
+        
+        addStatusMessage('All data refreshed successfully', 'success');
+        showNotification('All data refreshed from Firebase', 'success');
+        
+    } catch (error) {
+        console.error('❌ Error refreshing data:', error);
+        addStatusMessage(`Data refresh failed: ${error.message}`, 'error');
+        showNotification('Data refresh failed', 'error');
+    }
+}
+
+// Enhanced tab switching with analytics
+function switchTab(tabName) {
+    console.log(`📱 Switching to tab: ${tabName}`);
+    
+    // Update navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-tab') === tabName) {
+            item.classList.add('active');
+        }
+    });
+    
+    // Update current tab
+    const previousTab = currentTab;
+    currentTab = tabName;
+    
+    // Render tab content
+    renderCurrentTab();
+    
+    // Log tab change
+    addStatusMessage(`Switched from ${previousTab} to ${tabName}`, 'info');
+    
+    // Handle special tab requirements
+    switch (tabName) {
+        case 'analytics':
+            // Load analytics-specific data
+            loadAnalyticsData();
+            break;
+        case 'bot-controls':
+            // Load bot control panel
+            renderBotControlsTab();
+            break;
+        case 'system':
+            // Load system settings
+            renderSystemTab();
+            break;
+    }
+}
+
+// Load analytics data
+function loadAnalyticsData() {
+    console.log('📈 Loading analytics data...');
+    addStatusMessage('Loading analytics data...', 'info');
+    
+    // This would typically load more detailed analytics
+    // For now, we'll use the existing real-time stats
+    const stats = calculateRealTimeStats(realTimeData.users, realTimeData.activities, dashboardState.selectedTimeRange);
+    realTimeData.systemStats = stats;
+}
+
+// Render bot controls tab
+function renderBotControlsTab() {
+    const content = `
+        <div class="tab-content">
+            <h2>🤖 Bot Controls</h2>
+            <div class="section">
+                <h3>📢 Broadcast Message</h3>
+                <textarea id="broadcastMessage" placeholder="Enter message to broadcast to all users..." rows="3" style="width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+                <button onclick="sendBroadcast()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">Send Broadcast</button>
+            </div>
+            
+            <div class="section">
+                <h3>👥 Bulk User Operations</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <button onclick="bulkResetDailyAds()" style="padding: 1rem; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">Reset All Daily Ads</button>
+                    <button onclick="bulkAddPoints()" style="padding: 1rem; background: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer;">Add Points to All Users</button>
+                    <button onclick="exportAllData()" style="padding: 1rem; background: #ffc107; color: black; border: none; border-radius: 5px; cursor: pointer;">Export All Data</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('mainContent').innerHTML = content;
+}
+
+// Render system tab
+function renderSystemTab() {
+    const content = `
+        <div class="tab-content">
+            <h2>⚙️ System Settings</h2>
+            <div class="section">
+                <h3>🔧 Dashboard Configuration</h3>
+                <label>Auto Refresh Interval (seconds):</label>
+                <input type="number" id="refreshInterval" value="${dashboardState.refreshInterval / 1000}" min="5" max="300" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px; margin-left: 1rem;">
+                <button onclick="updateRefreshInterval()" style="padding: 0.5rem 1rem; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 1rem;">Update</button>
+            </div>
+            
+            <div class="section">
+                <h3>📊 Data Management</h3>
+                <button onclick="clearOldActivities()" style="padding: 1rem; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 1rem;">Clear Old Activities</button>
+                <button onclick="backupData()" style="padding: 1rem; background: #6f42c1; color: white; border: none; border-radius: 5px; cursor: pointer;">Backup All Data</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('mainContent').innerHTML = content;
+}
+
+// Send broadcast message
+async function sendBroadcast() {
+    const message = document.getElementById('broadcastMessage').value.trim();
+    if (!message) {
+        showNotification('Please enter a message to broadcast', 'warning');
+        return;
+    }
+    
+    const success = await sendBotCommand('broadcast', { message: message });
+    if (success) {
+        document.getElementById('broadcastMessage').value = '';
+    }
+}
+
+// Bulk operations
+async function bulkResetDailyAds() {
+    const userIds = Object.keys(realTimeData.users);
+    await bulkUserOperation('reset_daily_ads', userIds);
+}
+
+async function bulkAddPoints() {
+    const amount = prompt('Enter points to add to all users:');
+    if (amount && !isNaN(amount)) {
+        const userIds = Object.keys(realTimeData.users);
+        await bulkUserOperation('add_points', userIds, { amount: parseFloat(amount) });
+    }
+}
+
+// Export all data
+function exportAllData() {
+    exportDashboardData('complete', 'json');
+}
+
+// Update refresh interval
+function updateRefreshInterval() {
+    const newInterval = parseInt(document.getElementById('refreshInterval').value) * 1000;
+    if (newInterval >= 5000 && newInterval <= 300000) {
+        dashboardState.refreshInterval = newInterval;
+        showNotification(`Refresh interval updated to ${newInterval/1000} seconds`, 'success');
+        
+        if (dashboardState.autoRefresh) {
+            startAutoRefresh(); // Restart with new interval
+        }
+    } else {
+        showNotification('Invalid interval. Must be between 5-300 seconds.', 'error');
+    }
+}
+
 // Auto-refresh connection status every 30 seconds
 setInterval(() => {
     if (isFirebaseInitialized) {
@@ -1203,3 +1755,6 @@ setInterval(() => {
         addStatusMessage('System status: Firebase disconnected', 'error');
     }
 }, 30000);
+
+// Start auto refresh by default
+startAutoRefresh();
