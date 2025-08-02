@@ -4,7 +4,8 @@
   "description": "Telegram Bot for NAVIGI SBARO with Firebase integration",
   "main": "bot-setup.js",
   "scripts": {
-    "start": "node bot-setup.js",
+    "start": "node start-bots.js",
+    "main": "node bot-setup.js",
     "admin": "node admin-bot-setup.js",
     "dev": "nodemon bot-setup.js",
     "test": "echo \"Error: no test specified\" && exit 1"
