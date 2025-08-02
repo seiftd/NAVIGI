@@ -1,4 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
+const { FirebaseManager } = require('./firebase-config');
 
 // Admin Bot Configuration
 const ADMIN_BOT_TOKEN = '8095971099:AAFDLGO8oFBPgmI878cFeCuil3tf9Kh2tmM';
@@ -7,6 +8,9 @@ const MAIN_BOT_TOKEN = '8185239716:AAGwRpHQH3pEoMLVTzWpLnE3hHTNc35AleY';
 const ADMIN_USER_ID = '@Sbaroone'; // Replace with actual admin user ID
 const MAIN_BOT_API_URL = 'https://navigiu.netlify.app/.netlify/functions';
 
+// Initialize Firebase Manager
+const firebaseManager = new FirebaseManager();
+
 // Create main bot instance for sending messages
 const mainBot = new TelegramBot(MAIN_BOT_TOKEN);
 
@@ -14,6 +18,41 @@ const mainBot = new TelegramBot(MAIN_BOT_TOKEN);
 const adminBot = new TelegramBot(ADMIN_BOT_TOKEN, { polling: true });
 
 console.log('🤖 Admin Bot (@Seifoneme_bot) started successfully!');
+
+// Set up real-time VIP notification listener
+firebaseManager.onVipNotification(async (notification) => {
+    console.log('📞 New VIP notification received:', notification);
+    
+    // Send notification to all admins
+    const adminIds = ['123456789', '987654321']; // Replace with actual admin IDs
+    
+    for (const adminId of adminIds) {
+        try {
+            await adminBot.sendMessage(adminId, 
+                `🔔 *NEW VIP REQUEST*\n\n` +
+                `👤 User: ${notification.first_name || 'Unknown'}\n` +
+                `🆔 ID: ${notification.user_id}\n` +
+                `📱 Username: @${notification.username || 'none'}\n` +
+                `⏰ Time: ${new Date(notification.created_at).toLocaleString()}\n\n` +
+                `Use /vip_approve ${notification.id} or /vip_reject ${notification.id}`,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: '✅ Approve', callback_data: `vip_approve_${notification.id}` },
+                                { text: '❌ Reject', callback_data: `vip_reject_${notification.id}` }
+                            ],
+                            [{ text: '👤 View User', callback_data: `view_user_${notification.user_id}` }]
+                        ]
+                    }
+                }
+            );
+        } catch (error) {
+            console.error(`Failed to send VIP notification to admin ${adminId}:`, error);
+        }
+    }
+});
 
 // Admin authentication middleware
 function isAdmin(userId) {
@@ -270,7 +309,23 @@ adminBot.on('callback_query', async (callbackQuery) => {
     }
     
     try {
-        if (data.startsWith('approve_vip_')) {
+        // Handle Firebase VIP notifications
+        if (data.startsWith('vip_approve_')) {
+            const notificationId = data.replace('vip_approve_', '');
+            await handleFirebaseVipApproval(chatId, notificationId, true);
+            adminBot.answerCallbackQuery(callbackQuery.id, '✅ VIP request approved!');
+            
+        } else if (data.startsWith('vip_reject_')) {
+            const notificationId = data.replace('vip_reject_', '');
+            await handleFirebaseVipApproval(chatId, notificationId, false);
+            adminBot.answerCallbackQuery(callbackQuery.id, '❌ VIP request rejected');
+            
+        } else if (data.startsWith('view_user_')) {
+            const targetUserId = data.replace('view_user_', '');
+            await showFirebaseUserDetails(chatId, targetUserId);
+            adminBot.answerCallbackQuery(callbackQuery.id);
+            
+        } else if (data.startsWith('approve_vip_')) {
             const requestId = data.replace('approve_vip_', '');
             await approveVipRequest(requestId);
             adminBot.answerCallbackQuery(callbackQuery.id, '✅ VIP request approved!');
@@ -537,5 +592,206 @@ async function sendBroadcastMessage(message, adminChatId) {
     }
 }
 
+// Firebase VIP approval handler
+async function handleFirebaseVipApproval(chatId, notificationId, approved) {
+    try {
+        // Update notification status in Firebase
+        const status = approved ? 'approved' : 'rejected';
+        await firebaseManager.updateVipNotification(notificationId, status, `Admin ${approved ? 'approved' : 'rejected'} VIP request`);
+        
+        // Get notification details to find user
+        const notification = await firebaseManager.db.ref(`vip_notifications/${notificationId}`).once('value');
+        const notificationData = notification.val();
+        
+        if (notificationData) {
+            const userId = notificationData.user_id;
+            
+            if (approved) {
+                // Update user VIP status in Firebase
+                await firebaseManager.updateUser(userId, {
+                    vip_status: 'KING', // Default to KING, can be customized
+                    vip_expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+                });
+                
+                // Log activity
+                await firebaseManager.logActivity(userId, 'vip_approved', {
+                    notification_id: notificationId,
+                    new_status: 'KING',
+                    approved_by: 'admin'
+                });
+                
+                // Send approval message to user
+                try {
+                    await mainBot.sendMessage(userId, 
+                        `🎉 *VIP REQUEST APPROVED!*\n\n` +
+                        `✅ Your VIP upgrade has been approved!\n` +
+                        `👑 New Status: KING VIP\n` +
+                        `⏰ Valid for: 30 days\n\n` +
+                        `🎁 VIP Benefits:\n` +
+                        `• Reduced ad cooldowns\n` +
+                        `• Higher daily limits (20 ads)\n` +
+                        `• Exclusive contests\n` +
+                        `• Priority support\n\n` +
+                        `Welcome to VIP! 🌟`,
+                        { parse_mode: 'Markdown' }
+                    );
+                } catch (error) {
+                    console.error('Failed to send approval message to user:', error);
+                }
+                
+                adminBot.sendMessage(chatId, 
+                    `✅ *VIP REQUEST APPROVED*\n\n` +
+                    `👤 User: ${notificationData.first_name}\n` +
+                    `🆔 ID: ${userId}\n` +
+                    `👑 Status: KING VIP\n` +
+                    `📅 Duration: 30 days\n\n` +
+                    `User has been notified!`,
+                    { parse_mode: 'Markdown' }
+                );
+            } else {
+                // Log rejection activity
+                await firebaseManager.logActivity(userId, 'vip_rejected', {
+                    notification_id: notificationId,
+                    rejected_by: 'admin'
+                });
+                
+                // Send rejection message to user
+                try {
+                    await mainBot.sendMessage(userId, 
+                        `❌ *VIP REQUEST REJECTED*\n\n` +
+                        `Your VIP upgrade request has been reviewed and rejected.\n\n` +
+                        `📞 Contact admin for more information: @Sbaroone\n` +
+                        `🔄 You can submit a new request anytime.`,
+                        { parse_mode: 'Markdown' }
+                    );
+                } catch (error) {
+                    console.error('Failed to send rejection message to user:', error);
+                }
+                
+                adminBot.sendMessage(chatId, 
+                    `❌ *VIP REQUEST REJECTED*\n\n` +
+                    `👤 User: ${notificationData.first_name}\n` +
+                    `🆔 ID: ${userId}\n\n` +
+                    `User has been notified.`,
+                    { parse_mode: 'Markdown' }
+                );
+            }
+        }
+    } catch (error) {
+        console.error('Firebase VIP approval error:', error);
+        adminBot.sendMessage(chatId, `❌ Error processing VIP request: ${error.message}`);
+    }
+}
+
+// Show Firebase user details
+async function showFirebaseUserDetails(chatId, userId) {
+    try {
+        const user = await firebaseManager.getUser(userId);
+        const activities = await firebaseManager.db.ref(`users/${userId}/activities`).limitToLast(10).once('value');
+        const userActivities = activities.val() || {};
+        
+        if (user) {
+            let message = `👤 *USER DETAILS*\n\n`;
+            message += `🆔 ID: ${user.id}\n`;
+            message += `👤 Name: ${user.first_name || 'Unknown'}\n`;
+            message += `📱 Username: @${user.username || 'none'}\n`;
+            message += `💎 Points: ${user.points || 0}\n`;
+            message += `💰 Balance: $${(user.balance || 0).toFixed(2)}\n`;
+            message += `📺 Ads Watched: ${user.ads_watched || 0}\n`;
+            message += `📊 Daily Ads: ${user.daily_ads_watched || 0}\n`;
+            message += `👑 VIP Status: ${user.vip_status || 'FREE'}\n`;
+            message += `👥 Referrals: ${user.referrals || 0}\n`;
+            message += `📅 Joined: ${new Date(user.join_date).toLocaleDateString()}\n\n`;
+            
+            // Contest progress
+            if (user.contest_ads) {
+                message += `🏆 *Contest Progress:*\n`;
+                message += `📅 Daily: ${user.contest_ads.daily || 0}/10\n`;
+                message += `📊 Weekly: ${user.contest_ads.weekly || 0}/30\n`;
+                message += `🗓️ Monthly: ${user.contest_ads.monthly || 0}/200\n\n`;
+            }
+            
+            // Recent activities
+            const activityList = Object.values(userActivities).slice(-5);
+            if (activityList.length > 0) {
+                message += `📋 *Recent Activities:*\n`;
+                activityList.forEach(activity => {
+                    const time = new Date(activity.timestamp).toLocaleString();
+                    message += `• ${activity.type} - ${time}\n`;
+                });
+            }
+            
+            adminBot.sendMessage(chatId, message, {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '👑 Make VIP', callback_data: `make_vip_${userId}` },
+                            { text: '🚫 Ban User', callback_data: `ban_user_${userId}` }
+                        ],
+                        [{ text: '💰 Add Points', callback_data: `add_points_${userId}` }]
+                    ]
+                }
+            });
+        } else {
+            adminBot.sendMessage(chatId, `❌ User ${userId} not found in database.`);
+        }
+    } catch (error) {
+        console.error('Show user details error:', error);
+        adminBot.sendMessage(chatId, `❌ Error fetching user details: ${error.message}`);
+    }
+}
+
+// Enhanced broadcast messaging with Firebase queue
+async function sendFirebaseBroadcast(message, adminChatId) {
+    try {
+        // Queue message in Firebase
+        const messageId = await firebaseManager.queueBroadcastMessage(message, adminChatId);
+        
+        if (messageId) {
+            adminBot.sendMessage(adminChatId, '📤 Message queued for broadcast. Processing...');
+            
+            // Get all users from Firebase
+            const users = await firebaseManager.getAllUsers();
+            
+            let successCount = 0;
+            let failCount = 0;
+            
+            for (const user of users) {
+                try {
+                    await mainBot.sendMessage(user.id, `📢 **ADMIN MESSAGE**\n\n${message}`, {
+                        parse_mode: 'Markdown'
+                    });
+                    successCount++;
+                    
+                    // Small delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (error) {
+                    console.error(`Failed to send broadcast to user ${user.id}:`, error);
+                    failCount++;
+                }
+            }
+            
+            // Mark broadcast as sent
+            await firebaseManager.markBroadcastSent(messageId);
+            
+            adminBot.sendMessage(adminChatId, 
+                `✅ **BROADCAST COMPLETE**\n\n` +
+                `📤 Messages sent: ${successCount}\n` +
+                `❌ Failed: ${failCount}\n` +
+                `👥 Total users: ${users.length}`
+            );
+        } else {
+            adminBot.sendMessage(adminChatId, '❌ Failed to queue broadcast message.');
+        }
+    } catch (error) {
+        console.error('Firebase broadcast error:', error);
+        adminBot.sendMessage(adminChatId, '❌ Failed to send broadcast message: ' + error.message);
+    }
+}
+
 console.log('🤖 Admin Bot is running and ready to manage NAVIGI!');
+console.log('🔥 Firebase Real-time Database: Connected');
+console.log('📞 VIP notification listener: Active');
+console.log('📊 System ready for real-time administration!');
 

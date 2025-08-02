@@ -1,4 +1,15 @@
-// Telegram Mini App - NAVIGI SBARO
+// Firebase configuration for client-side
+const firebaseConfig = {
+    apiKey: "your-api-key-here",
+    authDomain: "navigi-sbaro-bot.firebaseapp.com",
+    databaseURL: "https://navigi-sbaro-bot-default-rtdb.firebaseio.com",
+    projectId: "navigi-sbaro-bot",
+    storageBucket: "navigi-sbaro-bot.appspot.com",
+    messagingSenderId: "your-sender-id",
+    appId: "your-app-id"
+};
+
+// Telegram Mini App - NAVIGI SBARO with Firebase Integration
 class TelegramSbaroApp {
     constructor() {
         this.tg = window.Telegram.WebApp;
@@ -14,6 +25,8 @@ class TelegramSbaroApp {
         };
         this.currentTab = 'home';
         this.isArabic = localStorage.getItem('isArabic') === 'true';
+        this.firebaseInitialized = false;
+        this.database = null;
         
         // Daily login and tasks
         this.dailyLoginClaimed = false;
@@ -37,6 +50,9 @@ class TelegramSbaroApp {
 
     async init() {
         try {
+            // Initialize Firebase
+            await this.initFirebase();
+            
             // Initialize Telegram WebApp
             this.initTelegramWebApp();
             
@@ -52,6 +68,9 @@ class TelegramSbaroApp {
             // Initialize Monetag
             this.initMonetag();
             
+            // Set up real-time listeners
+            this.setupRealtimeListeners();
+            
             // Hide loading screen
             this.hideLoadingScreen();
             
@@ -59,6 +78,27 @@ class TelegramSbaroApp {
         } catch (error) {
             console.error('Failed to initialize app:', error);
             this.showError('Failed to initialize app. Please try again.');
+        }
+    }
+
+    async initFirebase() {
+        try {
+            // Check if Firebase is available
+            if (typeof firebase !== 'undefined') {
+                // Initialize Firebase
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                this.database = firebase.database();
+                this.firebaseInitialized = true;
+                console.log('🔥 Firebase initialized successfully');
+            } else {
+                console.warn('⚠️ Firebase not available - using local storage fallback');
+                this.firebaseInitialized = false;
+            }
+        } catch (error) {
+            console.error('❌ Firebase initialization failed:', error);
+            this.firebaseInitialized = false;
         }
     }
 
@@ -242,6 +282,29 @@ class TelegramSbaroApp {
     
     async fetchRealUserStats() {
         try {
+            // Try Firebase first
+            if (this.firebaseInitialized && this.database && this.user) {
+                const userId = this.user.id;
+                const userRef = this.database.ref(`users/${userId}`);
+                const snapshot = await userRef.once('value');
+                const firebaseData = snapshot.val();
+                
+                if (firebaseData) {
+                    this.userStats = {
+                        totalPoints: firebaseData.points || 0,
+                        totalBalance: firebaseData.balance || 0,
+                        vipStatus: firebaseData.vip_status || 'FREE',
+                        adsWatched: firebaseData.ads_watched || 0,
+                        contestAdsWatched: (firebaseData.contest_ads?.daily || 0) + (firebaseData.contest_ads?.weekly || 0) + (firebaseData.contest_ads?.monthly || 0),
+                        contestsJoined: firebaseData.contests_joined || 0,
+                        referrals: firebaseData.referrals || 0
+                    };
+                    console.log('✅ Real user stats fetched from Firebase');
+                    return;
+                }
+            }
+            
+            // Fallback to API
             const response = await fetch(`https://navigiu.netlify.app/.netlify/functions/user-stats?user_id=${this.user.id}`, {
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -257,9 +320,94 @@ class TelegramSbaroApp {
                     contestsJoined: data.contests_joined || 0,
                     referrals: data.referrals || 0
                 };
+                console.log('📡 Real user stats fetched from API');
             }
         } catch (error) {
             console.error('Failed to fetch real user stats:', error);
+        }
+    }
+
+    setupRealtimeListeners() {
+        if (!this.firebaseInitialized || !this.database || !this.user) {
+            console.log('⚠️ Firebase not available - skipping real-time listeners');
+            return;
+        }
+        
+        try {
+            const userId = this.user.id;
+            const userRef = this.database.ref(`users/${userId}`);
+            
+            // Listen for real-time updates to user data
+            userRef.on('value', (snapshot) => {
+                const firebaseData = snapshot.val();
+                if (firebaseData) {
+                    // Update local stats if they changed
+                    const newStats = {
+                        totalPoints: firebaseData.points || 0,
+                        totalBalance: firebaseData.balance || 0,
+                        vipStatus: firebaseData.vip_status || 'FREE',
+                        adsWatched: firebaseData.ads_watched || 0,
+                        contestAdsWatched: (firebaseData.contest_ads?.daily || 0) + (firebaseData.contest_ads?.weekly || 0) + (firebaseData.contest_ads?.monthly || 0),
+                        contestsJoined: firebaseData.contests_joined || 0,
+                        referrals: firebaseData.referrals || 0
+                    };
+                    
+                    // Check if data actually changed
+                    if (JSON.stringify(newStats) !== JSON.stringify(this.userStats)) {
+                        this.userStats = newStats;
+                        this.updateStatsDisplay();
+                        this.saveUserProgress(); // Save to localStorage as backup
+                        console.log('🔄 Real-time update received from Firebase');
+                        
+                        // Show notification for significant changes
+                        if (newStats.totalPoints > this.userStats.totalPoints) {
+                            this.showNotification(`🎉 Points updated: +${(newStats.totalPoints - this.userStats.totalPoints).toFixed(1)}`);
+                        }
+                        if (newStats.vipStatus !== this.userStats.vipStatus) {
+                            this.showNotification(`👑 VIP Status updated: ${newStats.vipStatus}`);
+                        }
+                    }
+                }
+            });
+            
+            // Listen for contest progress updates
+            const contestRef = this.database.ref(`users/${userId}/contest_ads`);
+            contestRef.on('value', (snapshot) => {
+                const contestData = snapshot.val();
+                if (contestData) {
+                    this.updateContestProgress(contestData);
+                }
+            });
+            
+            console.log('👂 Firebase real-time listeners set up successfully');
+        } catch (error) {
+            console.error('❌ Failed to set up Firebase listeners:', error);
+        }
+    }
+
+    async syncUserDataToFirebase() {
+        if (!this.firebaseInitialized || !this.database || !this.user) return false;
+        
+        try {
+            const userId = this.user.id;
+            const userRef = this.database.ref(`users/${userId}`);
+            
+            const updates = {
+                points: this.userStats.totalPoints,
+                balance: this.userStats.totalBalance,
+                ads_watched: this.userStats.adsWatched,
+                vip_status: this.userStats.vipStatus,
+                contests_joined: this.userStats.contestsJoined,
+                referrals: this.userStats.referrals,
+                updated_at: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            await userRef.update(updates);
+            console.log('✅ User data synced to Firebase');
+            return true;
+        } catch (error) {
+            console.error('❌ Failed to sync to Firebase:', error);
+            return false;
         }
     }
 
