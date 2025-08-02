@@ -1076,6 +1076,43 @@ body {
     transform: none;
 }
 
+/* VIP Contest Styles */
+.vip-contest {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    border: 2px solid #ffd700;
+    color: #333;
+}
+
+.vip-contest .contest-badge {
+    background: #333;
+    color: #ffd700;
+}
+
+.vip-contest .contest-info h3 {
+    color: #333;
+}
+
+.vip-contest .contest-info p {
+    color: #666;
+}
+
+.vip-btn {
+    background: linear-gradient(135deg, #333, #555);
+    color: #ffd700;
+    border: 2px solid #ffd700;
+}
+
+.vip-btn:hover {
+    background: linear-gradient(135deg, #555, #777);
+    transform: translateY(-2px);
+}
+
+.vip-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .stats-list, .settings-list {
     display: flex;
     flex-direction: column;

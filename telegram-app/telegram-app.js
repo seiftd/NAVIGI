@@ -231,6 +231,9 @@ class TelegramSbaroApp {
             // Reset referral leaderboard to zero
             this.resetReferralLeaderboard();
             
+            // Reset today's progress to zero
+            this.resetTodayProgress();
+            
         } catch (error) {
             console.error('Failed to load user data:', error);
         }
@@ -610,9 +613,9 @@ class TelegramSbaroApp {
     }
     
     async watchContestAd(contestType) {
-        // Check contest ad cooldown (5 minutes for contest ads)
+        // Check contest ad cooldown (3 minutes for contest ads)
         const lastContestAdTime = localStorage.getItem('lastContestAdTime');
-        const contestCooldown = 5 * 60 * 1000; // 5 minutes
+        const contestCooldown = 3 * 60 * 1000; // 3 minutes
         
         if (lastContestAdTime && Date.now() - parseInt(lastContestAdTime) < contestCooldown) {
             const remainingMs = contestCooldown - (Date.now() - parseInt(lastContestAdTime));
@@ -693,12 +696,38 @@ class TelegramSbaroApp {
     incrementContestAds(contestType) {
         const key = `contestAds_${contestType}`;
         const current = this.getContestAdsWatched(contestType);
-        localStorage.setItem(key, (current + 1).toString());
+        const newCount = current + 1;
+        localStorage.setItem(key, newCount.toString());
+        
+        // Send to dashboard
+        this.sendContestProgressToBackend(contestType, newCount);
+        
+        console.log(`Contest ${contestType} ads: ${newCount}`);
+    }
+
+    // Send contest progress to backend
+    async sendContestProgressToBackend(contestType, adsWatched) {
+        try {
+            await fetch('https://navigiu.netlify.app/.netlify/functions/contest-progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: this.user?.id,
+                    username: this.user?.username,
+                    contest_type: contestType,
+                    ads_watched: adsWatched,
+                    platform: 'telegram_bot',
+                    timestamp: Date.now()
+                })
+            });
+        } catch (error) {
+            console.error('Failed to send contest progress:', error);
+        }
     }
     
     updateContestEligibility() {
-        const contests = ['daily', 'weekly', 'monthly'];
-        const requirements = { daily: 10, weekly: 30, monthly: 200 };
+        const contests = ['daily', 'weekly', 'monthly', 'vip'];
+        const requirements = { daily: 10, weekly: 30, monthly: 200, vip: 50 };
         
         contests.forEach(contest => {
             const watched = this.getContestAdsWatched(contest);
@@ -987,9 +1016,9 @@ class TelegramSbaroApp {
     getDailyAdLimit() {
         const vipLimits = {
             'FREE': 12,
-            'KING': 20,
-            'EMPEROR': 30,
-            'LORD': 50
+            'KING': 16,
+            'EMPEROR': 20,
+            'LORD': 25
         };
         return vipLimits[this.userStats.vipStatus] || 12;
     }
@@ -1813,7 +1842,7 @@ class TelegramSbaroApp {
 
     // Start cooldown timer display
     startCooldownTimer(type = 'earn') {
-        const cooldownTime = type === 'earn' ? 7 * 60 * 1000 : 5 * 60 * 1000; // 7min for earn, 5min for contest
+        const cooldownTime = type === 'earn' ? 7 * 60 * 1000 : 3 * 60 * 1000; // 7min for earn, 3min for contest
         const lastTimeKey = type === 'earn' ? 'lastAdTime' : 'lastContestAdTime';
         const lastTime = localStorage.getItem(lastTimeKey);
         
@@ -2086,6 +2115,22 @@ class TelegramSbaroApp {
         this.userStats.referrals = 0;
         
         console.log('Referral leaderboard reset to zero');
+    }
+
+    // Reset today's progress
+    resetTodayProgress() {
+        // Reset daily ad count
+        localStorage.setItem('todayAdsWatched', '0');
+        
+        // Reset contest ads for today
+        const contestAds = { daily: 0, weekly: 0, monthly: 0 };
+        localStorage.setItem('contestAdsWatched', JSON.stringify(contestAds));
+        
+        // Update display
+        this.updateDailyProgress();
+        this.updateContestEligibility();
+        
+        console.log('Today progress reset to zero');
     }
 
 }
