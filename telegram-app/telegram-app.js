@@ -223,6 +223,7 @@ class TelegramSbaroApp {
             this.updateDailyLoginUI();
             this.updateVipMiningUI();
             this.initTasksUI();
+            this.loadRecentActivities();
             
             // Start cooldown timers if needed
             this.startCooldownTimer('earn');
@@ -555,28 +556,118 @@ class TelegramSbaroApp {
     }
 
     addActivity(title, points, type) {
+        // Create activity object with real data
+        const activity = {
+            id: Date.now(),
+            title,
+            points,
+            type,
+            timestamp: Date.now(),
+            date: new Date().toLocaleString(),
+            user_id: this.user?.id,
+            username: this.user?.username
+        };
+        
+        // Store in localStorage for persistence
+        const activities = JSON.parse(localStorage.getItem('recentActivities') || '[]');
+        activities.unshift(activity);
+        
+        // Keep only last 50 activities
+        if (activities.length > 50) {
+            activities.splice(50);
+        }
+        
+        localStorage.setItem('recentActivities', JSON.stringify(activities));
+        
+        // Send to backend for real-time tracking
+        this.sendActivityToBackend(activity);
+        
+        // Update UI
         const activityList = document.getElementById('activityList');
-        const activityItem = document.createElement('div');
-        activityItem.className = 'activity-item';
+        if (activityList) {
+            const activityItem = document.createElement('div');
+            activityItem.className = 'activity-item';
+            
+            const iconClass = type === 'earn' ? 'earn' : type === 'contest' ? 'contest' : type === 'vip' ? 'vip' : type === 'task' ? 'task' : 'earn';
+            const icon = type === 'contest' ? '🏆' : type === 'vip' ? '💎' : type === 'task' ? '✅' : type === 'daily' ? '📅' : '+';
+            
+            activityItem.innerHTML = `
+                <div class="activity-icon ${iconClass}">${icon}</div>
+                <div class="activity-info">
+                    <div class="activity-title">${title}</div>
+                    <div class="activity-time">${this.formatTimeAgo(activity.timestamp)}</div>
+                </div>
+                <div class="activity-points">${points}</div>
+            `;
+            
+            // Add to top of list
+            activityList.insertBefore(activityItem, activityList.firstChild);
+            
+            // Remove last item if more than 10 items
+            if (activityList.children.length > 10) {
+                activityList.removeChild(activityList.lastChild);
+            }
+        }
         
-        const iconClass = type === 'earn' ? 'earn' : type === 'contest' ? 'contest' : 'earn';
-        const icon = type === 'contest' ? '🏆' : '+';
+        console.log('📝 Real activity logged:', activity);
+    }
+
+    // Send activity to backend for real-time tracking
+    async sendActivityToBackend(activity) {
+        try {
+            await fetch('https://navigiu.netlify.app/.netlify/functions/user-activity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...activity,
+                    platform: 'telegram_bot'
+                })
+            });
+        } catch (error) {
+            console.error('Failed to send activity to backend:', error);
+        }
+    }
+
+    // Format time ago
+    formatTimeAgo(timestamp) {
+        const now = Date.now();
+        const diff = now - timestamp;
+        const minutes = Math.floor(diff / (60 * 1000));
+        const hours = Math.floor(diff / (60 * 60 * 1000));
+        const days = Math.floor(diff / (24 * 60 * 60 * 1000));
         
-        activityItem.innerHTML = `
-            <div class="activity-icon ${iconClass}">${icon}</div>
-            <div class="activity-info">
-                <div class="activity-title">${title}</div>
-                <div class="activity-time">Just now</div>
-            </div>
-            <div class="activity-points">${points}</div>
-        `;
+        if (days > 0) return `${days}d ago`;
+        if (hours > 0) return `${hours}h ago`;
+        if (minutes > 0) return `${minutes}m ago`;
+        return 'Just now';
+    }
+
+    // Load recent activities on app start
+    loadRecentActivities() {
+        const activities = JSON.parse(localStorage.getItem('recentActivities') || '[]');
+        const activityList = document.getElementById('activityList');
         
-        // Add to top of list
-        activityList.insertBefore(activityItem, activityList.firstChild);
-        
-        // Remove last item if more than 5 items
-        if (activityList.children.length > 5) {
-            activityList.removeChild(activityList.lastChild);
+        if (activityList && activities.length > 0) {
+            activityList.innerHTML = ''; // Clear existing
+            
+            activities.slice(0, 10).forEach(activity => {
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                
+                const iconClass = activity.type === 'earn' ? 'earn' : activity.type === 'contest' ? 'contest' : activity.type === 'vip' ? 'vip' : activity.type === 'task' ? 'task' : 'earn';
+                const icon = activity.type === 'contest' ? '🏆' : activity.type === 'vip' ? '💎' : activity.type === 'task' ? '✅' : activity.type === 'daily' ? '📅' : '+';
+                
+                activityItem.innerHTML = `
+                    <div class="activity-icon ${iconClass}">${icon}</div>
+                    <div class="activity-info">
+                        <div class="activity-title">${activity.title}</div>
+                        <div class="activity-time">${this.formatTimeAgo(activity.timestamp)}</div>
+                    </div>
+                    <div class="activity-points">${activity.points}</div>
+                `;
+                
+                activityList.appendChild(activityItem);
+            });
         }
     }
 
@@ -709,7 +800,11 @@ class TelegramSbaroApp {
         // Send to dashboard
         this.sendContestProgressToBackend(contestType, newCount);
         
-        console.log(`Contest ${contestType} ads: ${newCount}`);
+        // Force update contest eligibility display
+        this.updateContestEligibility();
+        
+        console.log(`✅ Contest ${contestType} ads incremented: ${current} → ${newCount}`);
+        this.showToast(`📊 ${contestType.toUpperCase()} contest progress: ${newCount}`, 'info');
     }
 
     // Send contest progress to backend
@@ -736,12 +831,26 @@ class TelegramSbaroApp {
         const contests = ['daily', 'weekly', 'monthly', 'vip'];
         const requirements = { daily: 10, weekly: 30, monthly: 200, vip: 50 };
         
+        // Check VIP status for VIP contest
+        const isVip = this.userStats.vipStatus !== 'FREE';
+        
         contests.forEach(contest => {
             const watched = this.getContestAdsWatched(contest);
             const required = requirements[contest];
             const card = document.getElementById(`${contest}Contest`);
             const progress = document.getElementById(`${contest}Progress`);
             const btn = document.getElementById(`${contest}JoinBtn`);
+            
+            // Special handling for VIP contest
+            if (contest === 'vip' && !isVip) {
+                progress.textContent = 'VIP Required';
+                card.style.borderColor = '#666';
+                card.style.backgroundColor = 'rgba(102, 102, 102, 0.1)';
+                btn.textContent = 'VIP Required';
+                btn.disabled = true;
+                btn.style.backgroundColor = '#666';
+                return;
+            }
             
             // Update progress display
             progress.textContent = `${watched}/${required}`;
