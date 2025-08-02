@@ -27,18 +27,89 @@ let realTimeData = {
 // Initialize Firebase
 function initializeFirebase() {
     try {
-        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+        console.log('🔄 Initializing Firebase Admin Dashboard...');
+        console.log('📊 Firebase available:', typeof firebase !== 'undefined');
+        console.log('📊 Config check:', {
+            projectId: firebaseConfig.projectId,
+            databaseURL: firebaseConfig.databaseURL,
+            apiKey: firebaseConfig.apiKey ? 'Present' : 'Missing'
+        });
+        
+        if (typeof firebase !== 'undefined') {
+            // Initialize Firebase if not already initialized
+            if (!firebase.apps.length) {
+                console.log('🚀 Initializing new Firebase app...');
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                console.log('♻️ Using existing Firebase app...');
+            }
+            
             database = firebase.database();
             isFirebaseInitialized = true;
-            console.log('🔥 Firebase initialized successfully in admin dashboard');
+            
+                    console.log('✅ Firebase initialized successfully in admin dashboard');
+        console.log('🔗 Database URL:', firebaseConfig.databaseURL);
+        console.log('🔥 Firebase App Name:', firebase.app().name);
+        
+        // Add connection status to page
+        addConnectionStatus('Firebase initialized successfully', 'success');
+        
+        // Test connection immediately
+        testFirebaseConnection();
+            
+            // Setup listeners
             setupRealtimeListeners();
+            
+            showNotification('Firebase connected successfully!', 'success');
             return true;
+        } else {
+            throw new Error('Firebase SDK not loaded');
         }
     } catch (error) {
         console.error('❌ Firebase initialization failed:', error);
-        showNotification('Firebase connection failed. Using demo data.', 'error');
+        console.error('❌ Error details:', error.message);
+        console.error('❌ Stack:', error.stack);
+        showNotification('Firebase connection failed: ' + error.message, 'error');
+        isFirebaseInitialized = false;
         return false;
+    }
+}
+
+// Test Firebase connection
+async function testFirebaseConnection() {
+    try {
+        console.log('🧪 Testing Firebase connection...');
+        
+        // Test basic connection
+        const testRef = database.ref('.info/connected');
+        testRef.on('value', (snapshot) => {
+            if (snapshot.val() === true) {
+                console.log('✅ Firebase connection: ONLINE');
+                showNotification('Firebase connection: ONLINE', 'success');
+            } else {
+                console.log('❌ Firebase connection: OFFLINE');
+                showNotification('Firebase connection: OFFLINE', 'warning');
+            }
+        });
+        
+        // Test write/read
+        const writeTestRef = database.ref('admin_dashboard_test');
+        await writeTestRef.set({
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            source: 'admin_dashboard',
+            test_connection: true
+        });
+        
+        console.log('✅ Firebase write test successful');
+        
+        // Clean up after 5 seconds
+        setTimeout(() => {
+            writeTestRef.remove();
+        }, 5000);
+        
+    } catch (error) {
+        console.error('❌ Firebase connection test failed:', error);
+        showNotification('Connection test failed: ' + error.message, 'error');
     }
 }
 
@@ -49,15 +120,23 @@ function setupRealtimeListeners() {
         return;
     }
 
-    // Listen to users data
+    // Listen to users data with error handling
     database.ref('users').on('value', (snapshot) => {
-        const users = snapshot.val() || {};
-        realTimeData.users = users;
-        console.log('👥 Users data updated:', Object.keys(users).length, 'users');
-        updateDashboardStats();
-        if (currentTab === 'users') {
-            renderUsersTab();
+        try {
+            const users = snapshot.val() || {};
+            realTimeData.users = users;
+            console.log('👥 Users data updated:', Object.keys(users).length, 'users');
+            console.log('👥 Sample user IDs:', Object.keys(users).slice(0, 3));
+            updateDashboardStats();
+            if (currentTab === 'users') {
+                renderUsersTab();
+            }
+        } catch (error) {
+            console.error('❌ Error processing users data:', error);
         }
+    }, (error) => {
+        console.error('❌ Users listener error:', error);
+        showNotification('Users data connection failed', 'error');
     });
 
     // Listen to activities data - get latest activities first
@@ -104,9 +183,34 @@ function setupRealtimeListeners() {
     console.log('👂 Real-time listeners set up successfully');
 }
 
+// Add connection status to page
+function addConnectionStatus(message, type) {
+    const statusContainer = document.getElementById('connectionStatus');
+    if (statusContainer) {
+        const statusItem = document.createElement('div');
+        statusItem.className = `status-item ${type}`;
+        statusItem.innerHTML = `
+            <span class="status-time">${new Date().toLocaleTimeString()}</span>
+            <span class="status-message">${message}</span>
+        `;
+        statusContainer.appendChild(statusItem);
+        
+        // Keep only last 10 status messages
+        while (statusContainer.children.length > 10) {
+            statusContainer.removeChild(statusContainer.firstChild);
+        }
+        
+        // Auto scroll to bottom
+        statusContainer.scrollTop = statusContainer.scrollHeight;
+    }
+}
+
 // Initialize dashboard when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing NAVIGI SBARO Admin Dashboard...');
+    
+    // Add initial status
+    addConnectionStatus('Dashboard initializing...', 'info');
     
     // Initialize Firebase
     initializeFirebase();
