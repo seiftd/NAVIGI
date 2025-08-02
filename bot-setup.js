@@ -1,4 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
+const { FirebaseManager } = require('./firebase-config');
 
 // Bot configuration
 const BOT_TOKEN = '8185239716:AAGwRpHQH3pEoMLVTzWpLnE3hHTNc35AleY';
@@ -8,7 +9,10 @@ const ADMIN_DASHBOARD_URL = 'https://navigiu.netlify.app/admin-dashboard.html';
 // Initialize bot
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// User data storage (in production, use database)
+// Initialize Firebase Manager
+const firebaseManager = new FirebaseManager();
+
+// User data storage (fallback for when Firebase is not available)
 const users = new Map();
 const userCooldowns = new Map();
 const contestCooldowns = new Map();
@@ -25,28 +29,48 @@ const DAILY_LIMITS = {
     'LORD': 50
 };
 
-// Initialize user data
-function initUser(userId, userData = {}) {
-    if (!users.has(userId)) {
-        users.set(userId, {
-            id: userId,
-            username: userData.username || null,
-            first_name: userData.first_name || null,
-            points: 0,
-            balance: 0.00,
-            ads_watched: 0,
-            daily_ads_watched: 0,
-            last_ad_reset: new Date().toDateString(),
-            contest_ads: { daily: 0, weekly: 0, monthly: 0 },
-            contests_joined: 0,
-            referrals: 0,
-            vip_status: 'FREE',
-            vip_expires: null,
-            referred_by: null,
-            join_date: new Date().toISOString()
+// Initialize user data with Firebase integration
+async function initUser(userId, userData = {}) {
+    // Try to get user from Firebase first
+    let user = await firebaseManager.getUser(userId);
+    
+    if (!user) {
+        // Create new user in Firebase
+        user = await firebaseManager.createUser(userId, userData);
+        
+        // Fallback to local storage if Firebase fails
+        if (!user) {
+            user = {
+                id: userId,
+                username: userData.username || null,
+                first_name: userData.first_name || null,
+                points: 0,
+                balance: 0.00,
+                ads_watched: 0,
+                daily_ads_watched: 0,
+                last_ad_reset: new Date().toDateString(),
+                contest_ads: { daily: 0, weekly: 0, monthly: 0 },
+                contests_joined: 0,
+                referrals: 0,
+                vip_status: 'FREE',
+                vip_expires: null,
+                referred_by: null,
+                join_date: new Date().toISOString()
+            };
+            users.set(userId, user);
+        }
+        
+        // Log new user activity
+        await firebaseManager.logActivity(userId, 'user_joined', {
+            username: userData.username,
+            first_name: userData.first_name,
+            platform: 'telegram_bot'
         });
     }
-    return users.get(userId);
+    
+    // Also store in local cache for quick access
+    users.set(userId, user);
+    return user;
 }
 
 // Reset daily ads if new day
@@ -203,6 +227,9 @@ bot.on('callback_query', async (query) => {
         case 'withdraw':
             await handleWithdraw(chatId, userId);
             break;
+        case 'request_vip':
+            await handleVipRequest(chatId, userId);
+            break;
         case 'back_main':
             bot.editMessageText('🏠 Main Menu', {
                 chat_id: chatId,
@@ -285,6 +312,13 @@ async function handleWatchAd(chatId, userId) {
         bot.sendMessage(chatId, `⏰ Please wait ${formatTimeRemaining(timeRemaining)} before next ad.`);
         return;
     }
+    
+    // Log ad start activity
+    await firebaseManager.logActivity(userId, 'ad_started', {
+        vip_status: user.vip_status,
+        daily_count: user.daily_ads_watched,
+        limit: limit
+    });
     
     // Show first video ad
     bot.sendMessage(chatId, '📺 *First Video Ad (15 seconds)*\n\nWatch the complete video to continue...', {
@@ -517,6 +551,13 @@ bot.on('callback_query', async (query) => {
         user.contest_ads[contestType] += 1;
         users.set(userId, user);
         
+        // Update Firebase with real-time contest progress
+        await firebaseManager.updateContestProgress(userId, contestType);
+        await firebaseManager.updateUser(userId, {
+            contest_ads: user.contest_ads,
+            contests_joined: user.contests_joined
+        });
+        
         // Set contest cooldown
         contestCooldowns.set(userId, Date.now());
         
@@ -558,13 +599,16 @@ bot.on('callback_query', async (query) => {
 
 // Handle VIP upgrade
 async function handleVipUpgrade(chatId, userId) {
-    const message = `👑 *VIP Upgrade*\n\n🔗 Visit our website to upgrade:\n${WEBAPP_URL}payment.html\n\n💎 VIP Benefits:\n• Reduced ad cooldowns\n• Higher daily limits\n• Exclusive contests\n• Priority support`;
+    const user = users.get(userId);
+    
+    const message = `👑 *VIP Upgrade*\n\n🔗 Visit our website to upgrade:\n${WEBAPP_URL}payment.html\n\n💎 VIP Benefits:\n• Reduced ad cooldowns\n• Higher daily limits\n• Exclusive contests\n• Priority support\n\n📞 Or request manual approval from admin:`;
     
     bot.sendMessage(chatId, message, {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [
                 [{ text: '🌐 Open Website', url: `${WEBAPP_URL}payment.html` }],
+                [{ text: '📞 Request VIP Approval', callback_data: 'request_vip' }],
                 [{ text: '🔙 Back', callback_data: 'back_main' }]
             ]
         }
@@ -691,6 +735,46 @@ async function handleWithdraw(chatId, userId) {
     });
 }
 
+// Handle VIP request
+async function handleVipRequest(chatId, userId) {
+    const user = users.get(userId);
+    
+    // Send VIP notification to Firebase for admin bot
+    const notificationId = await firebaseManager.sendVipNotification(userId, {
+        username: user.username,
+        first_name: user.first_name
+    }, 'request');
+    
+    if (notificationId) {
+        // Log activity
+        await firebaseManager.logActivity(userId, 'vip_request', {
+            notification_id: notificationId,
+            current_status: user.vip_status,
+            points: user.points,
+            ads_watched: user.ads_watched
+        });
+        
+        bot.sendMessage(chatId, `📞 *VIP Request Sent!*\n\n✅ Your VIP upgrade request has been sent to admin.\n🔔 You'll receive a notification when processed.\n\n👤 User: ${user.first_name || 'User'}\n🆔 ID: ${userId}\n💎 Points: ${user.points}\n📺 Ads: ${user.ads_watched}`, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '🔙 Back', callback_data: 'back_main' }]
+                ]
+            }
+        });
+    } else {
+        bot.sendMessage(chatId, `❌ *Request Failed*\n\nUnable to send VIP request. Please contact admin directly: @Sbaroone`, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '📧 Contact Admin', url: 'https://t.me/Sbaroone' }],
+                    [{ text: '🔙 Back', callback_data: 'back_main' }]
+                ]
+            }
+        });
+    }
+}
+
 // Admin commands
 bot.onText(/\/admin/, (msg) => {
     const chatId = msg.chat.id;
@@ -730,6 +814,22 @@ setInterval(async () => {
     await sendToAdminDashboard('bot_stats', stats);
 }, 60 * 60 * 1000); // Every hour
 
-console.log('🤖 NAVIGI SBARO Bot started successfully!');
-console.log('📊 Dashboard URL:', ADMIN_DASHBOARD_URL);
-console.log('🔗 Bot URL: https://t.me/navigi_sbaro_bot');
+// Initialize Firebase and clear test data on startup
+async function initializeBot() {
+    console.log('🚀 Initializing NAVIGI SBARO Bot...');
+    
+    // Clear test data for fresh start
+    const cleared = await firebaseManager.clearTestData();
+    if (cleared) {
+        console.log('✅ Test data cleared - Fresh database ready!');
+    }
+    
+    console.log('🤖 NAVIGI SBARO Bot started successfully!');
+    console.log('📊 Dashboard URL:', ADMIN_DASHBOARD_URL);
+    console.log('🔗 Bot URL: https://t.me/navigi_sbaro_bot');
+    console.log('🔥 Firebase Real-time Database: Connected');
+    console.log('📊 System ready for production use!');
+}
+
+// Start the bot
+initializeBot();
