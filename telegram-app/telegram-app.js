@@ -1,4 +1,4 @@
-// Firebase configuration for client-side
+// Firebase configuration for client-side with your actual credentials
 const firebaseConfig = {
     apiKey: "AIzaSyCfrl9jNATQFJJDZSWoh9sb4DDtil4aHpY",
     authDomain: "navigi-sbaro-bot.firebaseapp.com",
